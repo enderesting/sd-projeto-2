@@ -5,63 +5,69 @@
 #include "data.h"
 #include "entry.h"
 
-/* Função que cria e inicializa uma nova lista (estrutura list_t a
- * ser definida pelo grupo no ficheiro list-private.h).
- * Retorna a lista ou NULL em caso de erro.
+/* Esta estrutura define o par {chave, valor} para a tabela
  */
-struct list_t *list_create(){
+struct entry_t {
+	char *key;	/* string, cadeia de caracteres terminada por '\0' */
+	struct data_t *value; /* Bloco de dados */
+};
 
+/* Função que cria uma entry, reservando a memória necessária e
+ * inicializando-a com a string e o bloco de dados de entrada.
+ * Retorna a nova entry ou NULL em caso de erro.
+ */
+struct entry_t *entry_create(char *key, struct data_t *data){
+    struct entry_t* entry;
+    entry = (struct entry_t*) calloc(1,sizeof(struct entry_t));
+    if (entry == NULL || key == NULL || data == NULL)
+        return NULL;
+    entry->key = key;
+    entry->value = data;
+    return entry;
 }
 
-/* Função que elimina uma lista, libertando *toda* a memória utilizada
- * pela lista.
+/* Função que elimina uma entry, libertando a memória por ela ocupada.
  * Retorna 0 (OK) ou -1 em caso de erro.
  */
-int list_destroy(struct list_t *list){
-    
+int entry_destroy(struct entry_t *entry){
+    if(entry == NULL)
+        return -1;
+    free(entry);
+    return 0;
 }
 
-/* Função que adiciona à lista a entry passada como argumento.
- * A entry é inserida de forma ordenada, tendo por base a comparação
- * de entries feita pela função entry_compare do módulo entry e
- * considerando que a entry menor deve ficar na cabeça da lista.
- * Se já existir uma entry igual (com a mesma chave), a entry
- * já existente na lista será substituída pela nova entry,
- * sendo libertada a memória ocupada pela entry antiga.
- * Retorna 0 se a entry ainda não existia, 1 se já existia e foi
- * substituída, ou -1 em caso de erro.
+/* Função que duplica uma entry, reservando a memória necessária para a
+ * nova estrutura.
+ * Retorna a nova entry ou NULL em caso de erro.
  */
-int list_add(struct list_t *list, struct entry_t *entry);
+struct entry_t *entry_dup(struct entry_t *entry){
+    // TODO... Unsure about this
+}
 
-/* Função que elimina da lista a entry com a chave key, libertando a
- * memória ocupada pela entry.
- * Retorna 0 se encontrou e removeu a entry, 1 se não encontrou a entry,
- * ou -1 em caso de erro.
- */
-int list_remove(struct list_t *list, char *key);
-
-/* Função que obtém da lista a entry com a chave key.
- * Retorna a referência da entry na lista ou NULL se não encontrar a
- * entry ou em caso de erro.
-*/
-struct entry_t *list_get(struct list_t *list, char *key);
-
-/* Função que conta o número de entries na lista passada como argumento.
- * Retorna o tamanho da lista ou -1 em caso de erro.
- */
-int list_size(struct list_t *list);
-
-/* Função que constrói um array de char* com a cópia de todas as keys na 
- * lista, colocando o último elemento do array com o valor NULL e
- * reservando toda a memória necessária.
- * Retorna o array de strings ou NULL em caso de erro.
- */
-char **list_get_keys(struct list_t *list);
-
-/* Função que liberta a memória ocupada pelo array de keys obtido pela 
- * função list_get_keys.
+/* Função que substitui o conteúdo de uma entry, usando a nova chave e
+ * o novo valor passados como argumentos, e eliminando a memória ocupada
+ * pelos conteúdos antigos da mesma.
  * Retorna 0 (OK) ou -1 em caso de erro.
  */
-int list_free_keys(char **keys);
+int entry_replace(struct entry_t *entry, char *new_key, struct data_t *new_value){
+    if(entry == NULL || new_key == NULL || new_value == NULL)
+        return -1;
+    free(entry->value);
+    free(entry->key);
+    entry->value = new_value;
+    entry->key = new_key;
+    return 0;
+    //Q: wouldn't it be the same as destroying an entry and recreating it?
+    //   or would entry ptr has to be the same? therefore it can't be a new entry?
+}
+
+/* Função que compara duas entries e retorna a ordem das mesmas, sendo esta
+ * ordem definida pela ordem das suas chaves.
+ * Retorna 0 se as chaves forem iguais, -1 se entry1 < entry2,
+ * 1 se entry1 > entry2 ou -2 em caso de erro.
+ */
+int entry_compare(struct entry_t *entry1, struct entry_t *entry2){
+    //TODO. im sleepy
+}
 
 #endif
