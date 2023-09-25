@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#include <string.h>
+
 
 #include "entry.h"
 #include "list-private.h"
@@ -7,6 +9,21 @@
 struct list_t *list_create() {
     struct list_t *list = (struct list_t *) calloc(1, sizeof(struct list_t));
     return list;
+}
+
+int list_destroy(struct list_t *list) {
+    struct node_t* node = list->head;
+    struct node_t* next_node;
+
+    while (node != 0) {
+        next_node = node->next;
+        entry_destroy(node->entry);
+        free(node);
+        node = next_node;
+    }
+
+    free(list);
+    return 0;
 }
 
 int list_add(struct list_t *list, struct entry_t *entry) {
@@ -48,9 +65,9 @@ int list_add(struct list_t *list, struct entry_t *entry) {
 
         if (cmp_ret == 0) {
             if (entry_replace(node->entry, entry->key, entry->value) == -1) {
-              return -1;
+                return -1;
             } else {
-              return 1;
+                return 1;
             }
         } else if (cmp_ret == -1) {
             struct node_t *new_node =
@@ -67,4 +84,32 @@ int list_add(struct list_t *list, struct entry_t *entry) {
     new_node->next = node;
     previous_node->next = new_node;
     return 0;
+}
+
+int list_remove(struct list_t *list, char *key) {
+    if (!list->head) {
+        return 1;
+    }
+
+    int cmp_ret = strcmp(list->head->entry->key, key);
+    if (!cmp_ret) {
+        list->head = list->head->next;
+        return entry_destroy(list->head->entry);
+    }
+
+    struct node_t* previous_node = list->head;
+    struct node_t* node = previous_node->next;
+
+    while (node != 0) {
+        int cmp_ret = strcmp(node->entry->key, key);
+        if (!cmp_ret) {
+            previous_node->next = node->next;
+            return entry_destroy(list->head->entry);
+        }
+
+        previous_node = node;
+        node = node->next;
+    }
+
+    return 1;
 }
