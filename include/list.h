@@ -40,7 +40,7 @@ int list_remove(struct list_t *list, char *key);
 /* Função que obtém da lista a entry com a chave key.
  * Retorna a referência da entry na lista ou NULL se não encontrar a
  * entry ou em caso de erro.
-*/
+ */
 struct entry_t *list_get(struct list_t *list, char *key);
 
 /* Função que conta o número de entries na lista passada como argumento.
