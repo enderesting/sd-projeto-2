@@ -29,6 +29,7 @@ int list_destroy(struct list_t *list) {
 int list_add(struct list_t *list, struct entry_t *entry) {
     // TODO extract new_node creation to a separate function
     // TODO refactor this function
+    // TODO update list size if a node was added
 
     if (!list->head) {
         struct node_t* new_node =
@@ -87,6 +88,7 @@ int list_add(struct list_t *list, struct entry_t *entry) {
 }
 
 int list_remove(struct list_t *list, char *key) {
+    // TODO update list size if element was removed
     if (!list->head) {
         return 1;
     }
@@ -112,4 +114,32 @@ int list_remove(struct list_t *list, char *key) {
     }
 
     return 1;
+}
+
+struct entry_t *list_get(struct list_t *list, char *key) {
+    struct node_t* node = list->head;
+    while (node != 0) {
+        if (strcmp(node->entry->key, key) == 0) {
+            return node->entry;
+        }
+
+        node = node->next;
+    }
+
+    return NULL;
+}
+
+int list_size(struct list_t *list) {
+    int count = 0;
+    struct node_t* node = list->head;
+    while (node != 0) {
+        count++;
+        node = node->next;
+    }
+
+    return count;
+}
+
+char **list_get_keys(struct list_t *list) {
+    // TODO implement a way to enforce that strings are terminated
 }
