@@ -9,6 +9,13 @@ struct list_t *list_create() {
     return list;
 }
 
+int list_destroy(struct list_t *list){
+    if (list == NULL)
+        return -1;
+    free(list);
+    return 0;
+}
+
 int list_add(struct list_t *list, struct entry_t *entry) {
     // TODO extract new_node creation to a separate function
     // TODO refactor this function
