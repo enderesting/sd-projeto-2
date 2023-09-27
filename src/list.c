@@ -30,7 +30,6 @@ int list_destroy(struct list_t *list) {
         free(node);
         node = next_node;
     }
-
     free(list);
     return 0;
 }
@@ -57,6 +56,7 @@ struct node_t* node_create(struct entry_t* entry, struct node_t* next) {
  * Retorna 0 se a entry ainda não existia, 1 se já existia e foi
  * substituída, ou -1 em caso de erro.
  */
+
 int list_add(struct list_t *list, struct entry_t *entry) {
     if (!list || !entry) return -1;
 
