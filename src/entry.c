@@ -1,8 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef _LIST_H
-#define _LIST_H 
 
 /* Módulo list */
 #include "data.h"
@@ -56,5 +54,3 @@ int entry_compare(struct entry_t *entry1, struct entry_t *entry2){
             return 0;
     }
 }
-
-#endif
