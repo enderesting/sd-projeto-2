@@ -24,15 +24,26 @@ int list_destroy(struct list_t *list) {
 
     if (list == NULL) return -1;
 
-    while (node != 0) {
+    while (node) {
         next_node = node->next;
         entry_destroy(node->entry);
         free(node);
         node = next_node;
     }
-
     free(list);
     return 0;
+}
+
+/* Creates a new node with given entry and next node.
+ *
+ * Returns the created node's pointer, or the null pointer in case the creation's
+ * failed.
+ */
+struct node_t* node_create(struct entry_t* entry, struct node_t* next) {
+    struct node_t* node = (struct node_t *)calloc(1, sizeof(struct node_t));
+    node->entry = entry;
+    node->next = next;
+    return node;
 }
 
 /* Função que adiciona à lista a entry passada como argumento.
@@ -45,66 +56,64 @@ int list_destroy(struct list_t *list) {
  * Retorna 0 se a entry ainda não existia, 1 se já existia e foi
  * substituída, ou -1 em caso de erro.
  */
-int list_add(struct list_t *list, struct entry_t *entry) {
-    // TODO extract new_node creation to a separate function
-    // TODO refactor this function
-    // TODO update list size if a node was added
 
+int list_add(struct list_t *list, struct entry_t *entry) {
     if (!list || !entry) return -1;
 
     if (!list->head) {
-        struct node_t* new_node =
-            (struct node_t*) calloc(1, sizeof(struct node_t));
-        new_node->entry = entry;
-        new_node->next = NULL;
+        struct node_t* new_node = node_create(entry, NULL);
+        if (!new_node) return -1;
         list->head = new_node;
+        list->size = list->size + 1;
         return 0;
     }
 
     struct node_t* node = list->head;
     int cmp_ret = entry_compare(entry, node->entry);
 
-    if (cmp_ret == 0) {
-        if (entry_replace(node->entry, entry->key, entry->value) == -1) {
-            return -1;
-        } else {
-            return 1;
-        }
-    } else if (cmp_ret == -1) {
-        struct node_t *new_node =
-            (struct node_t *)calloc(1, sizeof(struct node_t));
-        new_node->entry = entry;
-        new_node->next = node;
+    if (cmp_ret == ENTRY_CMP_ERROR) return -1;
+
+    if (cmp_ret == ENTRY_EQUAL) {
+        return entry_replace(node->entry, entry->key, entry->value) == -1 ?
+            -1 : 1;
+    }
+
+    if (cmp_ret == ENTRY_LESSER) {
+        struct node_t* new_node = node_create(entry, node);
+        if (!new_node) return -1;
         list->head = new_node;
+        list->size = list->size + 1;
         return 0;
     }
 
-    struct node_t *previous_node;
-    while (node->next != 0) {
-        previous_node = node;
-        node = node->next;
-        cmp_ret = entry_compare(entry, node->entry);
+    struct node_t* previous_node = node;
+    node = node->next;
+    while (node) {
+        int cmp_ret = entry_compare(entry, node->entry);
 
-        if (cmp_ret == 0) {
-            if (entry_replace(node->entry, entry->key, entry->value) == -1) {
-                return -1;
-            } else {
-                return 1;
-            }
-        } else if (cmp_ret == -1) {
-            struct node_t *new_node =
-                (struct node_t *) calloc(1, sizeof(struct node_t));
-            new_node->entry = entry;
-            new_node->next = node;
+        if (cmp_ret == ENTRY_CMP_ERROR) return -1;
+
+        if (cmp_ret == ENTRY_EQUAL) {
+            return entry_replace(node->entry, entry->key, entry->value) == -1 ?
+                -1 : 1;
+        }
+
+        if (cmp_ret == ENTRY_LESSER) {
+            struct node_t* new_node = node_create(entry, node);
+            if (!new_node) return -1;
             previous_node->next = new_node;
+            list->size = list->size + 1;
             return 0;
         }
+
+        previous_node = node;
+        node = node->next;
     }
 
-    struct node_t *new_node = (struct node_t *) calloc(1, sizeof(struct node_t));
-    new_node->entry = entry;
-    new_node->next = node;
+    struct node_t *new_node = node_create(entry, NULL);
+    if (!new_node) return -1;
     previous_node->next = new_node;
+    list->size = list->size + 1;
     return 0;
 }
 
@@ -118,24 +127,36 @@ int list_remove(struct list_t *list, char *key) {
 
     if (!list || !key) return -1;
 
-    if (!list->head) {
-        return 1;
-    }
+    if (!list->head) return 1;
 
     int cmp_ret = strcmp(list->head->entry->key, key);
     if (!cmp_ret) {
+        struct node_t* old_node = list->head;
         list->head = list->head->next;
-        return entry_destroy(list->head->entry);
+
+        int ret = entry_destroy(list->head->entry);
+        if (ret) return -1;
+
+        free(old_node);
+        list->size = list->size - 1;
+        return ret;
     }
 
     struct node_t* previous_node = list->head;
     struct node_t* node = previous_node->next;
 
-    while (node != 0) {
-        int cmp_ret = strcmp(node->entry->key, key);
+    while (node) {
+        cmp_ret = strcmp(node->entry->key, key);
         if (!cmp_ret) {
+            struct node_t *old_node = node;
             previous_node->next = node->next;
-            return entry_destroy(list->head->entry);
+
+            int ret = entry_destroy(node->entry);
+            if (ret) return -1;
+
+            free(old_node);
+            list->size = list->size - 1;
+            return ret;
         }
 
         previous_node = node;
@@ -153,7 +174,7 @@ struct entry_t *list_get(struct list_t *list, char *key) {
     if (!list || !key) return NULL;
 
     struct node_t* node = list->head;
-    while (node != 0) {
+    while (node) {
         if (strcmp(node->entry->key, key) == 0) {
             return node->entry;
         }
@@ -172,7 +193,7 @@ int list_size(struct list_t *list) {
 
     int count = 0;
     struct node_t* node = list->head;
-    while (node != 0) {
+    while (node) {
         count++;
         node = node->next;
     }
@@ -194,7 +215,7 @@ char **list_get_keys(struct list_t *list) {
     int i = 0;
     char* key_ptr;
     struct node_t* node = list->head;
-    while (node != 0) {
+    while (node) {
         key_ptr = (char*) calloc(100, sizeof(char)); // TODO replace magic number
 
         keys_array[i] = key_ptr;
