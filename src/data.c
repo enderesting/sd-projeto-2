@@ -8,12 +8,11 @@
  * Retorna a nova estrutura ou NULL em caso de erro.
  */
 struct data_t *data_create(int size, void *data){
-    struct data_t* d;
     
     if (size <= 0 || data == NULL)
         return NULL;
 
-    d = malloc (sizeof(struct data_t));
+    struct data_t* d = malloc (sizeof(struct data_t));
 
     d->data = data;
     d->datasize = size;
@@ -41,7 +40,14 @@ int data_destroy(struct data_t *data){
  */
 struct data_t *data_dup(struct data_t *data){
 
-    return NULL;
+    if(data == NULL || data->data == NULL || data->datasize <= 0)
+        return NULL;
+
+    struct data_t* dup = malloc (sizeof(struct data_t));
+    dup->datasize = data->datasize;
+    memcpy(dup->data, data->data, dup->datasize);
+
+    return dup;
 }
 
 /* Função que substitui o conteúdo de um elemento de dados data_t.
@@ -49,6 +55,14 @@ struct data_t *data_dup(struct data_t *data){
  * Retorna 0 (OK) ou -1 em caso de erro.
  */
 int data_replace(struct data_t *data, int new_size, void *new_data){
+
+    if(data == NULL || data->data == NULL || data->datasize <= 0 || new_size <= 0 || new_data == NULL)
+        return -1;
+
+    free(data->data);
+    free(data->datasize);
+    data->data = new_data;
+    data->datasize = new_size;
 
     return 0;
 }
