@@ -46,4 +46,20 @@ int keyArray_to_buffer(char **keys, char **keys_buf) {
  *    | nkeys | key1   | key2   | key3   |
  * Retorna o array de strings ou NULL em caso de erro.
  */
-char** buffer_to_keyArray(char *keys_buf) {}
+char** buffer_to_keyArray(char *keys_buf) {
+    if (!keys_buf) return NULL;
+
+    int nkeys = *((int*) keys_buf);
+    char** keys_array = (char**) malloc(sizeof(char*) * (nkeys + 1));
+    keys_array[nkeys] = NULL;
+
+    char* read_buffer_ptr = keys_buf + sizeof(int);
+    for (int i = 0; i < nkeys; i++) {
+        int key_size = strlen(read_buffer_ptr) + 1;
+        keys_array[i] = malloc(sizeof(key_size));
+        strcpy(keys_array[i], read_buffer_ptr);
+        read_buffer_ptr += key_size;
+    }
+
+    return keys_array;
+}
