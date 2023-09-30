@@ -52,7 +52,7 @@ int testSerialize(){
 		pee("  keyArray_to_buffer retornou -1 - O teste não pode prosseguir");
 
 	/*
-	| int   | string | string | string |
+		| int   | string | string | string |
         | nkeys | key1   | key2   | key3   |
 	*/
 
