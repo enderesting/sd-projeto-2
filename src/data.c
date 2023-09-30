@@ -29,6 +29,7 @@ int data_destroy(struct data_t *data){
     if(data == NULL)
         return -1;
 
+    free(data->data);
     free(data);    
 
     return 0;
@@ -60,7 +61,6 @@ int data_replace(struct data_t *data, int new_size, void *new_data){
         return -1;
 
     free(data->data);
-    free(data->datasize);
     data->data = new_data;
     data->datasize = new_size;
 
