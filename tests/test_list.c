@@ -141,9 +141,9 @@ int testAdd132RemoveTail() {
 	result = result && (list_add(list, entry3) == 0);
 	result = result && (list_add(list, entry2) == 0);
 
-	result = result && (list_remove(list, "abc2") == 0);
+	result = result && (list_remove(list, "abc3") == 0);
 	result = result && (list_get(list, "abc1") == entry1);
-	result = result && (list_get(list, "abc3") == entry3);
+	result = result && (list_get(list, "abc2") == entry2);
 	result = result && (list_size(list) == 2);
 
 	list_destroy(list);
