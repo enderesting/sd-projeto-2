@@ -1,9 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-/* Módulo list */
-#include "data.h"
 #include "entry.h"
 
 
@@ -27,7 +24,11 @@ int entry_destroy(struct entry_t *entry){
 
 
 struct entry_t *entry_dup(struct entry_t *entry){
-    return entry_create(entry->key,entry->value);
+    char *key_copy = calloc(1,strlen(entry->key)+1);
+    strcpy(key_copy,entry->key);
+    struct data_t *value_copy = (struct data_t*) calloc(1,sizeof(struct data_t));
+    value_copy = data_dup(entry->value);
+    return entry_create(key_copy,value_copy);
 }
 
 int entry_replace(struct entry_t *entry, char *new_key, struct data_t *new_value){
