@@ -45,6 +45,7 @@ struct data_t *data_dup(struct data_t *data){
         return NULL;
 
     struct data_t* dup = malloc (sizeof(struct data_t));
+    dup->data = (void *) malloc (data->datasize);
     dup->datasize = data->datasize;
     memcpy(dup->data, data->data, dup->datasize);
 
