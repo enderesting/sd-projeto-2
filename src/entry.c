@@ -19,7 +19,7 @@ struct entry_t *entry_create(char *key, struct data_t *data){
 
 
 int entry_destroy(struct entry_t *entry){
-    if(entry == NULL)
+    if(entry == NULL || entry->key == NULL || entry->value == NULL)
         return -1;
     free(entry);
     return 0;
@@ -27,7 +27,13 @@ int entry_destroy(struct entry_t *entry){
 
 
 struct entry_t *entry_dup(struct entry_t *entry){
-    return entry_create(entry->key,entry->value);
+    if(entry == NULL || entry->key == NULL || entry->value == NULL)
+        return NULL;
+    char *key_copy = calloc(1,strlen(entry->key)+1);
+    strcpy(key_copy,entry->key);
+    struct data_t *value_copy = (struct data_t*) calloc(1,sizeof(struct data_t));
+    value_copy = data_dup(entry->value);
+    return entry_create(key_copy,value_copy);
 }
 
 int entry_replace(struct entry_t *entry, char *new_key, struct data_t *new_value){
@@ -42,10 +48,11 @@ int entry_replace(struct entry_t *entry, char *new_key, struct data_t *new_value
 
 
 int entry_compare(struct entry_t *entry1, struct entry_t *entry2){
-    int result = strcmp(entry1->key,entry2->key);
-    if (result == NULL)
+    
+    if (!entry1 || !entry2 || !entry1->key || !entry2->key)
         return -2;
     else{
+        int result = strcmp(entry1->key,entry2->key);
         if (result > 0)
             return 1;
         else if (result < 0)

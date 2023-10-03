@@ -74,6 +74,7 @@ int list_add(struct list_t *list, struct entry_t *entry) {
     if (cmp_ret == ENTRY_CMP_ERROR) return -1;
 
     if (cmp_ret == ENTRY_EQUAL) {
+        node->entry = entry;
         return entry_replace(node->entry, entry->key, entry->value) == -1 ?
             -1 : 1;
     }
@@ -94,6 +95,7 @@ int list_add(struct list_t *list, struct entry_t *entry) {
         if (cmp_ret == ENTRY_CMP_ERROR) return -1;
 
         if (cmp_ret == ENTRY_EQUAL) {
+            node->entry = entry;
             return entry_replace(node->entry, entry->key, entry->value) == -1 ?
                 -1 : 1;
         }
@@ -134,7 +136,7 @@ int list_remove(struct list_t *list, char *key) {
         struct node_t* old_node = list->head;
         list->head = list->head->next;
 
-        int ret = entry_destroy(list->head->entry);
+        int ret = entry_destroy(old_node->entry);
         if (ret) return -1;
 
         free(old_node);
@@ -149,9 +151,9 @@ int list_remove(struct list_t *list, char *key) {
         cmp_ret = strcmp(node->entry->key, key);
         if (!cmp_ret) {
             struct node_t *old_node = node;
-            previous_node->next = node->next;
+            previous_node->next = old_node->next;
 
-            int ret = entry_destroy(node->entry);
+            int ret = entry_destroy(old_node->entry);
             if (ret) return -1;
 
             free(old_node);
