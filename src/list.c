@@ -75,8 +75,7 @@ int list_add(struct list_t *list, struct entry_t *entry) {
 
     if (cmp_ret == ENTRY_EQUAL) {
         node->entry = entry;
-        return entry_replace(node->entry, entry->key, entry->value) == -1 ?
-            -1 : 1;
+        return 1;
     }
 
     if (cmp_ret == ENTRY_LESSER) {
@@ -96,8 +95,7 @@ int list_add(struct list_t *list, struct entry_t *entry) {
 
         if (cmp_ret == ENTRY_EQUAL) {
             node->entry = entry;
-            return entry_replace(node->entry, entry->key, entry->value) == -1 ?
-                -1 : 1;
+            return 1;
         }
 
         if (cmp_ret == ENTRY_LESSER) {
