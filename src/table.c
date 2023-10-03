@@ -81,7 +81,8 @@ int table_remove(struct table_t *table, char *key){
  * Retorna o tamanho da tabela ou -1 em caso de erro.
  */
 int table_size(struct table_t *table){
-    return table->size;
+    if(!table->size) return -1;
+    else return table->size;
 }
 
 /* Função que constrói um array de char* com a cópia de todas as keys na 
@@ -106,7 +107,9 @@ char **table_get_keys(struct table_t *table){
     for(int i=0; i<(table->size); i++){
         //list_get_keys(table->lists[j]);
         this_list_mem = table->lists[i]->size * sizeof(char*);
-        memcpy(key_arr+used_mem, list_get_keys(table->lists[i]),this_list_mem);
+        char** this_list_key = list_get_keys(table->lists[i]);
+        if (!this_list_key) return NULL;
+        memcpy(key_arr+used_mem, this_list_key, this_list_mem);
         used_mem += this_list_mem;
     }
 
