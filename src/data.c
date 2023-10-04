@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+
 #include "data.h"
 
 /* Função que cria um novo elemento de dados data_t e que inicializa 
