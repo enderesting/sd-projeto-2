@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <arpa/inet.h>
 
 #include "serialization.h"
 
@@ -27,6 +28,7 @@ int keyArray_to_buffer(char **keys, char **keys_buf) {
     }
 
     char* buffer = malloc(size_to_alloc);
+    htonl(nkeys);
     memcpy(buffer, &nkeys, sizeof(int));
 
     char* buffer_write_ptr = buffer + sizeof(int);
@@ -49,7 +51,7 @@ int keyArray_to_buffer(char **keys, char **keys_buf) {
 char** buffer_to_keyArray(char *keys_buf) {
     if (!keys_buf) return NULL;
 
-    int nkeys = *((int*) keys_buf);
+    int nkeys = ntohl(*((int*) keys_buf));
     char** keys_array = (char**) malloc(sizeof(char*) * (nkeys + 1));
     keys_array[nkeys] = NULL;
 
