@@ -1,3 +1,4 @@
+.PRECIOUS: obj/%.o obj/test_%.o
 BIN_DIR = bin
 INC_DIR = include
 LIB_DIR = lib
