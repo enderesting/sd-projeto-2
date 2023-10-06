@@ -8,7 +8,7 @@
  * Retorna a tabela ou NULL em caso de erro.
  */
 struct table_t *table_create(int n){
-    
+    if (n<0) return NULL;
     struct table_t *table;
     table = (struct table_t*) calloc(1,sizeof(struct table_t));
     table->size = n;
@@ -27,7 +27,6 @@ int table_destroy(struct table_t *table){
         if (status != 0) return status;
     }
     return status;
-
 }
 
 /* Função que calcula o índice da lista a partir da chave
@@ -82,8 +81,14 @@ int table_remove(struct table_t *table, char *key){
  * Retorna o tamanho da tabela ou -1 em caso de erro.
  */
 int table_size(struct table_t *table){
-    if(!table->size) return -1;
-    else return table->size;
+    if(!table->size) return -1; //eh why not keep it
+    int entry_count = 0;
+    for(int i=0; i<table->size; i++){
+        int result = list_size(table->lists[i]);
+        if (result == -1) return result;
+        entry_count += result;
+    }
+    return entry_count;
 }
 
 /* Função que constrói um array de char* com a cópia de todas as keys na 
