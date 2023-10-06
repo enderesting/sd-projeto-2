@@ -57,7 +57,7 @@ int table_destroy(struct table_t *table){
  */
 int hash_code(char *key, int n){
     //does something, e.g.
-    int hashed = strlen(key) % n;
+    int hashed = strlen(key);
     //we can workshop a better hash code to use
 
     return hashed%n;
