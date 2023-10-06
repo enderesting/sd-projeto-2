@@ -33,7 +33,6 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 $(OBJ_DIR)/test_%.o: $(SRC_DIR)/test_%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-
 # Include makefiles from dependencies
 include $(wildcard $(DEP_DIR)/*.d)
 
