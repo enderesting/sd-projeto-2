@@ -20,7 +20,7 @@ bin/test_table := obj/data.o obj/list.o obj/entry.o
 
 CC = gcc
 # CFLAGS = -Wall -Werror -g -MMD -MP -MF -I $(INC_DIR)
-CFLAGS = -g -I $(INC_DIR)
+CFLAGS = -Wall -Werror -g -I $(INC_DIR)
 
 compile: $(EXECS)
 
