@@ -1,6 +1,8 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "entry.h"
 #include "list.h"
 
 /* Função que cria e inicializa uma nova lista (estrutura list_t a
@@ -17,17 +19,17 @@ struct list_t *list_create() {
  * Retorna 0 (OK) ou -1 em caso de erro.
  */
 int list_destroy(struct list_t *list) {
+    if (list == NULL) return -1;
+
     struct node_t* node = list->head;
     struct node_t* next_node;
 
-    if (list == NULL) return -1;
-
     while (node) {
         next_node = node->next;
-        entry_destroy(node->entry);
-        free(node);
+        node_destroy(node);
         node = next_node;
     }
+
     free(list);
     return 0;
 }
@@ -42,6 +44,20 @@ struct node_t* node_create(struct entry_t* entry, struct node_t* next) {
     node->entry = entry;
     node->next = next;
     return node;
+}
+
+/*
+** Frees up all the memory occupied by a given node
+**
+** Returns 0 if the operation was successful or -1 in case of error
+*/
+int node_destroy(struct node_t* node) {
+   if (!node) return -1;
+
+   entry_destroy(node->entry);
+   free(node);
+
+   return 0;
 }
 
 /* Função que adiciona à lista a entry passada como argumento.
@@ -72,6 +88,7 @@ int list_add(struct list_t *list, struct entry_t *entry) {
     if (cmp_ret == ENTRY_CMP_ERROR) return -1;
 
     if (cmp_ret == ENTRY_EQUAL) {
+        entry_destroy(node->entry);
         node->entry = entry;
         return 1;
     }
@@ -92,6 +109,7 @@ int list_add(struct list_t *list, struct entry_t *entry) {
         if (cmp_ret == ENTRY_CMP_ERROR) return -1;
 
         if (cmp_ret == ENTRY_EQUAL) {
+            entry_destroy(node->entry);
             node->entry = entry;
             return 1;
         }
@@ -214,7 +232,7 @@ char **list_get_keys(struct list_t *list) {
     char* key_ptr;
     struct node_t* node = list->head;
     while (node) {
-        key_ptr = (char*) calloc(100, sizeof(char)); // TODO replace magic number
+        key_ptr = (char*) calloc(1, sizeof(char) * strlen(node->entry->key) + 1);
 
         keys_array[i] = key_ptr;
         strcpy(key_ptr, node->entry->key);
@@ -231,15 +249,15 @@ char **list_get_keys(struct list_t *list) {
  * Retorna 0 (OK) ou -1 em caso de erro.
  */
 int list_free_keys(char **keys) {
-    if (!keys)
-        return -1;
+    if (!keys) return -1;
 
     int i = 0;
-    char *key_ptr = *keys;
+    char *key_ptr = keys[i];
     while (key_ptr != NULL) {
+        // printf("Freeing up %s", key_ptr);
         free(key_ptr);
         i++;
-        key_ptr = *(keys + sizeof(char *) * i);
+        key_ptr = keys[i];
     }
 
     free(keys);

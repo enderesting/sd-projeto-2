@@ -25,4 +25,11 @@ struct list_t {
  */
 struct node_t* node_create(struct entry_t* entry, struct node_t* next);
 
+/*
+** Frees up all the memory occupied by a given node
+**
+** Returns 0 if the operation was successful or -1 in case of error
+*/
+int node_destroy(struct node_t* node);
+
 #endif
