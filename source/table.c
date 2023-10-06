@@ -10,9 +10,9 @@
 struct table_t *table_create(int n){
     if (n<=0) return NULL;
     struct table_t *table;
-    table = (struct table_t*) malloc(sizeof(struct table_t));
+    table = (struct table_t*) calloc(1,sizeof(struct table_t));
     table->size = n;
-    table->lists = (struct list_t**) malloc(sizeof(struct list_t*)*n); 
+    table->lists = (struct list_t**) calloc(1,sizeof(struct list_t*)*n); 
 
     for (int i = 0; i < n; i++){
         table->lists[i] = list_create();
@@ -35,16 +35,20 @@ int table_destroy(struct table_t *table){
         return -1;
     }
 
-    if(!table->lists[0]){
+    // if(!table->lists[0]){
 
-        free(table->lists);
-        free(table);
+    //     free(table->lists);
+    //     free(table);
 
-        return 0;
-    }
+    //     return 0;
+    // }
 
+    int status = 0;
     for(int i=0; i<table->size; i++){
-        list_destroy(table->lists[i]);
+        status = (status || list_destroy(table->lists[i])); //see comment in list_destroy
+        // if one list returns null, do we still free ALL of the used memory
+        // like function describes?
+        if (status != 0) return status;
     }
 
     free(table->lists);
@@ -72,7 +76,7 @@ int hash_code(char *key, int n){
  */
 int table_put(struct table_t *table, char *key, struct data_t *value){
     int index = hash_code(key, table->size);
-    struct entry_t *entry = entry_create(strdup(key),data_dup(value));
+    struct entry_t *entry = entry_create(key,value);
     int result = list_add(table->lists[index], entry_dup(entry));
     if (result == 1) { //aka: substituted data
         return 0;
@@ -90,18 +94,9 @@ struct data_t *table_get(struct table_t *table, char *key){
     if(!table || !key) return NULL;
 
     int index = hash_code(key, table->size);
-    char** keys = list_get_keys(table->lists[index]);
-
-    for(int i=0;i<table->lists[index]->size;i++){
-        
-        if (strcmp(keys[i], key) == 0) {
-
-            struct entry_t* entry = list_get(table->lists[index], key);
-            return data_dup(entry->value);
-        }
-    }
-
-    return NULL;
+    struct entry_t *entry = list_get(table->lists[index],key);
+    if(!entry) return NULL;
+    else return data_dup(entry->value);
 }
 
 /* Função que remove da lista a entry com a chave key, libertando a
@@ -118,12 +113,7 @@ int table_remove(struct table_t *table, char *key){
  * Retorna o tamanho da tabela ou -1 em caso de erro.
  */
 int table_size(struct table_t *table){
-    if(!table->size || !table) return -1; //eh why not keep it
-
-    if(table->lists[0] == NULL){
-        return 0;
-    }
-
+    if(!table->size || !table) return -1; 
     int entry_count = 0;
     for(int i=0; i<table->size; i++){
         int result = list_size(table->lists[i]);
@@ -139,33 +129,20 @@ int table_size(struct table_t *table){
  * Retorna o array de strings ou NULL em caso de erro.
  */
 char **table_get_keys(struct table_t *table){
-
-    if (table == NULL) return NULL;
-
     //allocate this array
-    int total_keys = 0;
-    char **key_arr = (char **)malloc(sizeof(char*));
+    if(!table) return NULL;
+    char **key_arr = (char**)calloc(table_size(table)+1,sizeof(char*));
 
+    // use memcpy to copy over the keys list by list
+    size_t used_mem = 0;
+    size_t this_list_mem = 0;
     for(int i=0; i<(table->size); i++){
-    
-        char **keys = list_get_keys(table->lists[i]);
-
-        int list_size = 0;
-        while(!keys[list_size]){
-            list_size++;
-        }
-
-        key_arr = (char **)realloc(key_arr, (total_keys + list_size + 1) * sizeof(char *));
-
-        for (int j = 0; j < list_size; j++){
-            key_arr[total_keys++] = keys[j];
-        }
-
-        free(keys);
+        this_list_mem = table->lists[i]->size * sizeof(char*);
+        char** this_list_key = list_get_keys(table->lists[i]);
+        // if (!this_list_key) return NULL;  // there has to be a different way to handle error.
+        memcpy(key_arr+used_mem, this_list_key, this_list_mem);
+        used_mem += this_list_mem;
     }
-
-    key_arr[total_keys] = NULL;
-
     return key_arr;
 }
 
