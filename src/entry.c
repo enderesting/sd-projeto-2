@@ -1,9 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-/* Módulo list */
-#include "data.h"
 #include "entry.h"
 
 

@@ -2,6 +2,7 @@
 #define _TABLE_H /* Módulo table */
 
 #include "data.h"
+#include "table-private.h"
 
 struct table_t; /* A definir pelo grupo em table-private.h */
 

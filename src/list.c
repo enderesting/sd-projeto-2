@@ -1,8 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "entry.h"
-#include "list-private.h"
 #include "list.h"
 
 /* Função que cria e inicializa uma nova lista (estrutura list_t a

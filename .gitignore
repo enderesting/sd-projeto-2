@@ -53,3 +53,11 @@ dkms.conf
 
 # Config files
 compile_flags.txt
+
+# Mimi's Config files
+.vscode/
+
+# Compiled files
+bin/
+obj/
+dependencies/
