@@ -206,7 +206,7 @@ int list_size(struct list_t *list) {
  */
 char **list_get_keys(struct list_t *list) {
     // TODO implement a way to enforce that strings are terminated
-    if (!list) return NULL;
+    if (!list || !list->head) return NULL;
 
     char** keys_array = (char**) calloc(list->size + 1, sizeof(char*));
 
