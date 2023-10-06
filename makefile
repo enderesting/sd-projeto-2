@@ -1,9 +1,9 @@
-.PRECIOUS: obj/%.o obj/test_%.o
-BIN_DIR = bin
+.PRECIOUS: object/%.o object/test_%.o
+BIN_DIR = binary
 INC_DIR = include
-LIB_DIR = lib
-OBJ_DIR = obj
-SRC_DIR = src
+LIB_DIR = library
+OBJ_DIR = object
+SRC_DIR = source
 DEP_DIR = dependencies
 TEST_DIR = tests
 
@@ -11,11 +11,11 @@ TARGETS = data entry list serialization table
 EXECS = $(foreach target,$(TARGETS),$(BIN_DIR)/test_$(target))
 OBJS = $(foreach target,$(TARGETS),$(OBJ_DIR)/test_$(target).o)
 
-bin/test_data :=
-bin/test_entry := obj/data.o
-bin/test_list := obj/data.o obj/entry.o
-bin/test_serialization := obj/data.o obj/entry.o obj/list.o
-bin/test_table := obj/data.o obj/list.o obj/entry.o
+binary/test_data :=
+binary/test_entry := object/data.o
+binary/test_list := object/data.o object/entry.o
+binary/test_serialization := object/data.o object/entry.o object/list.o
+binary/test_table := object/data.o object/list.o object/entry.o
 
 
 CC = gcc

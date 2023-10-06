@@ -8,6 +8,7 @@
  * Retorna a tabela ou NULL em caso de erro.
  */
 struct table_t *table_create(int n){
+    
     struct table_t *table;
     table = (struct table_t*) calloc(1,sizeof(struct table_t));
     table->size = n;
@@ -64,7 +65,7 @@ int table_put(struct table_t *table, char *key, struct data_t *value){
 struct data_t *table_get(struct table_t *table, char *key){
     int index = hash_code(key, table->size);
     struct entry_t *entry = list_get(table->lists[index],key);
-    return data_dup(entry);
+    return data_dup(entry->value);
 }
 
 /* Função que remove da lista a entry com a chave key, libertando a

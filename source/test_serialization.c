@@ -55,7 +55,7 @@ int testSerialize(){
 		| int   | string | string | string |
         | nkeys | key1   | key2   | key3   |
 	*/
-
+	
 	assert(size == (sizeof(int) + strlen(key1)+1 + strlen(key2)+1 + strlen(key3)+1));
 	result = result && (size == (sizeof(int) + strlen(key1)+1 + strlen(key2)+1 + strlen(key3)+1));
 

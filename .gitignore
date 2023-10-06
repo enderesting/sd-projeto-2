@@ -58,6 +58,6 @@ compile_flags.txt
 .vscode/
 
 # Compiled files
-bin/
-obj/
+binary/
+object/
 dependencies/

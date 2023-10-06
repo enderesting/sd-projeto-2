@@ -28,7 +28,7 @@ int keyArray_to_buffer(char **keys, char **keys_buf) {
     }
 
     char* buffer = malloc(size_to_alloc);
-    htonl(nkeys);
+    nkeys = htonl(nkeys);
     memcpy(buffer, &nkeys, sizeof(int));
 
     char* buffer_write_ptr = buffer + sizeof(int);
