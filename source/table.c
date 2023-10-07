@@ -52,11 +52,11 @@ int table_destroy(struct table_t *table){
 /* Função que calcula o índice da lista a partir da chave
  */
 int hash_code(char *key, int n){
-    //does something, e.g.
-    int hashed = strlen(key);
-    //we can workshop a better hash code to use
-
-    return hashed%n;
+    int result = 7;
+    for (int i=0; i<strlen(key); i++){
+        result = result * 31 + key[i];
+    }
+    return result%n;
 }
 
 /* Função para adicionar um par chave-valor à tabela. Os dados de entrada
