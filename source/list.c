@@ -23,7 +23,11 @@ int list_destroy(struct list_t *list) {
 
     struct node_t* node = list->head;
     struct node_t* next_node;
+    int result = 0;
 
+    if (list == NULL)
+        result = -1; // is this really an error?
+    // after all, lists can be empty right? you can still free an empty list.
     while (node) {
         next_node = node->next;
         node_destroy(node);
@@ -31,7 +35,7 @@ int list_destroy(struct list_t *list) {
     }
 
     free(list);
-    return 0;
+    return result;
 }
 
 /* Creates a new node with given entry and next node.

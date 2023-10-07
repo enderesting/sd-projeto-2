@@ -8,11 +8,20 @@
  * Retorna a tabela ou NULL em caso de erro.
  */
 struct table_t *table_create(int n){
-    if (n<0) return NULL;
+    if (n<=0) return NULL;
     struct table_t *table;
     table = (struct table_t*) calloc(1,sizeof(struct table_t));
     table->size = n;
-    table->lists = (struct list_t**) calloc(n,sizeof(struct list_t*)); 
+    table->lists = (struct list_t**) calloc(1,sizeof(struct list_t*)*n); 
+
+    for (int i = 0; i < n; i++){
+        table->lists[i] = list_create();
+        if (!table->lists[i]){
+            table_destroy(table);
+            return NULL;
+        }
+    }
+
     return table;
 }
 
@@ -21,12 +30,31 @@ struct table_t *table_create(int n){
  * Retorna 0 (OK) ou -1 em caso de erro.
  */
 int table_destroy(struct table_t *table){
+
+    if(!table){
+        return -1;
+    }
+
+    // if(!table->lists[0]){
+
+    //     free(table->lists);
+    //     free(table);
+
+    //     return 0;
+    // }
+
     int status = 0;
     for(int i=0; i<table->size; i++){
-        status = list_destroy(table->lists[i]);
+        status = (status || list_destroy(table->lists[i])); //see comment in list_destroy
+        // if one list returns null, do we still free ALL of the used memory
+        // like function describes?
         if (status != 0) return status;
     }
-    return status;
+
+    free(table->lists);
+    free(table);
+
+    return 0;
 }
 
 /* Função que calcula o índice da lista a partir da chave
@@ -47,6 +75,9 @@ int hash_code(char *key, int n){
  * Retorna 0 (ok) ou -1 em caso de erro.
  */
 int table_put(struct table_t *table, char *key, struct data_t *value){
+
+    if(!table || !key || !value) return -1;
+    
     int index = hash_code(key, table->size);
     struct entry_t *entry = entry_create(key,value);
     int result = list_add(table->lists[index], entry_dup(entry));
@@ -62,9 +93,13 @@ int table_put(struct table_t *table, char *key, struct data_t *value){
  * NULL se não encontrar a entry ou em caso de erro.
  */
 struct data_t *table_get(struct table_t *table, char *key){
+
+    if(!table || !key) return NULL;
+
     int index = hash_code(key, table->size);
     struct entry_t *entry = list_get(table->lists[index],key);
-    return data_dup(entry->value);
+    if(!entry) return NULL;
+    else return data_dup(entry->value);
 }
 
 /* Função que remove da lista a entry com a chave key, libertando a
@@ -73,6 +108,9 @@ struct data_t *table_get(struct table_t *table, char *key){
  * ou -1 em caso de erro.
  */
 int table_remove(struct table_t *table, char *key){
+
+    if(!table || !key) return -1;
+    
     int index = hash_code(key, table->size);
     return list_remove(table->lists[index],key);
 }
@@ -81,7 +119,7 @@ int table_remove(struct table_t *table, char *key){
  * Retorna o tamanho da tabela ou -1 em caso de erro.
  */
 int table_size(struct table_t *table){
-    if(!table->size) return -1; //eh why not keep it
+    if(!table->size || !table) return -1; 
     int entry_count = 0;
     for(int i=0; i<table->size; i++){
         int result = list_size(table->lists[i]);
@@ -97,31 +135,20 @@ int table_size(struct table_t *table){
  * Retorna o array de strings ou NULL em caso de erro.
  */
 char **table_get_keys(struct table_t *table){
-    // find the size of the key array
-    int key_size = 0;
-    for(int i=0; i<table->size; i++){
-        int n = table->lists[i]->size;
-        key_size += n;
-    }
-
     //allocate this array
-    char **key_arr = calloc(key_size+1,sizeof(char*));
+    if(!table) return NULL;
+    char **key_arr = (char**)calloc(table_size(table)+1,sizeof(char*));
 
     // use memcpy to copy over the keys list by list
     size_t used_mem = 0;
     size_t this_list_mem = 0;
     for(int i=0; i<(table->size); i++){
-        //list_get_keys(table->lists[j]);
         this_list_mem = table->lists[i]->size * sizeof(char*);
         char** this_list_key = list_get_keys(table->lists[i]);
-        if (!this_list_key) return NULL;
+        // if (!this_list_key) return NULL;  // there has to be a different way to handle error.
         memcpy(key_arr+used_mem, this_list_key, this_list_mem);
         used_mem += this_list_mem;
     }
-
-    // put NULL at the last element
-    // ^ which i believe the last copied over list_get_keys had included
-
     return key_arr;
 }
 
