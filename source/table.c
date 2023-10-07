@@ -139,7 +139,7 @@ char **table_get_keys(struct table_t *table){
         char** list_keys = list_get_keys(table->lists[i]);
         if (!list_keys) continue;
 
-        for (int j = 0; j < table->lists[i]->size; j++) {
+        for (int j = 0; j < list_size(table->lists[i]); j++) {
             key_arr[write_index] = strdup(list_keys[j]);
             write_index++;
         }
