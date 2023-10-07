@@ -21,15 +21,13 @@ int keyArray_to_buffer(char **keys, char **keys_buf) {
     int size_to_alloc = sizeof(int);
     int nkeys = 0;
     char* key = keys[nkeys];
-    while (!key) {
+    while (key != NULL) {
         size_to_alloc += strlen(key) * sizeof(char) + 1;
         nkeys++;
         key = keys[nkeys];
     }
 
     char* buffer = malloc(size_to_alloc);
-    nkeys = htonl(nkeys);
-    memcpy(buffer, &nkeys, sizeof(int));
 
     char* buffer_write_ptr = buffer + sizeof(int);
     for (int i = 0; i < nkeys; i++) {
@@ -37,6 +35,8 @@ int keyArray_to_buffer(char **keys, char **keys_buf) {
         buffer_write_ptr += strlen(keys[i]) + 1;
     }
 
+    nkeys = htonl(nkeys);
+    memcpy(buffer, &nkeys, sizeof(int));
     *(keys_buf) = buffer;
     return size_to_alloc;
 }
