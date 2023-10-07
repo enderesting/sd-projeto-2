@@ -35,19 +35,9 @@ int table_destroy(struct table_t *table){
         return -1;
     }
 
-    // if(!table->lists[0]){
-
-    //     free(table->lists);
-    //     free(table);
-
-    //     return 0;
-    // }
-
     int status = 0;
     for(int i=0; i<table->size; i++){
-        status = (status || list_destroy(table->lists[i])); //see comment in list_destroy
-        // if one list returns null, do we still free ALL of the used memory
-        // like function describes?
+        status = (status || list_destroy(table->lists[i])); 
         if (status != 0) return status;
     }
 
@@ -145,7 +135,7 @@ char **table_get_keys(struct table_t *table){
     for(int i=0; i<(table->size); i++){
         this_list_mem = table->lists[i]->size * sizeof(char*);
         char** this_list_key = list_get_keys(table->lists[i]);
-        // if (!this_list_key) return NULL;  // there has to be a different way to handle error.
+        // if (!this_list_key) return NULL;  // there has to be a different way to handle error. //GUESS NOT
         memcpy(key_arr+used_mem, this_list_key, this_list_mem);
         used_mem += this_list_mem;
     }
@@ -163,8 +153,6 @@ int table_free_keys(char **keys){
     while(keys[i]){
         free(keys[i]);
         i++;
-    // Q: what if an error occurs during the freeing of one of the keys?
-    // wouldn't it just assume it'd reached the end and fail to free correctly?
     }
     free(keys);
     return 0;
