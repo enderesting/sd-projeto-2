@@ -75,6 +75,9 @@ int hash_code(char *key, int n){
  * Retorna 0 (ok) ou -1 em caso de erro.
  */
 int table_put(struct table_t *table, char *key, struct data_t *value){
+
+    if(!table || !key || !value) return -1;
+    
     int index = hash_code(key, table->size);
     struct entry_t *entry = entry_create(key,value);
     int result = list_add(table->lists[index], entry_dup(entry));
@@ -105,6 +108,9 @@ struct data_t *table_get(struct table_t *table, char *key){
  * ou -1 em caso de erro.
  */
 int table_remove(struct table_t *table, char *key){
+
+    if(!table || !key) return -1;
+    
     int index = hash_code(key, table->size);
     return list_remove(table->lists[index],key);
 }
