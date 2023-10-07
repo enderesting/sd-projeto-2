@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "data.h"
+#include "list.h"
 #include "table.h"
 
 /* Função para criar e inicializar uma nova tabela hash, com n
@@ -69,8 +71,11 @@ int table_put(struct table_t *table, char *key, struct data_t *value){
     if(!table || !key || !value) return -1;
     
     int index = hash_code(key, table->size);
-    struct entry_t *entry = entry_create(key,value);
-    int result = list_add(table->lists[index], entry_dup(entry));
+    char* dup_key = strdup(key);
+    struct data_t* dup_value = data_dup(value);
+    struct entry_t *entry = entry_create(dup_key, dup_value);
+
+    int result = list_add(table->lists[index], entry);
     if (result == 1) { //aka: substituted data
         return 0;
     }else{
@@ -127,18 +132,21 @@ int table_size(struct table_t *table){
 char **table_get_keys(struct table_t *table){
     //allocate this array
     if(!table) return NULL;
-    char **key_arr = (char**)calloc(table_size(table)+1,sizeof(char*));
+    char **key_arr = (char**) calloc(table_size(table) + 1, sizeof(char*));
 
-    // use memcpy to copy over the keys list by list
-    size_t used_mem = 0;
-    size_t this_list_mem = 0;
-    for(int i=0; i<(table->size); i++){
-        this_list_mem = table->lists[i]->size * sizeof(char*);
-        char** this_list_key = list_get_keys(table->lists[i]);
-        // if (!this_list_key) return NULL;  // there has to be a different way to handle error. //GUESS NOT
-        memcpy(key_arr+used_mem, this_list_key, this_list_mem);
-        used_mem += this_list_mem;
+    int write_index = 0;
+    for (int i = 0; i < table->size; i++) {
+        char** list_keys = list_get_keys(table->lists[i]);
+        if (!list_keys) continue;
+
+        for (int j = 0; j < list_size(table->lists[i]); j++) {
+            key_arr[write_index] = strdup(list_keys[j]);
+            write_index++;
+        }
+
+        list_free_keys(list_keys);
     }
+
     return key_arr;
 }
 

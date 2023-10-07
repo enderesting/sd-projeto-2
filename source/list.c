@@ -241,7 +241,6 @@ char **list_get_keys(struct list_t *list) {
         node = node->next;
         i++;
     }
-    keys_array = realloc(keys_array,(i+1)*sizeof(char*));
     keys_array[i] = NULL;
 
     return keys_array;
