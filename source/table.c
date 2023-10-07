@@ -57,6 +57,9 @@ int hash_code(char *key, int n){
         result = result * 31 + key[i];
     }
     return result%n;
+    //https://stackoverflow.com/questions/2624192/good-hash-function-for-strings
+    //31 was chosen bc of a section from Joshua Bloch's Effective Java book.
+    // It's also used in JAVA's string hash func.
 }
 
 /* Função para adicionar um par chave-valor à tabela. Os dados de entrada
