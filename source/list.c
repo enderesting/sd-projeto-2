@@ -25,9 +25,7 @@ int list_destroy(struct list_t *list) {
     struct node_t* next_node;
     int result = 0;
 
-    if (list == NULL)
-        result = -1; // is this really an error?
-    // after all, lists can be empty right? you can still free an empty list.
+    if (list == NULL) result = -1;
     while (node) {
         next_node = node->next;
         node_destroy(node);
@@ -227,7 +225,6 @@ int list_size(struct list_t *list) {
  * Retorna o array de strings ou NULL em caso de erro.
  */
 char **list_get_keys(struct list_t *list) {
-    // TODO implement a way to enforce that strings are terminated
     if (!list || !list->head) return NULL;
 
     char** keys_array = (char**) calloc(list->size + 1, sizeof(char*));
@@ -244,6 +241,8 @@ char **list_get_keys(struct list_t *list) {
         node = node->next;
         i++;
     }
+    keys_array = realloc(keys_array,(i+1)*sizeof(char*));
+    keys_array[i] = NULL;
 
     return keys_array;
 }
@@ -258,7 +257,6 @@ int list_free_keys(char **keys) {
     int i = 0;
     char *key_ptr = keys[i];
     while (key_ptr != NULL) {
-        // printf("Freeing up %s", key_ptr);
         free(key_ptr);
         i++;
         key_ptr = keys[i];
