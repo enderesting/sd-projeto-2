@@ -58,7 +58,7 @@ char** buffer_to_keyArray(char *keys_buf) {
     char* read_buffer_ptr = keys_buf + sizeof(int);
     for (int i = 0; i < nkeys; i++) {
         int key_size = strlen(read_buffer_ptr) + 1;
-        keys_array[i] = malloc(sizeof(key_size));
+        keys_array[i] = malloc(key_size);
         strcpy(keys_array[i], read_buffer_ptr);
         read_buffer_ptr += key_size;
     }
