@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -52,14 +53,19 @@ int table_destroy(struct table_t *table){
 /* Função que calcula o índice da lista a partir da chave
  */
 int hash_code(char *key, int n){
-    int result = 7;
-    for (int i=0; i<strlen(key); i++){
+   /*  https://stackoverflow.com/questions/2624192/good-hash-function-for-strings
+    *  31 was chosen bc of a section from Joshua Bloch's Effective Java book.
+    *  It's also used in JAVA's string hash func.
+    */
+
+    // FIXME Implement this function without the use of abs to patch
+    unsigned long long result = 7;
+    for (int i = 0; i < strlen(key); i++){
         result = result * 31 + key[i];
     }
-    return result%n;
-    //https://stackoverflow.com/questions/2624192/good-hash-function-for-strings
-    //31 was chosen bc of a section from Joshua Bloch's Effective Java book.
-    // It's also used in JAVA's string hash func.
+
+    result = (int) result % n;
+    return abs((int) result);
 }
 
 /* Função para adicionar um par chave-valor à tabela. Os dados de entrada
