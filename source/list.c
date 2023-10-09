@@ -1,8 +1,14 @@
+/* Grupo 50
+ * Filipe Costa - 55549
+ * Yichen Cao - 58165
+ * Emily Sá - 58200
+ * Github repo: https://github.com/padrezulmiro/sd-projeto/
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "entry.h"
 #include "list.h"
 
 /* Função que cria e inicializa uma nova lista (estrutura list_t a
@@ -141,7 +147,6 @@ int list_add(struct list_t *list, struct entry_t *entry) {
  * ou -1 em caso de erro.
  */
 int list_remove(struct list_t *list, char *key) {
-    // TODO update list size if element was removed
 
     if (!list || !key) return -1;
 

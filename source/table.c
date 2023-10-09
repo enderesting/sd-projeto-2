@@ -1,9 +1,14 @@
+/* Grupo 50
+ * Filipe Costa - 55549
+ * Yichen Cao - 58165
+ * Emily Sá - 58200
+ * Github repo: https://github.com/padrezulmiro/sd-projeto/
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "data.h"
-#include "list.h"
 #include "table.h"
 
 /* Função para criar e inicializar uma nova tabela hash, com n
@@ -139,7 +144,6 @@ int table_size(struct table_t *table){
  * Retorna o array de strings ou NULL em caso de erro.
  */
 char **table_get_keys(struct table_t *table){
-    //allocate this array
     if(!table) return NULL;
     char **key_arr = (char**) calloc(table_size(table) + 1, sizeof(char*));
 
