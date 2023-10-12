@@ -33,4 +33,3 @@ struct node_t* node_create(struct entry_t* entry, struct node_t* next);
 int node_destroy(struct node_t* node);
 
 #endif
-d
