@@ -1,0 +1,49 @@
+/* Ficheiro sdmessage.proto
+ */
+
+syntax = "proto3";
+
+message entry_t			/* Formato da mensagem EntryT */
+{
+	string key		= 1;
+	bytes  value	= 2;
+}
+
+message message_t			/* Formato da mensagem MessageT */
+{
+	enum Opcode {		/* Opcodes da mensagem */
+		OP_BAD	= 0;
+		OP_PUT	= 10;
+		OP_GET	= 20;
+		OP_DEL	= 30;
+		OP_SIZE	= 40;
+		OP_GETKEYS	= 50;
+		OP_GETTABLE	= 60;
+		OP_ERROR	= 99;
+	}
+
+	enum C_type {		/* Códigos para conteúdos da mensagem */
+		CT_BAD	= 0;
+		CT_ENTRY	= 10;
+		CT_KEY	= 20;
+		CT_VALUE	= 30;
+		CT_RESULT	= 40;
+		CT_KEYS	= 50;
+		CT_TABLE	= 60;
+		CT_NONE	= 70;
+	}
+
+/* Campos disponíveis na mensagem genérica (cada mensagem concreta, de
+ * pedido ou de resposta, usa apenas os campos que necessitar) 
+ */
+	Opcode 		opcode	= 1;
+	C_type 		c_type	= 2;
+	entry_t		entry		= 3;
+	string		key		= 4;
+	bytes			value		= 5;
+	sint32		result	= 6;
+	repeated string	keys		= 7;
+	repeated entry_t	entries	= 8;
+};
+
+
