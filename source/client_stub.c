@@ -2,7 +2,9 @@
 #include <string.h>
 
 #include "client_stub-private.h"
+#include "data.h"
 #include "network_client.h"
+#include "sdmessage.pb-c.h"
 
 /* Função para estabelecer uma associação entre o cliente e o servidor,
  * em que address_port é uma string no formato <hostname>:<port>.
@@ -53,7 +55,31 @@ int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {
 /* Retorna o elemento da tabela com chave key, ou NULL caso não exista
  * ou se ocorrer algum erro.
  */
-struct data_t *rtable_get(struct rtable_t *rtable, char *key);
+struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
+    MessageT* msg =
+        (MessageT*) calloc(1, sizeof(struct MessageT*));
+    message_t__init(msg);
+    msg->opcode = MESSAGE_T__OPCODE__OP_GET;
+    msg->c_type = MESSAGE_T__C_TYPE__CT_KEY;
+    msg->key = key;
+
+    MessageT* res = network_send_receive(rtable, msg);
+
+    free(msg);
+
+    if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR ||
+        res->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
+        return NULL;
+    }
+
+    struct data_t* data = (struct data_t*) malloc(sizeof(struct data_t*));
+    data->datasize = res->value.len;
+    data->data = strndup((char*) res->value.data, data->datasize);
+
+    message_t__free_unpacked(res, NULL);
+
+    return data;
+}
 
 /* Função para remover um elemento da tabela. Vai libertar
  * toda a memoria alocada na respetiva operação rtable_put().
