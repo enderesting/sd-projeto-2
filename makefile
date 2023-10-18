@@ -7,30 +7,36 @@ SRC_DIR = source
 DEP_DIR = dependencies
 TEST_DIR = tests
 
-TARGETS = data entry list serialization table
-EXECS = $(foreach target,$(TARGETS),$(BIN_DIR)/test_$(target))
-OBJS = $(foreach target,$(TARGETS),$(OBJ_DIR)/test_$(target).o)
-
-binary/test_data :=
-binary/test_entry := object/data.o
-binary/test_list := object/data.o object/entry.o
-binary/test_serialization := object/data.o object/entry.o object/list.o
-binary/test_table := object/data.o object/list.o object/entry.o
-
+LIB_TABLE_R = $(addprefix $(OBJ_DIR)/,data.o entry.o list.o table.o)
+TABLE_CLIENT_R = $(addprefix $(OBJ_DIR)/,data.o \
+	entry.o \
+	table_client.o \
+	client_stub.o \
+	network_client.o)
+TABLE_SERVER_R = $(addprefix $(OBJ_DIR)/,data.o \
+	entry.o \
+	list.o \
+	table.o \
+	table_server.o \
+	network_server.o)
 
 CC = gcc
 # CFLAGS = -Wall -Werror -g -MMD -MP -MF -I $(INC_DIR)
 CFLAGS = -Wall -Werror -g -I $(INC_DIR)
+ARCHIVE = ar -rcs
 
-compile: $(EXECS)
+all: libtable table-client table-server
 
-$(BIN_DIR)/test_%: $($@) $(OBJ_DIR)/test_%.o $(OBJ_DIR)/%.o
-	$(CC) $^ $($@) -o $@
+libtable: $(LIB_TABLE_R)
+	$(ARCHIVE) $(OBJ_DIR)/$@.a $^
+
+table-client: $(TABLE_CLIENT_R)
+	$(CC) $^ libtable.a -o $@
+
+table-server: $(TABLE_SERVER_R)
+	$(CC) $^ libtable.a -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(OBJ_DIR)/test_%.o: $(SRC_DIR)/test_%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Include makefiles from dependencies
