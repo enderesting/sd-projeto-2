@@ -48,9 +48,8 @@ int invoke(MessageT *msg, struct table_t *table){
                 v.len = gotten_value->datasize;
                 v.data = gotten_value->data;
                 msg->value = v;
-                //update result and type
-                res = 0;
                 msg->c_type = MESSAGE_T__C_TYPE__CT_VALUE;
+                res = 0;
             }else{ //if get success
                 res = -1;
                 printf("Error in rtable_get or key not found!\n");
@@ -66,38 +65,48 @@ int invoke(MessageT *msg, struct table_t *table){
         case MESSAGE_T__OPCODE__OP_SIZE:
             res = table_size(table);
             if (res>=0){
-                msg->n_keys = res;
+                msg->result = res;
                 msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT;
-                res = 0;
             }
             break;
         case MESSAGE_T__OPCODE__OP_GETKEYS:
             char** keys = table_get_keys(table);
             if (keys){
-                res = 0;
+                msg->n_keys = table_size(table);
                 msg->keys = keys;
                 msg->c_type = MESSAGE_T__C_TYPE__CT_KEYS;
+                res = 0;
             }else{
                 res = -1;
             }
             break;
         case MESSAGE_T__OPCODE__OP_GETTABLE:
-            //TOOD: get table here        
-            if (res == 0){
+            int tab_size = table_size(table);
+            struct entry_t** old_entries = table_get_entries(table);
+            if (old_entries){
+                struct _EntryT** entries = (struct _EntryT*) malloc(tab_size+1,sizeof(struct _EntryT*));
+                for (int i=0; i<tab_size; i++){
+                    entries[i]->key = old_entries[i]->key;
+                    entries[i]->value.len = old_entries[i]->value->datasize;
+                    entries[i]->value.data = old_entries[i]->value->data;
+                }
+                msg->n_entries = tab_size;
+                msg->entries = entries;
                 msg->c_type = MESSAGE_T__C_TYPE__CT_TABLE;
+                res = 0;
             }
             break;
         case MESSAGE_T__OPCODE__OP_ERROR:
             //CHECKTHIS: how to handle error?
-            if (res == 0){}
             break;
     }
 
     if (res<0) {
         msg->opcode = MESSAGE_T__OPCODE__OP_ERROR;
         msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
-    }else if (res==0){
+    }else{
         msg->opcode = msg->opcode+1;
     }
 
+    return res;
 }
