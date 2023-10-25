@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include "client_stub.h"
+#include "network_client.h"
 #include "sdmessage.pb-c.h"
 #include "client_stub-private.h"
 
@@ -33,13 +34,13 @@ int network_connect(struct rtable_t *rtable) {
     server.sin_family = AF_INET;
     server.sin_port = htons(rtable->server_port);
     if (inet_pton(AF_INET, rtable->server_address, &server.sin_addr) < 1) {
-        close(sockfd); //FIXME is this necessary?
+        network_close(rtable);
         perror("Error parsing IP address");
         return -1;
     }
 
-    if (connect(sockfd, (struct sockaddr*) &server, sizeof(server))) {
-        close(sockfd);
+    if (connect(sockfd, (struct sockaddr*) &server, sizeof(server)) < 0) {
+        network_close(rtable);
         perror("Error connecting to remote server");
         return -1;
     }
@@ -72,7 +73,7 @@ MessageT *network_send_receive(struct rtable_t *rtable, MessageT *msg) {
     int write_len;
     if ((write_len = write(sockfd, buf, buf_len)) != buf_len){
         perror("Error writting to client socket");
-        close(sockfd);
+        network_close(rtable);
         return NULL;
     }
 
@@ -81,7 +82,7 @@ MessageT *network_send_receive(struct rtable_t *rtable, MessageT *msg) {
     if ((read_len = read(sockfd, &response_len_ns, sizeof(uint16_t))) !=
             sizeof(response_len_ns)) {
         perror("Error reading message length from socket");
-        close(sockfd);
+        network_close(rtable);
         return NULL;
     }
     short response_len = ntohs(response_len_ns);
@@ -90,7 +91,7 @@ MessageT *network_send_receive(struct rtable_t *rtable, MessageT *msg) {
     if ((read_len = read(sockfd, read_buf, response_len)) !=
             response_len) {
         perror("Error reading packed message from socket");
-        close(sockfd);
+        network_close(rtable);
         return NULL;
     }
 
