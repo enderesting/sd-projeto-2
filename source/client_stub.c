@@ -164,7 +164,24 @@ int rtable_size(struct rtable_t *rtable) {
  * colocando um último elemento do array a NULL.
  * Retorna NULL em caso de erro.
  */
-char **rtable_get_keys(struct rtable_t *rtable);
+char **rtable_get_keys(struct rtable_t *rtable) {
+
+    if(!rtable) return NULL;
+
+    MessageT* msg = (MessageT*) calloc(1, sizeof(struct MessageT*));
+    message_t__init(msg);
+    msg->opcode = MESSAGE_T__OPCODE__OP_GETKEYS;
+    msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
+
+    MessageT* res = network_send_receive(rtable, msg);
+    free(msg);
+
+    if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
+        return NULL;
+    }
+
+    return res->keys;
+}
 
 /* Liberta a memória alocada por rtable_get_keys().
  */
@@ -173,7 +190,24 @@ void rtable_free_keys(char **keys);
 /* Retorna um array de entry_t* com todo o conteúdo da tabela, colocando
  * um último elemento do array a NULL. Retorna NULL em caso de erro.
  */
-struct entry_t **rtable_get_table(struct rtable_t *rtable);
+struct entry_t **rtable_get_table(struct rtable_t *rtable) {
+
+    if(!rtable) return NULL;
+
+    MessageT* msg = (MessageT*) calloc(1, sizeof(struct MessageT*));
+    message_t__init(msg);
+    msg->opcode = MESSAGE_T__OPCODE__OP_GETTABLE;
+    msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
+
+    MessageT* res = network_send_receive(rtable, msg);
+    free(msg);
+
+    if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
+        return NULL;
+    }
+
+    return res->entries;
+}
 
 /* Liberta a memória alocada por rtable_get_table().
  */
