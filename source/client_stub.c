@@ -11,6 +11,10 @@
  * Retorna a estrutura rtable preenchida, ou NULL em caso de erro.
  */
 struct rtable_t *rtable_connect(char *address_port) {
+
+    //error checking
+    if(!address_port) return NULL;
+
     char* colon = strchr(address_port, ':');
     int hostname_len = colon - address_port;
 
@@ -50,12 +54,39 @@ int rtable_disconnect(struct rtable_t *rtable) {
  */
 int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {
 
+    if (!rtable || !entry) return -1;
+    MessageT* msg = (MessageT*) calloc(1, sizeof(struct MessageT*));
+    message_t__init(msg);
+    EntryT* ent = (EntryT*) calloc(1, sizeof(struct EntryT*));
+    entry_t__init(ent);
+    ent->key = entry->key;
+    ent->value.data = entry->value->data;
+    ent->value.len = entry->value->datasize;
+    msg->opcode = MESSAGE_T__OPCODE__OP_PUT;
+    msg->c_type = MESSAGE_T__C_TYPE__CT_ENTRY;
+    msg->entry = ent;
+
+    MessageT* res = network_send_receive(rtable, msg);
+    free(ent);
+    free(msg);
+
+    if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
+        return -1;
+    }
+
+    else {
+        return 0;
+    }
+    
 }
 
 /* Retorna o elemento da tabela com chave key, ou NULL caso não exista
  * ou se ocorrer algum erro.
  */
 struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
+
+    if(!rtable || !key) return NULL;
+
     MessageT* msg =
         (MessageT*) calloc(1, sizeof(struct MessageT*));
     message_t__init(msg);
@@ -85,11 +116,49 @@ struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
  * toda a memoria alocada na respetiva operação rtable_put().
  * Retorna 0 (OK), ou -1 (chave não encontrada ou erro).
  */
-int rtable_del(struct rtable_t *rtable, char *key);
+int rtable_del(struct rtable_t *rtable, char *key) {
+
+    if(!rtable_get(rtable, key)) return -1;
+
+    MessageT* msg = (MessageT*) calloc(1, sizeof(struct MessageT*));
+    message_t__init(msg);
+    msg->opcode = MESSAGE_T__OPCODE__OP_DEL;
+    msg->c_type = MESSAGE_T__C_TYPE__CT_KEY;
+    msg->key = key;
+
+    MessageT* res = network_send_receive(rtable, msg);
+    free(msg);
+
+    if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
+        return -1;
+    }
+
+    else {
+        free(rtable_get(rtable, key));
+        return 0;
+    }
+}
 
 /* Retorna o número de elementos contidos na tabela ou -1 em caso de erro.
  */
-int rtable_size(struct rtable_t *rtable);
+int rtable_size(struct rtable_t *rtable) {
+
+    if(!rtable) return -1;
+
+    MessageT* msg = (MessageT*) calloc(1, sizeof(struct MessageT*));
+    message_t__init(msg);
+    msg->opcode = MESSAGE_T__OPCODE__OP_SIZE;
+    msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT;
+
+    MessageT* res = network_send_receive(rtable, msg);
+    free(msg);
+
+    if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
+        return -1;
+    }
+
+    return (int)res->result;
+}
 
 /* Retorna um array de char* com a cópia de todas as keys da tabela,
  * colocando um último elemento do array a NULL.
