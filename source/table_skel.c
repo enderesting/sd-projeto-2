@@ -27,20 +27,22 @@ int table_skel_destroy(struct table_t *table){
 int invoke(MessageT *msg, struct table_t *table){
     int res;
     switch (msg->opcode){
-        case MESSAGE_T__OPCODE__OP_BAD:
+        case MESSAGE_T__OPCODE__OP_BAD:{
             printf("Invalid arguments!\n");
             res = 0;
             msg->c_type = MESSAGE_T__C_TYPE__CT_BAD;
             break;
-        case MESSAGE_T__OPCODE__OP_PUT:
-            int entry_size = entry_t__get_packed_size(msg->entry);
+        }
+        case MESSAGE_T__OPCODE__OP_PUT:{
+            int entry_size = msg->entry->value.len;
             struct data_t *value = data_create(entry_size, msg->entry->value.data); // CHECKTHIS: is this the correct way of doing it
             res = table_put(table,msg->entry->key,value);
             if (res == 0){
                 msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
             }
             break;
-        case MESSAGE_T__OPCODE__OP_GET:
+        }
+        case MESSAGE_T__OPCODE__OP_GET:{
             struct data_t* gotten_value = table_get(table,msg->key);
             if (gotten_value){
                 //NO idea if this is being done correctly tbh
@@ -55,21 +57,24 @@ int invoke(MessageT *msg, struct table_t *table){
                 printf("Error in rtable_get or key not found!\n");
             }
             break;
-        case MESSAGE_T__OPCODE__OP_DEL:
+        }
+        case MESSAGE_T__OPCODE__OP_DEL:{
             res = table_remove(table,msg->key);
             if (res == 0){
                 msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
             }
             //CHECKTHIS: is there any difference in handling missing entry vs error deletion?
             break;
-        case MESSAGE_T__OPCODE__OP_SIZE:
+        }
+        case MESSAGE_T__OPCODE__OP_SIZE:{
             res = table_size(table);
             if (res>=0){
                 msg->result = res;
                 msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT;
             }
             break;
-        case MESSAGE_T__OPCODE__OP_GETKEYS:
+        }
+        case MESSAGE_T__OPCODE__OP_GETKEYS:{
             char** keys = table_get_keys(table);
             if (keys){
                 msg->n_keys = table_size(table);
@@ -80,7 +85,8 @@ int invoke(MessageT *msg, struct table_t *table){
                 res = -1;
             }
             break;
-        case MESSAGE_T__OPCODE__OP_GETTABLE:
+        }
+        case MESSAGE_T__OPCODE__OP_GETTABLE:{
             int tab_size = table_size(table);
             struct entry_t** old_entries = table_get_entries(table);
             if (old_entries){
@@ -96,9 +102,10 @@ int invoke(MessageT *msg, struct table_t *table){
                 res = 0;
             }
             break;
-        case MESSAGE_T__OPCODE__OP_ERROR:
-            //CHECKTHIS: how to handle error?
-            break;
+        }
+        // case MESSAGE_T__OPCODE__OP_ERROR:{ //assume this would never happen
+        //     break;
+        // }
     }
 
     if (res<0) {
