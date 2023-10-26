@@ -119,8 +119,8 @@ int invoke(MessageT *msg, struct table_t *table){
         new_msg->opcode = msg->opcode+1;
     }
 
-    message_t__free_unpacked(msg,NULL); //CHECKTHIS: what's the correct way to free it?
-    msg = new_msg;
+    message_t__free_unpacked(msg,NULL); 
+    *msg = *new_msg; //TODO: is this the correct parsing?
 
     return res;
 }
