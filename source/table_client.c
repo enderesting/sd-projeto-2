@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
                     key = keys[++i];
                 }
 
-                free(keys);
+                rtable_free_keys(keys);
                 break;
             }
 
@@ -132,7 +132,7 @@ int main(int argc, char *argv[]) {
                     entry = entries[++i];
                 }
 
-                free(entries);
+                rtable_free_entries(entries);
                 break;
             }
 

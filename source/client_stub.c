@@ -68,19 +68,22 @@ int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {
     msg->entry = ent;
 
     MessageT* res = network_send_receive(rtable, msg);
-    free(ent);
-    free(msg);
+    entry_t__free_unpacked(ent, NULL);
+    message_t__free_unpacked(msg, NULL);;
 
     if (res->opcode == MESSAGE_T__OPCODE__OP_BAD) {
+        message_t__free_unpacked(res, NULL);
         printf("Your function call was given incorrect and/or missing parameters");
         return -1;
     }
 
     if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR &&
         res->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
+        message_t__free_unpacked(res, NULL);
         return -1;
     }
 
+    message_t__free_unpacked(res, NULL);
     return 0;
 }
 
@@ -99,15 +102,17 @@ struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
 
     MessageT* res = network_send_receive(rtable, msg);
 
-    free(msg);
+    message_t__free_unpacked(msg, NULL);
 
     if (res->opcode == MESSAGE_T__OPCODE__OP_BAD) {
+        message_t__free_unpacked(res, NULL);
         printf("Your function call was given incorrect and/or missing parameters");
         return -1;
     }
 
     if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR &&
         res->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
+        message_t__free_unpacked(res, NULL);
         return NULL;
     }
 
@@ -135,15 +140,17 @@ int rtable_del(struct rtable_t *rtable, char *key) {
     msg->key = key;
 
     MessageT* res = network_send_receive(rtable, msg);
-    free(msg);
+    message_t__free_unpacked(msg, NULL);
 
     if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR &&
         res->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
+        message_t__free_unpacked(res, NULL);
         return -1;
     }
 
     else {
         free(rtable_get(rtable, key));
+        message_t__free_unpacked(res, NULL);
         return 0;
     }
 }
@@ -160,14 +167,18 @@ int rtable_size(struct rtable_t *rtable) {
     msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT;
 
     MessageT* res = network_send_receive(rtable, msg);
-    free(msg);
+    message_t__free_unpacked(msg, NULL);
 
     if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR &&
         res->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
+        message_t__free_unpacked(res, NULL);
         return -1;
     }
 
-    return (int)res->result;
+    int size = (int)res->result;
+    message_t__free_unpacked(res, NULL);
+
+    return size;
 }
 
 /* Retorna um array de char* com a cópia de todas as keys da tabela,
@@ -184,10 +195,11 @@ char **rtable_get_keys(struct rtable_t *rtable) {
     msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
 
     MessageT* res = network_send_receive(rtable, msg);
-    free(msg);
+    message_t__free_unpacked(msg, NULL);
 
     if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR &&
         res->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
+        message_t__free_unpacked(res, NULL);
         return NULL;
     }
 
@@ -196,7 +208,8 @@ char **rtable_get_keys(struct rtable_t *rtable) {
         key_arr[i] = res->keys[i];
     }
     key_arr[res->n_keys] = NULL;
-    
+
+    message_t__free_unpacked(res, NULL);
     return key_arr;
 }
 
@@ -204,7 +217,7 @@ char **rtable_get_keys(struct rtable_t *rtable) {
  */
 void rtable_free_keys(char **keys) {
 
-    int i = 0
+    int i = 0;
     char *key_ptr = keys[i];
     while (key_ptr != NULL) {
         free(key_ptr);
@@ -228,19 +241,21 @@ struct entry_t **rtable_get_table(struct rtable_t *rtable) {
     msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
 
     MessageT* res = network_send_receive(rtable, msg);
-    free(msg);
+    message_t__free_unpacked(msg, NULL);
 
     if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR &&
         res->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
+        message_t__free_unpacked(res, NULL);
         return NULL;
     }
 
-    entry_t** entry_arr = (entry_t**) calloc(res->n_entries + 1, sizeof(entry_t*));
+    struct entry_t** entry_arr = (struct entry_t**) calloc(res->n_entries + 1, sizeof(struct entry_t*));
     for (int i = 0; i < res->n_entries; i++) {
         entry_arr[i] = res->entries[i];
     }
     entry_arr[res->n_entries] = NULL;
 
+    message_t__free_unpacked(res, NULL);
     return entry_arr;
 }
 
@@ -248,8 +263,8 @@ struct entry_t **rtable_get_table(struct rtable_t *rtable) {
  */
 void rtable_free_entries(struct entry_t **entries) {
 
-    int i = 0
-    entry_t *entry_ptr = entries[i];
+    int i = 0;
+    struct entry_t *entry_ptr = entries[i];
     while (entry_ptr != NULL) {
         free(entry_ptr);
         i++;
