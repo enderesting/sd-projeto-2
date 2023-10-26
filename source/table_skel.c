@@ -25,65 +25,73 @@ int table_skel_destroy(struct table_t *table){
  * Retorna 0 (OK) ou -1 em caso de erro.
 */
 int invoke(MessageT *msg, struct table_t *table){
-    int res;
+    int res = -1;
+    MessageT* new_msg = (MessageT*) calloc(1, sizeof(struct MessageT*));
+    message_t__init(new_msg);
     switch (msg->opcode){
-        case MESSAGE_T__OPCODE__OP_BAD:{
-            printf("Invalid arguments!\n");
-            res = 0;
-            msg->c_type = MESSAGE_T__C_TYPE__CT_BAD;
-            break;
-        }
         case MESSAGE_T__OPCODE__OP_PUT:{
             int entry_size = msg->entry->value.len;
             struct data_t *value = data_create(entry_size, msg->entry->value.data); // CHECKTHIS: is this the correct way of doing it
+            if (!entry_size || !value){
+                new_msg = respond_bad_op(new_msg);
+                break;
+            }
             res = table_put(table,msg->entry->key,value);
             if (res == 0){
-                msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
+                new_msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
             }
+            else new_msg = respond_err_in_exec(new_msg);
             break;
         }
         case MESSAGE_T__OPCODE__OP_GET:{
+            char* key = msg->key;
+            if (!key){
+                new_msg = respond_bad_op(new_msg);
+                break;
+            }
             struct data_t* gotten_value = table_get(table,msg->key);
             if (gotten_value){
-                //NO idea if this is being done correctly tbh
                 struct ProtobufCBinaryData v;
                 v.len = gotten_value->datasize;
                 v.data = gotten_value->data;
-                msg->value = v;
-                msg->c_type = MESSAGE_T__C_TYPE__CT_VALUE;
+                new_msg->value = v;
+                new_msg->c_type = MESSAGE_T__C_TYPE__CT_VALUE;
                 res = 0;
-            }else{ //if get success
-                res = -1;
-                printf("Error in rtable_get or key not found!\n");
             }
+            else new_msg = respond_err_in_exec(new_msg);
             break;
         }
         case MESSAGE_T__OPCODE__OP_DEL:{
             res = table_remove(table,msg->key);
-            if (res == 0){
-                msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
+            char* key = msg->key;
+            if (!key){
+                new_msg = respond_bad_op(new_msg);
+                break;
             }
-            //CHECKTHIS: is there any difference in handling missing entry vs error deletion?
+            if (res == 0){
+                new_msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
+            }
+            else new_msg = respond_err_in_exec(new_msg);
             break;
         }
         case MESSAGE_T__OPCODE__OP_SIZE:{
             res = table_size(table);
             if (res>=0){
-                msg->result = res;
-                msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT;
+                new_msg->result = res;
+                new_msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT;
             }
+            else new_msg = respond_err_in_exec(new_msg);
             break;
         }
         case MESSAGE_T__OPCODE__OP_GETKEYS:{
             char** keys = table_get_keys(table);
             if (keys){
-                msg->n_keys = table_size(table);
-                msg->keys = keys;
-                msg->c_type = MESSAGE_T__C_TYPE__CT_KEYS;
+                new_msg->n_keys = table_size(table);
+                new_msg->keys = keys;
+                new_msg->c_type = MESSAGE_T__C_TYPE__CT_KEYS;
                 res = 0;
-            }else{
-                res = -1;
             }
+            else new_msg = respond_err_in_exec(new_msg);
             break;
         }
         case MESSAGE_T__OPCODE__OP_GETTABLE:{
@@ -96,24 +104,34 @@ int invoke(MessageT *msg, struct table_t *table){
                     entries[i]->value.len = old_entries[i]->value->datasize;
                     entries[i]->value.data = old_entries[i]->value->data;
                 }
-                msg->n_entries = tab_size;
-                msg->entries = entries;
-                msg->c_type = MESSAGE_T__C_TYPE__CT_TABLE;
+                new_msg->n_entries = tab_size;
+                new_msg->entries = entries;
+                new_msg->c_type = MESSAGE_T__C_TYPE__CT_TABLE;
                 res = 0;
             }
+            else new_msg = respond_err_in_exec(new_msg);
+            free(old_entries);
             break;
         }
-        // case MESSAGE_T__OPCODE__OP_ERROR:{ //assume this would never happen
-        //     break;
-        // }
     }
 
-    if (res<0) {
-        msg->opcode = MESSAGE_T__OPCODE__OP_ERROR;
-        msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
-    }else{
-        msg->opcode = msg->opcode+1;
+    if(res>=0){
+        new_msg->opcode = msg->opcode+1;
     }
+
+    message_t__free_unpacked(msg,NULL); //CHECKTHIS: what's the correct way to free it?
+    msg = new_msg;
 
     return res;
+}
+
+MessageT* respond_bad_op(MessageT* msg){
+    msg->opcode = MESSAGE_T__OPCODE__OP_BAD;
+    msg->c_type = MESSAGE_T__C_TYPE__CT_BAD;
+    return msg;
+}
+
+MessageT* respond_err_in_exec(MessageT* msg){
+    msg->opcode = MESSAGE_T__OPCODE__OP_ERROR;
+    msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
 }
