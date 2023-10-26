@@ -23,35 +23,22 @@ int main(int argc, char *argv[]) {
         printf("Bad port number");
         return -1;
     }
+
+    //initializing server socket
     int sockfd = network_server_init(port);
-    //initiates table
-    struct table_t* table = table_skel_init(strtol(argv[2],NULL,10)); //malformed arg still works?? 
-
-
-    //handles bind, listening, and finally accept -> reading loop
-    struct sockaddr_in server_addr, client_addr;
-    //fill in the struct
-    server_addr.sin_family = AF_INET;                   // always set to AF_INET for IP interface
-    server_addr.sin_port = htons(atoi(argv[1]));        // the port in network byte order
-    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);    // binds to all local interfaces
-
-    if (bind(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0){
-        perror("Error in Bind()");
-        close(sockfd);
+    if (sockfd==-1){
+        perror("Error initializing server");
         return -1;
-    };
-
-    if (listen(sockfd, 5) < 0){ // only accepts 1 client, no request is queued?
-        perror("Error in Listen()");
-        close(sockfd);
-        return -1;
-    };
-    printf("Server ready, waiting for connections");
-    if(accept(sockfd,(struct sockaddr *) &client_addr,sizeof(client_addr))){
-        return network_main_loop(sockfd,table); // loop in here until it's out
     }
 
+    //initiates table
+    struct table_t* table = table_skel_init(strtol(argv[2],NULL,10)); //malformed arg still works?? 
+    if (!table){
+        perror("Error initializing table");
+        return -1;
+    }
 
+    return network_main_loop(sockfd,table);
 }
 
 // void signal_handler(int signal)
