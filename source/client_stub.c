@@ -61,7 +61,7 @@ int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {
     EntryT* ent = (EntryT*) calloc(1, sizeof(struct EntryT*));
     entry_t__init(ent);
     ent->key = entry->key;
-    ent->value.data = entry->value->data;
+    memcpy(&(ent->value.data), entry->value->data, entry->value->datasize);
     ent->value.len = entry->value->datasize;
     msg->opcode = MESSAGE_T__OPCODE__OP_PUT;
     msg->c_type = MESSAGE_T__C_TYPE__CT_ENTRY;
@@ -107,7 +107,7 @@ struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
     if (res->opcode == MESSAGE_T__OPCODE__OP_BAD) {
         message_t__free_unpacked(res, NULL);
         printf("Your function call was given incorrect and/or missing parameters");
-        return -1;
+        return NULL;
     }
 
     if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR &&
@@ -131,8 +131,6 @@ struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
  */
 int rtable_del(struct rtable_t *rtable, char *key) {
 
-    if(!rtable_get(rtable, key)) return -1;
-
     MessageT* msg = (MessageT*) calloc(1, sizeof(struct MessageT*));
     message_t__init(msg);
     msg->opcode = MESSAGE_T__OPCODE__OP_DEL;
@@ -141,6 +139,12 @@ int rtable_del(struct rtable_t *rtable, char *key) {
 
     MessageT* res = network_send_receive(rtable, msg);
     message_t__free_unpacked(msg, NULL);
+
+    if (res->opcode == MESSAGE_T__OPCODE__OP_BAD) {
+        message_t__free_unpacked(res, NULL);
+        printf("Your function call was given incorrect and/or missing parameters");
+        return -1;
+    }
 
     if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR &&
         res->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
@@ -205,7 +209,7 @@ char **rtable_get_keys(struct rtable_t *rtable) {
 
     char **key_arr = (char**) calloc(res->n_keys + 1, sizeof(char*));
     for (int i = 0; i < res->n_keys; i++) {
-        key_arr[i] = res->keys[i];
+        key_arr[i] = strdup(res->keys[i]);
     }
     key_arr[res->n_keys] = NULL;
 
@@ -251,7 +255,10 @@ struct entry_t **rtable_get_table(struct rtable_t *rtable) {
 
     struct entry_t** entry_arr = (struct entry_t**) calloc(res->n_entries + 1, sizeof(struct entry_t*));
     for (int i = 0; i < res->n_entries; i++) {
-        entry_arr[i] = res->entries[i];
+        entry_arr[i] = (struct entry_t*) malloc(sizeof(struct entry_t));
+        entry_arr[i]->key = res->entries[i]->key;
+        entry_arr[i]->value->data = res->entries[i]->value.len;
+        memcpy(&(entry_arr[i]->value->data), res->entries[i]->value.data, res->entries[i]->value.len);
     }
     entry_arr[res->n_entries] = NULL;
 

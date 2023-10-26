@@ -105,7 +105,6 @@ int main(int argc, char *argv[]) {
                 char* key = keys[i];
                 while (key) {
                     printf("'%s'\n", key);
-                    free(key);
                     key = keys[++i];
                 }
 
@@ -128,7 +127,6 @@ int main(int argc, char *argv[]) {
                 while (entry) {
                     printf("'%s': %.*s", entry->key, entry->value->datasize,
                            (char*) entry->value->data);
-                    entry_destroy(entry);
                     entry = entries[++i];
                 }
 
