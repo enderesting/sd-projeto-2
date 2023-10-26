@@ -3,6 +3,7 @@
 
 #include "client_stub-private.h"
 #include "data.h"
+#include "entry.h"
 #include "network_client.h"
 #include "sdmessage.pb-c.h"
 
@@ -54,7 +55,7 @@ int rtable_disconnect(struct rtable_t *rtable) {
  */
 int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {
 
-    if (!rtable || !entry) return -1;
+    if (!rtable) return -1;
     MessageT* msg = (MessageT*) calloc(1, sizeof(struct MessageT*));
     message_t__init(msg);
     EntryT* ent = (EntryT*) calloc(1, sizeof(struct EntryT*));
@@ -70,14 +71,17 @@ int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {
     free(ent);
     free(msg);
 
-    if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
+    if (res->opcode == MESSAGE_T__OPCODE__OP_BAD) {
+        printf("Your function call was given incorrect and/or missing parameters");
         return -1;
     }
 
-    else {
-        return 0;
+    if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR &&
+        res->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
+        return -1;
     }
-    
+
+    return 0;
 }
 
 /* Retorna o elemento da tabela com chave key, ou NULL caso não exista
@@ -85,10 +89,9 @@ int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {
  */
 struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
 
-    if(!rtable || !key) return NULL;
+    if(!rtable) return NULL;
 
-    MessageT* msg =
-        (MessageT*) calloc(1, sizeof(struct MessageT*));
+    MessageT* msg = (MessageT*) calloc(1, sizeof(struct MessageT*));
     message_t__init(msg);
     msg->opcode = MESSAGE_T__OPCODE__OP_GET;
     msg->c_type = MESSAGE_T__C_TYPE__CT_KEY;
@@ -98,7 +101,12 @@ struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
 
     free(msg);
 
-    if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR ||
+    if (res->opcode == MESSAGE_T__OPCODE__OP_BAD) {
+        printf("Your function call was given incorrect and/or missing parameters");
+        return -1;
+    }
+
+    if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR &&
         res->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
         return NULL;
     }
@@ -129,7 +137,8 @@ int rtable_del(struct rtable_t *rtable, char *key) {
     MessageT* res = network_send_receive(rtable, msg);
     free(msg);
 
-    if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
+    if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR &&
+        res->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
         return -1;
     }
 
@@ -153,7 +162,8 @@ int rtable_size(struct rtable_t *rtable) {
     MessageT* res = network_send_receive(rtable, msg);
     free(msg);
 
-    if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
+    if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR &&
+        res->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
         return -1;
     }
 
@@ -176,16 +186,34 @@ char **rtable_get_keys(struct rtable_t *rtable) {
     MessageT* res = network_send_receive(rtable, msg);
     free(msg);
 
-    if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
+    if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR &&
+        res->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
         return NULL;
     }
 
-    return res->keys;
+    char **key_arr = (char**) calloc(res->n_keys + 1, sizeof(char*));
+    for (int i = 0; i < res->n_keys; i++) {
+        key_arr[i] = res->keys[i];
+    }
+    key_arr[res->n_keys] = NULL;
+    
+    return key_arr;
 }
 
 /* Liberta a memória alocada por rtable_get_keys().
  */
-void rtable_free_keys(char **keys);
+void rtable_free_keys(char **keys) {
+
+    int i = 0
+    char *key_ptr = keys[i];
+    while (key_ptr != NULL) {
+        free(key_ptr);
+        i++;
+        key_ptr = keys[i];
+    }
+
+    free(keys);
+}
 
 /* Retorna um array de entry_t* com todo o conteúdo da tabela, colocando
  * um último elemento do array a NULL. Retorna NULL em caso de erro.
@@ -202,13 +230,31 @@ struct entry_t **rtable_get_table(struct rtable_t *rtable) {
     MessageT* res = network_send_receive(rtable, msg);
     free(msg);
 
-    if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
+    if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR &&
+        res->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
         return NULL;
     }
 
-    return res->entries;
+    entry_t** entry_arr = (entry_t**) calloc(res->n_entries + 1, sizeof(entry_t*));
+    for (int i = 0; i < res->n_entries; i++) {
+        entry_arr[i] = res->entries[i];
+    }
+    entry_arr[res->n_entries] = NULL;
+
+    return entry_arr;
 }
 
 /* Liberta a memória alocada por rtable_get_table().
  */
-void rtable_free_entries(struct entry_t **entries);
+void rtable_free_entries(struct entry_t **entries) {
+
+    int i = 0
+    entry_t *entry_ptr = entries[i];
+    while (entry_ptr != NULL) {
+        free(entry_ptr);
+        i++;
+        entry_ptr = entries[i];
+    }
+
+    free(entries);
+}
