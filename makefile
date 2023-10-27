@@ -1,7 +1,7 @@
 .PRECIOUS: object/%.o object/test_%.o
 BIN_DIR = binary
 INC_DIR = include
-LIB_DIR = library
+LIB_DIR = lib
 OBJ_DIR = object
 SRC_DIR = source
 DEP_DIR = dependencies
@@ -33,7 +33,7 @@ PROTO_LIB = -I/usr/local/include -L/usr/local/lib -lprotobuf-c
 all: libtable table_client table_server
 
 libtable: $(LIB_TABLE_R)
-	$(ARCHIVE) $(OBJ_DIR)/$@.a $^
+	$(ARCHIVE) $(LIB_DIR)/$@.a $^
 
 table_client: $(TABLE_CLIENT_R)
 	$(CC) $^ $(PROTO_LIB) $(OBJ_DIR)/libtable.a -o $(BIN_DIR)/$@
