@@ -55,12 +55,8 @@ int invoke(MessageT *msg, struct table_t *table){
             }
             struct data_t* gotten_value = table_get(table,msg->key);
             if (gotten_value){
-                // XXX Is it correct to implement PBCBinaryData this way?
-                // Since v is being alloc'ed in the stack
-                struct ProtobufCBinaryData v;
-                v.len = gotten_value->datasize;
-                v.data = gotten_value->data;
-                new_msg->value = v;
+                new_msg->value.len = gotten_value->datasize;
+                new_msg->value.data =  gotten_value->data;
                 new_msg->c_type = MESSAGE_T__C_TYPE__CT_VALUE;
                 res = 0;
             }
