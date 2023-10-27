@@ -18,6 +18,10 @@
 #define MAX_MSG 2048
 
 int is_connected = 0;
+struct table_t *global_table;
+int global_socket;
+// int server_open = 0;
+
 /* Função para preparar um socket de receção de pedidos de ligação
  * num determinado porto.
  * Retorna o descritor do socket ou -1 em caso de erro.
@@ -60,7 +64,8 @@ int network_server_init(short port){
         close(sockfd);
         return -1;
     };
-
+    global_socket = sockfd;
+    // server_open = 1;
     return sockfd;
 
 }
@@ -80,9 +85,11 @@ int network_main_loop(int listening_socket, struct table_t *table){
     // sigaction(SIGPIPE, &(sigaction){sigpipe_handler}, NULL); // CHECKTHIS: should we use sigaction instead?
     // reference: https://stackoverflow.com/questions/18935446/program-received-signal-sigpipe-broken-pipe?noredirect=1&lq=1
     signal(SIGPIPE,signal_handler); //CHECKTHIS: should this be in table_server instead?
+    signal(SIGINT, signal_handler);
+    global_table = table;
 
     //connect to socket, send/receive
-    int connsockfd;
+    int connsockfd, ret;
     struct sockaddr_in client_addr;
     while(1){
         if(connsockfd = accept(listening_socket,(struct sockaddr *) &client_addr,sizeof(client_addr))!= -1){
@@ -93,23 +100,24 @@ int network_main_loop(int listening_socket, struct table_t *table){
                 if(!msg){
                     perror("Error in receiving"); //CHECKTHIS should it close socket on error?
                     close(connsockfd);
-                    continue;
+                    break;
                 }
                 //get table_skel to process and get response
-                if(msg) invoke(msg,table);
+                if((ret = invoke(msg,table)) < 0){
+                    perror("Error in remote processing"); //CHECKTHIS should it close socket on error?
+                    close(connsockfd);
+                    break;     
+                }
                 //wait until response is here?
                 if (network_send(listening_socket, msg) == -1){
                     perror("Error in sending");
                     close(connsockfd);
-                    continue;
+                    break;
                 }
+                message_t__free_unpacked(msg,NULL);
             }
         }
     }
-    //close shop baby
-    table_skel_destroy(table);
-    network_server_close(listening_socket); //does this go first?
-
 }
 
 /* A função network_receive() deve:
@@ -119,9 +127,28 @@ int network_main_loop(int listening_socket, struct table_t *table){
  * Retorna a mensagem com o pedido ou NULL em caso de erro.
  */
 MessageT *network_receive(int client_socket){
-    // read short first
-    // and then the rest of the socket 
+    // short buf_len = sizeof(uint16_t) + MAX_MSG;
+    // void* buf = malloc(buf_len);
+    // int nbytes;
+    
+    int read_len;
+    uint16_t response_len_ns;
+    if ((read_len = read(client_socket, &response_len_ns, sizeof(uint16_t))) !=
+            sizeof(response_len_ns)) { //CHECKTHIS: huh?
+        perror("Error reading message length from socket");
+        return NULL;
+    }
+    short response_len = ntohs(response_len_ns);
 
+    void* read_buf = malloc(response_len);
+    if ((read_len = read(client_socket, read_buf, response_len)) !=
+            response_len) {
+        perror("Error reading packed message from socket");
+        return NULL;
+    }
+    free(read_buf);
+
+    return message_t__unpack(NULL, response_len, read_buf);
 }
 
 /* A função network_send() deve:
@@ -130,7 +157,18 @@ MessageT *network_receive(int client_socket){
  * Retorna 0 (OK) ou -1 em caso de erro.
  */
 int network_send(int client_socket, MessageT *msg){
+    short buf_len = sizeof(uint16_t) + message_t__get_packed_size(msg);
+    void* buf = malloc(buf_len);
+    uint16_t buf_len_ns = htons(buf_len);
+    memcpy(buf, &buf_len_ns, sizeof(uint16_t));
+    message_t__pack(msg, buf + sizeof(uint16_t));
 
+    int write_len;
+    if ((write_len = write(client_socket, buf, buf_len)) != buf_len){
+        perror("Error writting to client socket");
+        return -1;
+    }
+    return 0;
 }
 
 /* Liberta os recursos alocados por network_server_init(), nomeadamente
@@ -138,18 +176,23 @@ int network_send(int client_socket, MessageT *msg){
  * Retorna 0 (OK) ou -1 em caso de erro.
  */
 int network_server_close(int socket){
-
+    close(socket);
+    table_skel_destroy(global_table);
+    //free all the stuff that needs to be freed
 }
 
 
-void signal_handler(int signal, int socket) //TODO: add header of this 
+void signal_handler(int signal) //TODO: add header of this 
 {
-    if (signal == SIGPIPE){
-        printf("Caught SIGPIPE, ignore and continue"); 
-        is_connected = 0;
-        // since we want it to ignore, eventually we can swap this function out for SIG_IGN instead...
-        // however, for the sake of testing,there's a print here. 
-        // SIGPIPE: Broken pipe: write to pipe with no readers
+    switch(signal){
+        case SIGPIPE:{
+            printf("Caught SIGPIPE, ignore and continue"); 
+            is_connected = 0;
+        }
+        case SIGINT:{
+            network_server_close(global_socket);
+        }
     }
+
 }
 
