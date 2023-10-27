@@ -12,6 +12,7 @@
 #include "data.h"
 #include "entry.h"
 #include "table.h"
+#include "table-private.h"
 
 /* Função para criar e inicializar uma nova tabela hash, com n
  * linhas (n = módulo da função hash).
