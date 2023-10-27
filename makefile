@@ -11,13 +11,16 @@ LIB_TABLE_R = $(addprefix $(OBJ_DIR)/,data.o entry.o list.o table.o)
 TABLE_CLIENT_R = $(addprefix $(OBJ_DIR)/,data.o \
 	entry.o \
 	table_client.o \
+	sdmessage.pb-c.o \
 	client_stub.o \
 	network_client.o)
 TABLE_SERVER_R = $(addprefix $(OBJ_DIR)/,data.o \
 	entry.o \
 	list.o \
 	table.o \
+	sdmessage.pb-c.o \
 	table_server.o \
+	table_skel.o \
 	network_server.o)
 
 # CFLAGS = -Wall -Werror -g -MMD -MP -MF -I $(INC_DIR)
