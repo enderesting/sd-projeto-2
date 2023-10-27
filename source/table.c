@@ -163,6 +163,29 @@ char **table_get_keys(struct table_t *table){
     return key_arr;
 }
 
+struct entry_t **table_get_entries(struct table_t *table){
+/*
+    allocate size
+    iterate through the lists
+    for each list, go through each node and add until empty
+*/
+    if(!table) return NULL;
+    struct entry_t** entries_arr = (struct entry_t**) calloc(table_size(table)+1, sizeof(struct entry_t*));
+    
+    int c = 0;
+    for(int i=0; i<table->size; i++){        
+        if (!table->lists[i]) return NULL;
+        struct node_t* node = table->lists[i]->head;
+        while (node) {
+            entries_arr = memcpy(entries_arr[c],node->entry,sizeof(struct entry_t*));
+            node = node->next;
+            c++;
+        }
+    }
+    return entries_arr;
+} 
+
+
 /* Função que liberta a memória ocupada pelo array de keys obtido pela 
  * função table_get_keys.
  * Retorna 0 (OK) ou -1 em caso de erro.
