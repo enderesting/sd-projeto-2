@@ -23,10 +23,12 @@ TABLE_SERVER_R = $(addprefix $(OBJ_DIR)/,data.o \
 	table_skel.o \
 	network_server.o)
 
-CC = gcc
 # CFLAGS = -Wall -Werror -g -MMD -MP -MF -I $(INC_DIR)
-CFLAGS = -Wall -Werror -g -I $(INC_DIR)  
+
+CC = gcc
+CFLAGS = -Wall -Werror -g -I $(INC_DIR)
 ARCHIVE = ar -rcs
+PROTO_LIB = -I/usr/local/include -L/usr/local/lib -lprotobuf-c
 
 all: libtable table_client table_server
 
@@ -34,10 +36,10 @@ libtable: $(LIB_TABLE_R)
 	$(ARCHIVE) $(OBJ_DIR)/$@.a $^
 
 table_client: $(TABLE_CLIENT_R)
-	$(CC) $^ -I/usr/local/include -L/usr/local/lib -lprotobuf-c $(OBJ_DIR)/libtable.a -o $@
+	$(CC) $^ $(PROTO_LIB) $(OBJ_DIR)/libtable.a -o $(BIN_DIR)/$@
 
 table_server: $(TABLE_SERVER_R)
-	$(CC) $^ -I/usr/local/include -L/usr/local/lib -lprotobuf-c $(OBJ_DIR)/libtable.a -o $@
+	$(CC) $^ $(PROTO_LIB) $(OBJ_DIR)/libtable.a -o $(BIN_DIR)/$@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -46,4 +48,4 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 include $(wildcard $(DEP_DIR)/*.d)
 
 clean:
-	rm $(OBJ_DIR)/*.o $(BIN_DIR)/test_*
+	rm $(OBJ_DIR)/*.o $(OBJ_DIR)/*.a $(BIN_DIR)/*
