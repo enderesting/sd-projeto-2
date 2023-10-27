@@ -13,6 +13,7 @@
 #include "network_server.h"
 #include "table_skel.h"
 #include "sdmessage.pb-c.h"
+#include "message_private.h"
 
 //tamanho maximo da mensagem enviada pelo cliente
 #define MAX_MSG 2048
@@ -130,25 +131,7 @@ MessageT *network_receive(int client_socket){
     // short buf_len = sizeof(uint16_t) + MAX_MSG;
     // void* buf = malloc(buf_len);
     // int nbytes;
-    
-    int read_len;
-    uint16_t response_len_ns;
-    if ((read_len = read(client_socket, &response_len_ns, sizeof(uint16_t))) !=
-            sizeof(response_len_ns)) { //CHECKTHIS: huh?
-        perror("Error reading message length from socket");
-        return NULL;
-    }
-    short response_len = ntohs(response_len_ns);
-
-    void* read_buf = malloc(response_len);
-    if ((read_len = read(client_socket, read_buf, response_len)) !=
-            response_len) {
-        perror("Error reading packed message from socket");
-        return NULL;
-    }
-    free(read_buf);
-
-    return message_t__unpack(NULL, response_len, read_buf);
+    return message_receive_all(client_socket);
 }
 
 /* A função network_send() deve:
@@ -157,18 +140,7 @@ MessageT *network_receive(int client_socket){
  * Retorna 0 (OK) ou -1 em caso de erro.
  */
 int network_send(int client_socket, MessageT *msg){
-    short buf_len = sizeof(uint16_t) + message_t__get_packed_size(msg);
-    void* buf = malloc(buf_len);
-    uint16_t buf_len_ns = htons(buf_len);
-    memcpy(buf, &buf_len_ns, sizeof(uint16_t));
-    message_t__pack(msg, buf + sizeof(uint16_t));
-
-    int write_len;
-    if ((write_len = write(client_socket, buf, buf_len)) != buf_len){
-        perror("Error writting to client socket");
-        return -1;
-    }
-    return 0;
+    return message_send_all(client_socket,msg);
 }
 
 /* Liberta os recursos alocados por network_server_init(), nomeadamente
