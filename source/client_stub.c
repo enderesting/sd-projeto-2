@@ -257,7 +257,7 @@ struct entry_t **rtable_get_table(struct rtable_t *rtable) {
     for (int i = 0; i < res->n_entries; i++) {
         entry_arr[i] = (struct entry_t*) malloc(sizeof(struct entry_t));
         entry_arr[i]->key = res->entries[i]->key;
-        entry_arr[i]->value->data = res->entries[i]->value.len;
+        entry_arr[i]->value->datasize = res->entries[i]->value.len;
         memcpy(&(entry_arr[i]->value->data), res->entries[i]->value.data, res->entries[i]->value.len);
     }
     entry_arr[res->n_entries] = NULL;
