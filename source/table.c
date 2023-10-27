@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "data.h"
+#include "entry.h"
 #include "table.h"
 
 /* Função para criar e inicializar uma nova tabela hash, com n
@@ -175,9 +177,21 @@ struct entry_t **table_get_entries(struct table_t *table){
     int c = 0;
     for(int i=0; i<table->size; i++){        
         if (!table->lists[i]) return NULL;
+
         struct node_t* node = table->lists[i]->head;
         while (node) {
-            entries_arr = memcpy(entries_arr[c],node->entry,sizeof(struct entry_t*));
+            char* key = node->entry->key;
+            int datasize = node->entry->value->datasize;
+            void* data = node->entry->value->data;
+
+            entries_arr[c] = (struct entry_t*) malloc(sizeof(struct entry_t*));
+            entries_arr[c]->key = strdup(key);
+
+            entries_arr[c]->value =
+                (struct data_t*) malloc(sizeof(struct data_t*));
+            entries_arr[c]->value->datasize = datasize;
+            memcpy(entries_arr[c]->value->data, data, datasize);
+
             node = node->next;
             c++;
         }

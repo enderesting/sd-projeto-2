@@ -58,4 +58,11 @@ char **table_get_keys(struct table_t *table);
  */
 int table_free_keys(char **keys);
 
+/* Função que constrói um array de entries com a cópia de todas as entries na
+ * tabela, colocando o último elemento do array com o valor NULL e
+ * reservando toda a memória necessária.
+ * Retorna o array de entries ou NULL em caso de erro.
+ */
+struct entry_t **table_get_entries(struct table_t *table);
+
 #endif
