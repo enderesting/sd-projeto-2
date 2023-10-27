@@ -105,11 +105,10 @@ int main(int argc, char *argv[]) {
                 char* key = keys[i];
                 while (key) {
                     printf("'%s'\n", key);
-                    free(key);
                     key = keys[++i];
                 }
 
-                free(keys);
+                rtable_free_keys(keys);
                 break;
             }
 
@@ -128,11 +127,10 @@ int main(int argc, char *argv[]) {
                 while (entry) {
                     printf("'%s': %.*s", entry->key, entry->value->datasize,
                            (char*) entry->value->data);
-                    entry_destroy(entry);
                     entry = entries[++i];
                 }
 
-                free(entries);
+                rtable_free_entries(entries);
                 break;
             }
 

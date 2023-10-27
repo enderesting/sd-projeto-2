@@ -1,5 +1,3 @@
-//network server
-
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
@@ -81,6 +79,7 @@ int network_server_init(short port){
  * A função não deve retornar, a menos que ocorra algum erro. Nesse
  * caso retorna -1.
  */
+
 int network_main_loop(int listening_socket, struct table_t *table){
     // handling SIGPIPE
     // sigaction(SIGPIPE, &(sigaction){sigpipe_handler}, NULL); // CHECKTHIS: should we use sigaction instead?
@@ -167,4 +166,3 @@ void signal_handler(int signal) //TODO: add header of this
     }
 
 }
-
