@@ -4,10 +4,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-// #include <signal.h>
-#include "inet.h"
-#include "table_server.h"
+#include <signal.h>
 
+#include "network_server.h"
+#include "table_server.h"
+#include "table_server-private.h"
+#include "table_skel.h"
+
+volatile sig_atomic_t terminated = 0;
+volatile sig_atomic_t connected = 0;
 
 int main(int argc, char *argv[]) {
     //processing args for port & n_list
@@ -15,10 +20,14 @@ int main(int argc, char *argv[]) {
         perror("Incorrect number of arguments");
         exit(-1);
     }
+
+    signal(SIGPIPE, sigint_handler);
+    signal(SIGINT, sigpipe_handler);
+
     //stores the chars after the first numerical digits are taken.
     //e.g. "123abc" -> it will store "abc"
     char* endptr = NULL;
-    int port = strtol(argv[1],endptr,10); //1024 <= port_range <= 98303 <- is this arbritrary? idk
+    int port = strtol(argv[1], &endptr, 10); //1024 <= port_range <= 98303 <- is this arbritrary? idk
     if (endptr){ // catches bad port and return. 
         printf("Bad port number");
         return -1;
@@ -38,16 +47,23 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
+    if (terminated) {
+        network_server_close(sockfd);
+        table_skel_destroy(table);
+        return 0;
+    }
+
     return network_main_loop(sockfd,table);
 }
 
-// void signal_handler(int signal)
-// {
-//     if (signal == SIGPIPE){
-//         printf("Caught SIGPIPE, ignore and continue"); 
-//         // since we want it to ignore, eventually we can swap this function out for SIG_IGN instead...
-//         // however, for the sake of testing,there's a print here. 
-//         // SIGPIPE: Broken pipe: write to pipe with no readers
-//     }
-// }
-// //TODO: handling SIGINT?
+void sigint_handler(int signal) {
+    terminated = 1;
+}
+
+void sigpipe_handler(int signal) {
+    // FIXME printf shouldn't be used in sig handlers
+    // https://stackoverflow.com/questions/16891019/how-to-avoid-using-printf-in-a-signal-handler/
+    // printf("Caught SIGPIPE, ignore and continue");
+
+    connected = 0;
+}
