@@ -8,13 +8,13 @@
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
-        perror("Incorrect number of arguments");
+        printf("Invalid args!\nUsage: table-client <server>:<port>\n");
         exit(-1);
     }
 
     //FIXME Error checking needs to be done in several parts of this function
 
-    char* address_port = argv[1];
+    //char* address_port = argv[1];
     struct rtable_t* rtable = rtable_connect(argv[1]);
 
     if (!rtable) {
@@ -22,14 +22,12 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
 
-    printf("SD's Client module:\n");
-
     int terminated = 0;
     while (!terminated) {
+        printf("Command:\n");
         char line[100]; //FIXME Remove magic number
         char* ret_fgets = fgets(line, 99, stdin);
-
-        switch (parse_operation(line)) {
+        switch (parse_operation(ret_fgets)) {
             case PUT: {
                 char* key = strtok(line, " ");
                 char* data = strtok(line, "\n");
