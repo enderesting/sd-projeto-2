@@ -24,13 +24,19 @@ int main(int argc, char *argv[]) {
 
     int terminated = 0;
     while (!terminated) {
-        printf("Command:\n");
+        printf("Command: ");
         char line[100]; //FIXME Remove magic number
-        char* ret_fgets = fgets(line, 99, stdin);
+        fgets(line, 99, stdin);
+        char* ret_fgets = strtok(line, "");
         switch (parse_operation(ret_fgets)) {
             case PUT: {
-                char* key = strtok(line, " ");
-                char* data = strtok(line, "\n");
+                char* key = strtok(NULL, " ");
+                char* data = strtok(NULL, " ");
+
+                if(!key || !data) {
+                    printf("Invalid arguments. Usage: put <key> <value>\n");
+                    break;
+                }
 
                 //XXX does data need to be null terminated? Doesn't seem so...
                 struct data_t* data_obj = data_create(strlen(data), data);
@@ -50,7 +56,13 @@ int main(int argc, char *argv[]) {
             }
 
             case GET: {
-                char* key = strtok(line, "\n");
+                char* key = strtok(NULL, " ");
+
+                if(!key) {
+                    printf("Invalid arguments. Usage: get <key>\n");
+                    break;
+                }
+                
                 struct data_t* data = rtable_get(rtable, key);
 
                 if (!data) {
@@ -67,7 +79,13 @@ int main(int argc, char *argv[]) {
             }
 
             case DEL: {
-                char* key = strtok(line, "\n");
+                char* key = strtok(NULL, " ");
+
+                if(!key) {
+                    printf("Invalid arguments. Usage: del <key>\n");
+                    break;
+                }
+
                 int ret_destroy = rtable_del(rtable, key);
 
                 if (!ret_destroy) {
@@ -134,11 +152,11 @@ int main(int argc, char *argv[]) {
 
             case QUIT:
                 terminated = 1;
-                printf("Quitting...\n");
+                printf("Bye, bye!\n");
                 break;
 
             default:
-                printf("Invalid command. Please try again.\n");
+                printf("Invalid command. Please try again.\nUsage: p[ut] <key> <value> | g[et] <key> | d[el] <key> | s[ize] | [get]k[eys] | [get]t[able] | q[uit]\n");
                 break;
         }
     }
@@ -152,24 +170,27 @@ int main(int argc, char *argv[]) {
 }
 
 operation parse_operation(char *op_str) {
-    if (strcmp(op_str, SIZE_STR) == 0) {
+    if (strcmp(op_str, SIZE_STR) == 0 || strcmp(op_str, "s\n") == 0) {
         return SIZE;
-    } else if (strcmp(op_str, DEL_STR) == 0) {
-        return DEL;
-    } else if (strcmp(op_str, GETKEYS_STR) == 0) {
+    } else if (strcmp(op_str, GETKEYS_STR) == 0 || strcmp(op_str, "k\n") == 0) {
         return GETKEYS;
-    } else if (strcmp(op_str, GETTABLE_STR) == 0) {
+    } else if (strcmp(op_str, GETTABLE_STR) == 0 || strcmp(op_str, "t\n") == 0) {
         return GETTABLE;
-    } else if (strcmp(op_str, QUIT_STR) == 0) {
+    } else if (strcmp(op_str, QUIT_STR) == 0 || strcmp(op_str, "q\n") == 0) {
         return QUIT;
     }
 
     char* operation = strtok(op_str, " ");
-    if (strcmp(operation, PUT_STR) == 0) {
+    if (strcmp(operation, PUT_STR) == 0 || strcmp(operation, "p") == 0 
+    || strcmp(operation, "put\n") == 0 || strcmp(operation, "p\n") == 0) {
         return PUT;
-    } else if (strcmp(operation, GET_STR) == 0) {
+    } else if (strcmp(operation, GET_STR) == 0 || strcmp(operation, "g") == 0
+    || strcmp(operation, "get\n") == 0 || strcmp(operation, "g\n") == 0) {
         return GET;
-    }
+    } else if (strcmp(operation, DEL_STR) == 0 || strcmp(operation, "d") == 0
+    || strcmp(operation, "del\n") == 0 || strcmp(operation, "d\n") == 0) {
+        return DEL;
+    } 
 
     return INVALID;
 }
