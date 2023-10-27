@@ -31,7 +31,8 @@ int main(int argc, char *argv[]) {
         switch (parse_operation(ret_fgets)) {
             case PUT: {
                 char* key = strtok(NULL, " ");
-                char* data = strtok(NULL, " ");
+                char* data_temp = strtok(NULL, " ");
+                char* data = strtok(data_temp, "\n");
 
                 if(!key || !data) {
                     printf("Invalid arguments. Usage: put <key> <value>\n");
@@ -56,7 +57,8 @@ int main(int argc, char *argv[]) {
             }
 
             case GET: {
-                char* key = strtok(NULL, " ");
+                char* key_temp = strtok(NULL, " ");
+                char* key = strtok(key_temp, "\n");
 
                 if(!key) {
                     printf("Invalid arguments. Usage: get <key>\n");
@@ -79,7 +81,8 @@ int main(int argc, char *argv[]) {
             }
 
             case DEL: {
-                char* key = strtok(NULL, " ");
+                char* key_temp = strtok(NULL, " ");
+                char* key = strtok(key_temp, "\n");
 
                 if(!key) {
                     printf("Invalid arguments. Usage: del <key>\n");
