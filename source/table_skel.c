@@ -2,6 +2,9 @@
 #include "data.h"
 #include "sdmessage.pb-c.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 /* Inicia o skeleton da tabela.
  * O main() do servidor deve chamar esta função antes de poder usar a
  * função invoke(). O parâmetro n_lists define o número de listas a
@@ -31,7 +34,8 @@ int invoke(MessageT *msg, struct table_t *table){
     switch (msg->opcode){
         case MESSAGE_T__OPCODE__OP_PUT:{
             int entry_size = msg->entry->value.len;
-            struct data_t *value = data_create(entry_size, msg->entry->value.data); // CHECKTHIS: is this the correct way of doing it
+            // CHECKTHIS: is this the correct way of doing it
+            struct data_t *value = data_create(entry_size, msg->entry->value.data);
             if (!entry_size || !value){
                 new_msg = respond_bad_op(new_msg);
                 break;
@@ -39,10 +43,10 @@ int invoke(MessageT *msg, struct table_t *table){
             res = table_put(table,msg->entry->key,value);
             if (res == 0){
                 new_msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
-            }
-            else new_msg = respond_err_in_exec(new_msg);
+            } else new_msg = respond_err_in_exec(new_msg);
             break;
         }
+
         case MESSAGE_T__OPCODE__OP_GET:{
             char* key = msg->key;
             if (!key){
@@ -51,6 +55,8 @@ int invoke(MessageT *msg, struct table_t *table){
             }
             struct data_t* gotten_value = table_get(table,msg->key);
             if (gotten_value){
+                // XXX Is it correct to implement PBCBinaryData this way?
+                // Since v is being alloc'ed in the stack
                 struct ProtobufCBinaryData v;
                 v.len = gotten_value->datasize;
                 v.data = gotten_value->data;
@@ -61,19 +67,21 @@ int invoke(MessageT *msg, struct table_t *table){
             else new_msg = respond_err_in_exec(new_msg);
             break;
         }
+
         case MESSAGE_T__OPCODE__OP_DEL:{
-            res = table_remove(table,msg->key);
             char* key = msg->key;
             if (!key){
                 new_msg = respond_bad_op(new_msg);
                 break;
             }
+            res = table_remove(table,msg->key);
             if (res == 0){
                 new_msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
             }
             else new_msg = respond_err_in_exec(new_msg);
             break;
         }
+
         case MESSAGE_T__OPCODE__OP_SIZE:{
             res = table_size(table);
             if (res>=0){
@@ -83,6 +91,7 @@ int invoke(MessageT *msg, struct table_t *table){
             else new_msg = respond_err_in_exec(new_msg);
             break;
         }
+
         case MESSAGE_T__OPCODE__OP_GETKEYS:{
             char** keys = table_get_keys(table);
             if (keys){
@@ -94,15 +103,18 @@ int invoke(MessageT *msg, struct table_t *table){
             else new_msg = respond_err_in_exec(new_msg);
             break;
         }
+
         case MESSAGE_T__OPCODE__OP_GETTABLE:{
             int tab_size = table_size(table);
             struct entry_t** old_entries = table_get_entries(table);
             if (old_entries){
-                struct _EntryT** entries = (struct _EntryT*) malloc(tab_size+1,sizeof(struct _EntryT*));
+                EntryT** entries = (EntryT**) calloc(tab_size+1,
+                    sizeof(struct _EntryT*));
                 for (int i=0; i<tab_size; i++){
-                    entries[i]->key = old_entries[i]->key;
+                    entries[i]->key = strdup(old_entries[i]->key);
                     entries[i]->value.len = old_entries[i]->value->datasize;
-                    entries[i]->value.data = old_entries[i]->value->data;
+                    memcpy(entries[i]->value.data, old_entries[i]->value->data,
+                           old_entries[i]->value->datasize);
                 }
                 new_msg->n_entries = tab_size;
                 new_msg->entries = entries;
@@ -113,6 +125,9 @@ int invoke(MessageT *msg, struct table_t *table){
             free(old_entries);
             break;
         }
+
+        default:
+            break;
     }
 
     if(res>=0){
@@ -134,4 +149,5 @@ MessageT* respond_bad_op(MessageT* msg){
 MessageT* respond_err_in_exec(MessageT* msg){
     msg->opcode = MESSAGE_T__OPCODE__OP_ERROR;
     msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
+    return msg;
 }
