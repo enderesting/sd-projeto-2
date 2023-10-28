@@ -1,9 +1,7 @@
-#include "table_skel.h"
-#include "data.h"
-#include "sdmessage.pb-c.h"
-
 #include <stdlib.h>
 #include <string.h>
+#include "table_skel.h"
+
 
 /* Inicia o skeleton da tabela.
  * O main() do servidor deve chamar esta função antes de poder usar a

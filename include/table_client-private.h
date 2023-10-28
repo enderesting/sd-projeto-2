@@ -2,7 +2,7 @@
 #define _TABLE_CLIENT_PRIVATE_H
 #include <signal.h>
 
-volatile sig_atomic_t connected_to_server = 0;
+extern volatile sig_atomic_t connected_to_server;
 
 void sigpipe_handler(int sig);
 

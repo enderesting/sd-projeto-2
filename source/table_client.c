@@ -1,13 +1,18 @@
-#include "client_stub.h"
-#include "data.h"
-#include "entry.h"
-#include "table_client-private.h"
-#include "table_client.h"
-#include "table_server-private.h"
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "table_client.h"
+// #include "client_stub.h"
+// #include "data.h"
+// #include "entry.h"
+// #include "table_client-private.h"
+
+// #include "table_server.h"
+// #include "table_server-private.h"
+
+volatile sig_atomic_t connected_to_server = 0;
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
@@ -200,4 +205,9 @@ operation parse_operation(char *op_str) {
     } 
 
     return INVALID;
+}
+
+
+void sigpipe_handler(int sig) {
+    connected_to_server = 0;
 }

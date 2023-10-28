@@ -6,10 +6,11 @@
 #include <string.h>
 #include <signal.h>
 
-#include "network_server.h"
 #include "table_server.h"
-#include "table_server-private.h"
-#include "table_skel.h"
+
+volatile sig_atomic_t terminated;
+volatile sig_atomic_t connected;
+
 
 int main(int argc, char *argv[]) {
     //processing args for port & n_list

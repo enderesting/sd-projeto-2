@@ -2,12 +2,9 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "client_stub-private.h"
-#include "data.h"
-#include "entry.h"
-#include "network_client.h"
-#include "sdmessage.pb-c.h"
-#include "table_client-private.h"
+// #include "data.h"
+#include "client_stub.h"
+// #include "table_client-private.h"
 
 /* Função para estabelecer uma associação entre o cliente e o servidor,
  * em que address_port é uma string no formato <hostname>:<port>.
