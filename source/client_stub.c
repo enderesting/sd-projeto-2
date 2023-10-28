@@ -108,7 +108,8 @@ struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
     msg->key = strdup(key);
 
     MessageT* res = network_send_receive(rtable, msg);
-
+    
+    message_t__free_unpacked(msg, NULL);
     if (res->opcode == MESSAGE_T__OPCODE__OP_BAD) {
         message_t__free_unpacked(res, NULL);
         printf("Your function call was given incorrect and/or missing parameters\n");
@@ -126,7 +127,6 @@ struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
     data->data = malloc(data->datasize);
     memcpy(data->data, res->value.data, res->value.len);
 
-    message_t__free_unpacked(msg, NULL);
     message_t__free_unpacked(res, NULL);
 
     return data;
@@ -158,9 +158,8 @@ int rtable_del(struct rtable_t *rtable, char *key) {
         message_t__free_unpacked(res, NULL);
         return -1;
     }
-
     else {
-        free(rtable_get(rtable, key)); 
+        // free(rtable_get(rtable, key)); 
         message_t__free_unpacked(res, NULL);
         return 0;
     }
