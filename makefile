@@ -50,4 +50,4 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 include $(wildcard $(DEP_DIR)/*.d)
 
 clean:
-	rm $(OBJ_DIR)/*.o $(OBJ_DIR)/*.a $(BIN_DIR)/*
+	rm $(OBJ_DIR)/*.o $(LIB_DIR)/*.a $(BIN_DIR)/*

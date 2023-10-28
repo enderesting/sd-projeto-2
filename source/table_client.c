@@ -70,10 +70,7 @@ int main(int argc, char *argv[]) {
                 struct data_t* data = rtable_get(rtable, key);
 
                 if (!data) {
-                    printf(
-                        "There was an error retrieving data from key %s",
-                        key
-                    );
+                    printf("Error in rtable_get or key not found!\n");
                     break;
                 }
 
@@ -94,9 +91,9 @@ int main(int argc, char *argv[]) {
                 int ret_destroy = rtable_del(rtable, key);
 
                 if (!ret_destroy) {
-                    printf("Key %s was destroyed\n", key);
+                    printf("Entry removed\n");
                 } else {
-                    printf("Key %s does not exist or there was an error\n", key);
+                    printf("Error in rtable_del or key not found!\n");
                 }
 
                 break;
