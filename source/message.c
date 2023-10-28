@@ -17,8 +17,8 @@
 //TODO: actually implement this so it has the ability to send/read multiple packets
 //returns -1 on error and 0 otherwise.
 int message_send_all(int other_socket, MessageT *msg){
-    size_t content_size = message_t__get_packed_size(msg);
-    size_t content_size_ns = htons(content_size);
+    short content_size = message_t__get_packed_size(msg);
+    short content_size_ns = htons(content_size);
 
     //allocate buffer
     u_int16_t* size_buf = (u_int16_t*)malloc(sizeof(u_int16_t));
@@ -71,7 +71,8 @@ MessageT *message_receive_all(int other_socket){
 
 
     //reading size
-    size_t response_size_ns;
+    short response_size_ns;
+
     int read_len;
     if ((read_len = read(other_socket, &response_size_ns, sizeof(uint16_t))) !=
             sizeof(response_size_ns)) {
@@ -98,7 +99,7 @@ MessageT *message_receive_all(int other_socket){
         perror("Error reading packed message from socket");
         return NULL;
     }
-    free(response_buf);
+    // free(response_buf);
 
     return message_t__unpack(NULL, response_size, response_buf);
 }

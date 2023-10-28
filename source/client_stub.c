@@ -73,8 +73,6 @@ int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {
     msg->entry = ent;
 
     MessageT* res = network_send_receive(rtable, msg);
-    entry_t__free_unpacked(ent, NULL);
-    message_t__free_unpacked(msg, NULL);;
 
     if (res->opcode == MESSAGE_T__OPCODE__OP_BAD) {
         message_t__free_unpacked(res, NULL);
@@ -88,6 +86,8 @@ int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {
         return -1;
     }
 
+    entry_t__free_unpacked(ent, NULL);
+    message_t__free_unpacked(msg, NULL);
     message_t__free_unpacked(res, NULL);
     return 0;
 }
