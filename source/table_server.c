@@ -44,13 +44,12 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    if (terminated) {
-        network_server_close(sockfd);
-        table_skel_destroy(table);
-        return 0;
-    }
+    int ret_net = network_main_loop(sockfd,table);
 
-    return network_main_loop(sockfd,table);
+    network_server_close(sockfd);
+    table_skel_destroy(table);
+
+    return ret_net;
 }
 
 void sigint_handler(int signal) {
