@@ -23,7 +23,7 @@ struct rtable_t *rtable_connect(char *address_port) {
     char* server_address = strndup(address_port, hostname_len);
     int server_port = atoi(colon + 1);
 
-    struct rtable_t* rtable = malloc(sizeof(struct rtable_t*));
+    struct rtable_t* rtable = malloc(sizeof(struct rtable_t));
 
     rtable->server_address = server_address;
     rtable->server_port = server_port;
@@ -57,12 +57,13 @@ int rtable_disconnect(struct rtable_t *rtable) {
 int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {
 
     if (!rtable) return -1;
-    MessageT* msg = (MessageT*) calloc(1, sizeof(struct MessageT*));
+    MessageT* msg = (MessageT*) calloc(1, sizeof(MessageT)+1);
     message_t__init(msg);
-    EntryT* ent = (EntryT*) calloc(1, sizeof(struct EntryT*));
+    EntryT* ent = (EntryT*) calloc(1, sizeof(EntryT)+1);
     entry_t__init(ent);
     ent->key = entry->key;
-    memcpy(&(ent->value.data), entry->value->data, entry->value->datasize);
+    ent->value.data = entry->value->data;
+    //memcpy(&(ent->value.data), entry->value->data, entry->value->datasize);
     ent->value.len = entry->value->datasize;
     msg->opcode = MESSAGE_T__OPCODE__OP_PUT;
     msg->c_type = MESSAGE_T__C_TYPE__CT_ENTRY;
@@ -95,7 +96,7 @@ struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
 
     if(!rtable) return NULL;
 
-    MessageT* msg = (MessageT*) calloc(1, sizeof(struct MessageT*));
+    MessageT* msg = (MessageT*) calloc(1, sizeof(MessageT));
     message_t__init(msg);
     msg->opcode = MESSAGE_T__OPCODE__OP_GET;
     msg->c_type = MESSAGE_T__C_TYPE__CT_KEY;
@@ -117,7 +118,7 @@ struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
         return NULL;
     }
 
-    struct data_t* data = (struct data_t*) malloc(sizeof(struct data_t*));
+    struct data_t* data = (struct data_t*) malloc(sizeof(struct data_t));
     data->datasize = res->value.len;
     data->data = strndup((char*) res->value.data, data->datasize);
 
@@ -132,7 +133,7 @@ struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
  */
 int rtable_del(struct rtable_t *rtable, char *key) {
 
-    MessageT* msg = (MessageT*) calloc(1, sizeof(struct MessageT*));
+    MessageT* msg = (MessageT*) calloc(1, sizeof(MessageT));
     message_t__init(msg);
     msg->opcode = MESSAGE_T__OPCODE__OP_DEL;
     msg->c_type = MESSAGE_T__C_TYPE__CT_KEY;
@@ -166,7 +167,7 @@ int rtable_size(struct rtable_t *rtable) {
 
     if(!rtable) return -1;
 
-    MessageT* msg = (MessageT*) calloc(1, sizeof(struct MessageT*));
+    MessageT* msg = (MessageT*) calloc(1, sizeof(MessageT));
     message_t__init(msg);
     msg->opcode = MESSAGE_T__OPCODE__OP_SIZE;
     msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT;
@@ -194,7 +195,7 @@ char **rtable_get_keys(struct rtable_t *rtable) {
 
     if(!rtable) return NULL;
 
-    MessageT* msg = (MessageT*) calloc(1, sizeof(struct MessageT*));
+    MessageT* msg = (MessageT*) calloc(1, sizeof(MessageT));
     message_t__init(msg);
     msg->opcode = MESSAGE_T__OPCODE__OP_GETKEYS;
     msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
@@ -240,7 +241,7 @@ struct entry_t **rtable_get_table(struct rtable_t *rtable) {
 
     if(!rtable) return NULL;
 
-    MessageT* msg = (MessageT*) calloc(1, sizeof(struct MessageT*));
+    MessageT* msg = (MessageT*) calloc(1, sizeof(MessageT));
     message_t__init(msg);
     msg->opcode = MESSAGE_T__OPCODE__OP_GETTABLE;
     msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
