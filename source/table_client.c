@@ -75,7 +75,8 @@ int main(int argc, char *argv[]) {
                 }
 
                 printf("%.*s\n", data->datasize, (char*) data->data);
-                data_destroy(data);
+                free(data->data);
+                free(data);
                 break;
             }
 
@@ -117,12 +118,10 @@ int main(int argc, char *argv[]) {
                     break;
                 }
 
-                printf("Keys in table:\n");
-
                 int i = 0;
                 char* key = keys[i];
                 while (key) {
-                    printf("'%s'\n", key);
+                    printf("%s\n", key);
                     key = keys[++i];
                 }
 
@@ -138,12 +137,12 @@ int main(int argc, char *argv[]) {
                     break;
                 }
 
-                printf("Entries in table:\n");
+                //printf("Entries in table:\n");
 
                 int i = 0;
                 struct entry_t* entry = entries[i];
                 while (entry) {
-                    printf("'%s': %.*s", entry->key, entry->value->datasize,
+                    printf("%s: %.*s\n", entry->key, entry->value->datasize,
                            (char*) entry->value->data);
                     entry = entries[++i];
                 }

@@ -121,9 +121,10 @@ struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
         return NULL;
     }
 
-    struct data_t* data = (struct data_t*) malloc(sizeof(struct data_t*));
+    struct data_t* data = (struct data_t*) malloc(sizeof(struct data_t));
     data->datasize = res->value.len;
-    data->data = strndup((char*) res->value.data, data->datasize);
+    data->data = malloc(data->datasize);
+    memcpy(data->data, res->value.data, res->value.len);
 
     message_t__free_unpacked(msg, NULL);
     message_t__free_unpacked(res, NULL);
@@ -159,7 +160,7 @@ int rtable_del(struct rtable_t *rtable, char *key) {
     }
 
     else {
-        free(rtable_get(rtable, key));
+        free(rtable_get(rtable, key)); 
         message_t__free_unpacked(res, NULL);
         return 0;
     }
@@ -261,9 +262,11 @@ struct entry_t **rtable_get_table(struct rtable_t *rtable) {
     struct entry_t** entry_arr = (struct entry_t**) calloc(res->n_entries + 1, sizeof(struct entry_t*));
     for (int i = 0; i < res->n_entries; i++) {
         entry_arr[i] = (struct entry_t*) malloc(sizeof(struct entry_t));
-        entry_arr[i]->key = res->entries[i]->key;
+        entry_arr[i]->value = (struct data_t*) malloc(sizeof(struct data_t));
+        entry_arr[i]->key = strdup(res->entries[i]->key);
         entry_arr[i]->value->datasize = res->entries[i]->value.len;
-        memcpy(&(entry_arr[i]->value->data), res->entries[i]->value.data, res->entries[i]->value.len);
+        entry_arr[i]->value->data = malloc(res->entries[i]->value.len);
+        memcpy((entry_arr[i]->value->data), res->entries[i]->value.data, res->entries[i]->value.len);
     }
     entry_arr[res->n_entries] = NULL;
 
@@ -279,6 +282,9 @@ void rtable_free_entries(struct entry_t **entries) {
     int i = 0;
     struct entry_t *entry_ptr = entries[i];
     while (entry_ptr != NULL) {
+        free(entry_ptr->value->data);
+        free(entry_ptr->value);
+        free(entry_ptr->key);
         free(entry_ptr);
         i++;
         entry_ptr = entries[i];
