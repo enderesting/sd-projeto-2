@@ -11,9 +11,6 @@
 #include "table_server-private.h"
 #include "table_skel.h"
 
-volatile sig_atomic_t terminated = 0;
-volatile sig_atomic_t connected = 0;
-
 int main(int argc, char *argv[]) {
     //processing args for port & n_list
     if (argc != 3) {
@@ -61,9 +58,5 @@ void sigint_handler(int signal) {
 }
 
 void sigpipe_handler(int signal) {
-    // FIXME printf shouldn't be used in sig handlers
-    // https://stackoverflow.com/questions/16891019/how-to-avoid-using-printf-in-a-signal-handler/
-    // printf("Caught SIGPIPE, ignore and continue");
-
     connected = 0;
 }
