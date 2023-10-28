@@ -40,7 +40,7 @@ int message_send_all(int other_socket, MessageT *msg){
         perror("Error sending msg size to socket");
         return -1;
     }
-    total_write_len += write_len;
+    total_write_len = write_len;
 
     //send the msg
 
@@ -88,7 +88,7 @@ MessageT *message_receive_all(int other_socket){
     //reading size
     short response_size_ns;
 
-    int total_read_len,read_len;
+    int read_len;
     if ((read_len = read(other_socket, &response_size_ns, sizeof(uint16_t))) !=
             sizeof(response_size_ns)) {
         perror("Error reading message length from socket");
