@@ -41,11 +41,11 @@ int main(int argc, char *argv[]) {
 
                 //XXX does data need to be null terminated? Doesn't seem so...
                 struct data_t* data_obj = data_create(strlen(data), data);
-                struct entry_t* entry = entry_create(key, data_obj);
+                struct entry_t* entry = entry_create(strdup(key), data_dup(data_obj));
 
                 int ret_put = rtable_put(rtable, entry);
                 if (ret_put == 0) {
-                    printf("Entry with key \"%s\" was added", key);
+                    printf("Entry with key \"%s\" was added\n", key);
                 } else {
                     printf(
                         "There was an error adding entry with key \"%s\"", key
@@ -53,6 +53,8 @@ int main(int argc, char *argv[]) {
                 }
 
                 entry_destroy(entry);
+                free(data_obj);
+                //cant use data_destroy here, becuase data->data is a reference that is freed elsewhere
                 break;
             }
 

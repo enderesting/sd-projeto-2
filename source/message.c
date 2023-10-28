@@ -99,7 +99,7 @@ MessageT *message_receive_all(int other_socket){
         perror("Error reading packed message from socket");
         return NULL;
     }
-    // free(response_buf);
-
-    return message_t__unpack(NULL, response_size, response_buf);
+    MessageT* ret = message_t__unpack(NULL, response_size, response_buf);
+    free(response_buf);
+    return ret;
 }

@@ -65,9 +65,10 @@ int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {
     EntryT* ent = (EntryT*) calloc(1, sizeof(EntryT));
     entry_t__init(ent);
     ent->key = strdup(entry->key);
-    ent->value.data = entry->value->data;
-    // memcpy(&(ent->value.data), entry->value->data, entry->value->datasize);
     ent->value.len = entry->value->datasize;
+    ent->value.data = malloc(ent->value.len);
+    // ent->value.data = entry->value->data;//doesnt copy it in
+    memcpy(ent->value.data, entry->value->data, entry->value->datasize);
     msg->opcode = MESSAGE_T__OPCODE__OP_PUT;
     msg->c_type = MESSAGE_T__C_TYPE__CT_ENTRY;
     msg->entry = ent;
@@ -86,7 +87,8 @@ int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {
         return -1;
     }
 
-    entry_t__free_unpacked(ent, NULL);
+
+    // entry_t__free_unpacked(ent, NULL); //offending free fails
     message_t__free_unpacked(msg, NULL);
     message_t__free_unpacked(res, NULL);
     return 0;
