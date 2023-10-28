@@ -107,6 +107,7 @@ int invoke(MessageT *msg, struct table_t *table){
                 EntryT** entries = (EntryT**) calloc(tab_size+1,
                     sizeof(struct _EntryT*));
                 for (int i=0; i<tab_size; i++){
+                    entry_t__init(entries[i]); 
                     entries[i]->key = strdup(old_entries[i]->key);
                     entries[i]->value.len = old_entries[i]->value->datasize;
                     memcpy(entries[i]->value.data, old_entries[i]->value->data,

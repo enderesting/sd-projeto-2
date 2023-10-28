@@ -16,63 +16,89 @@
 
 //TODO: actually implement this so it has the ability to send/read multiple packets
 //returns -1 on error and 0 otherwise.
-int message_send_all(int client_socket, MessageT *msg){
-    short buf_len = sizeof(uint16_t) + message_t__get_packed_size(msg);
+int message_send_all(int other_socket, MessageT *msg){
+    size_t content_size = message_t__get_packed_size(msg);
+    size_t content_size_ns = htons(content_size);
 
-    void* buf = malloc(buf_len); //stored in here
-    uint16_t buf_len_ns = htons(buf_len);
+    //allocate buffer
+    u_int16_t* size_buf = (u_int16_t*)malloc(sizeof(u_int16_t));
+    u_int8_t* content_buf = (u_int8_t*)calloc(content_size,sizeof(u_int8_t));
 
-    memcpy(buf, &buf_len_ns, sizeof(uint16_t));
-    message_t__pack(msg, buf + sizeof(uint16_t)); 
+    //copy content into buffer
+    memcpy(size_buf,&content_size_ns,sizeof(u_int16_t));
+    message_t__pack(msg,content_buf);
 
-    while(buf_len > MAX_MSG){
-        int write_len;
-        if ((write_len = write(client_socket, buf, MAX_MSG)) != MAX_MSG){
-            perror("Error writting to client socket");
-            return -1;
-        }
-        buf += MAX_MSG;
-        buf_len -= MAX_MSG;
-    }
-
-
+    //send the msg size first
     int write_len;
-    if ((write_len = write(client_socket, buf, buf_len)) != buf_len){
-        perror("Error writting to client socket");
+    if ((write_len = write(other_socket, size_buf, sizeof(u_int16_t))) != sizeof(u_int16_t)){
+        perror("Error sending msg size to socket");
         return -1;
     }
 
+    //send the msg
+
+
+    // short buf_len = sizeof(uint16_t) + message_t__get_packed_size(msg);
+
+    // void* buf = malloc(buf_len); //stored in here
+    // uint16_t buf_len_ns = htons(buf_len);
+
+    // memcpy(buf, &buf_len_ns, sizeof(uint16_t));
+    // message_t__pack(msg, buf + sizeof(uint16_t)); 
+
+    // int write_len;
+    while(content_size > MAX_MSG){
+        if ((write_len = write(other_socket, content_buf, MAX_MSG)) != MAX_MSG){
+            perror("Error writing size to client socket");
+            return -1;
+        }
+        content_buf += MAX_MSG;     // move pointer till after the MAX_MSG written
+        content_size -= MAX_MSG;    // the amount needed to send is smaller.
+    }
+
+
+    if ((write_len = write(other_socket, content_buf, content_size)) != content_size){
+        perror("Error writing content to client socket");
+        return -1;
+    }
+
+    free(content_buf);
+    free(size_buf);
     return 0;
 }
 
-MessageT *message_receive_all(int client_socket){
+MessageT *message_receive_all(int other_socket){
+
+
+    //reading size
+    size_t response_size_ns;
     int read_len;
-    uint16_t response_len_ns;
-    if ((read_len = read(client_socket, &response_len_ns, sizeof(uint16_t))) !=
-            sizeof(response_len_ns)) { //CHECKTHIS: huh?
+    if ((read_len = read(other_socket, &response_size_ns, sizeof(uint16_t))) !=
+            sizeof(response_size_ns)) {
         perror("Error reading message length from socket");
         return NULL;
     }
-    short response_len = ntohs(response_len_ns);
+    short response_size = ntohs(response_size_ns);
 
-    void* read_buf = malloc(response_len);
-    
-    while(response_len > MAX_MSG){ // if message is bigger than max
-        if ((read_len = read(client_socket, read_buf, MAX_MSG)) !=
+
+    //reading
+    u_int8_t* response_buf = (u_int8_t*)calloc(response_size,sizeof(u_int8_t));
+    while(response_size > MAX_MSG){ // if message is bigger than max
+        if ((read_len = read(other_socket, response_buf, MAX_MSG)) !=
                 MAX_MSG) {
             perror("Error reading packed message from socket");
             return NULL;
         }
-        read_buf += MAX_MSG;
-        response_len -= MAX_MSG;
+        response_buf += MAX_MSG;
+        response_size -= MAX_MSG;
     }
     
-    if ((read_len = read(client_socket, read_buf, response_len)) !=
-            response_len) {
+    if ((read_len = read(other_socket, response_buf, response_size)) !=
+            response_size) {
         perror("Error reading packed message from socket");
         return NULL;
     }
-    free(read_buf);
+    free(response_buf);
 
-    return message_t__unpack(NULL, response_len, read_buf);
+    return message_t__unpack(NULL, response_size, response_buf);
 }

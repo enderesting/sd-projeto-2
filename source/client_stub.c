@@ -23,13 +23,16 @@ struct rtable_t *rtable_connect(char *address_port) {
     char* server_address = strndup(address_port, hostname_len);
     int server_port = atoi(colon + 1);
 
-    struct rtable_t* rtable = malloc(sizeof(struct rtable_t*));
+    struct rtable_t* rtable = (struct rtable_t*) malloc(sizeof(struct rtable_t));
 
     rtable->server_address = server_address;
     rtable->server_port = server_port;
 
     //FIXME Error checking
-    network_connect(rtable);
+    if(network_connect(rtable)<0){
+        printf("Error in connecting to table.");
+        return NULL;
+    }
 
     return rtable;
 }
@@ -57,12 +60,13 @@ int rtable_disconnect(struct rtable_t *rtable) {
 int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {
 
     if (!rtable) return -1;
-    MessageT* msg = (MessageT*) calloc(1, sizeof(struct MessageT*));
+    MessageT* msg = (MessageT*) calloc(1, sizeof(MessageT));
     message_t__init(msg);
-    EntryT* ent = (EntryT*) calloc(1, sizeof(struct EntryT*));
+    EntryT* ent = (EntryT*) calloc(1, sizeof(EntryT));
     entry_t__init(ent);
-    ent->key = entry->key;
-    memcpy(&(ent->value.data), entry->value->data, entry->value->datasize);
+    ent->key = strdup(entry->key);
+    ent->value.data = entry->value->data;
+    // memcpy(&(ent->value.data), entry->value->data, entry->value->datasize);
     ent->value.len = entry->value->datasize;
     msg->opcode = MESSAGE_T__OPCODE__OP_PUT;
     msg->c_type = MESSAGE_T__C_TYPE__CT_ENTRY;

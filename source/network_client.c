@@ -66,15 +66,15 @@ MessageT *network_send_receive(struct rtable_t *rtable, MessageT *msg) {
     int sockfd = rtable->sockfd;
 
     if (message_send_all(sockfd,msg)<0){
-        perror("Error writting to client socket");
+        perror("Error writing to client socket");
         network_close(rtable);
         return NULL;
     }
 
-    MessageT* received_msg = message_receive_all(sockfd);
+    MessageT* received_msg = message_receive_all(rtable->sockfd);
     if (!received_msg){
-        perror("Error reading message length from socket");
-        etwork_close(rtable);
+        perror("Error reading message from socket");
+        network_close(rtable);
         return NULL;
     }
 

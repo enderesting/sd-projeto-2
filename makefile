@@ -12,6 +12,7 @@ TABLE_CLIENT_R = $(addprefix $(OBJ_DIR)/,data.o \
 	entry.o \
 	table_client.o \
 	sdmessage.pb-c.o \
+	message.o\
 	client_stub.o \
 	network_client.o)
 TABLE_SERVER_R = $(addprefix $(OBJ_DIR)/,data.o \
@@ -19,6 +20,7 @@ TABLE_SERVER_R = $(addprefix $(OBJ_DIR)/,data.o \
 	list.o \
 	table.o \
 	sdmessage.pb-c.o \
+	message.o\
 	table_server.o \
 	table_skel.o \
 	network_server.o)
@@ -36,10 +38,10 @@ libtable: $(LIB_TABLE_R)
 	$(ARCHIVE) $(LIB_DIR)/$@.a $^
 
 table_client: $(TABLE_CLIENT_R)
-	$(CC) $^ $(PROTO_LIB) $(OBJ_DIR)/libtable.a -o $(BIN_DIR)/$@
+	$(CC) $^ $(PROTO_LIB) $(LIB_DIR)/libtable.a -o $(BIN_DIR)/$@
 
 table_server: $(TABLE_SERVER_R)
-	$(CC) $^ $(PROTO_LIB) $(OBJ_DIR)/libtable.a -o $(BIN_DIR)/$@
+	$(CC) $^ $(PROTO_LIB) $(LIB_DIR)/libtable.a -o $(BIN_DIR)/$@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
