@@ -36,10 +36,10 @@ libtable: $(LIB_TABLE_R)
 	$(ARCHIVE) $(LIB_DIR)/$@.a $^
 
 table_client: $(TABLE_CLIENT_R)
-	$(CC) $^ $(PROTO_LIB) $(OBJ_DIR)/libtable.a -o $(BIN_DIR)/$@
+	$(CC) $^ $(PROTO_LIB) $(LIB_DIR)/libtable.a -o $(BIN_DIR)/$@
 
 table_server: $(TABLE_SERVER_R)
-	$(CC) $^ $(PROTO_LIB) $(OBJ_DIR)/libtable.a -o $(BIN_DIR)/$@
+	$(CC) $^ $(PROTO_LIB) $(LIB_DIR)/libtable.a -o $(BIN_DIR)/$@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
