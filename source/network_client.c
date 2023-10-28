@@ -11,6 +11,7 @@
 
 #include "client_stub.h"
 #include "network_client.h"
+#include "message_private.h"
 #include "sdmessage.pb-c.h"
 #include "client_stub-private.h"
 
@@ -61,44 +62,21 @@ int network_connect(struct rtable_t *rtable) {
  */
 MessageT *network_send_receive(struct rtable_t *rtable, MessageT *msg) {
     //FIXME error handling is not implemented
-
+    
     int sockfd = rtable->sockfd;
 
-    short buf_len = sizeof(uint16_t) + message_t__get_packed_size(msg);
-    void* buf = malloc(buf_len);
-    uint16_t buf_len_ns = htons(buf_len);
-    memcpy(buf, &buf_len_ns, sizeof(uint16_t));
-    message_t__pack(msg, buf + sizeof(uint16_t));
-
-    int write_len;
-    if ((write_len = write(sockfd, buf, buf_len)) != buf_len){
-        perror("Error writting to client socket");
+    if (message_send_all(sockfd,msg)<0){
+        perror("Error writing to client socket");
         network_close(rtable);
         return NULL;
     }
 
-    int read_len;
-    uint16_t response_len_ns;
-    if ((read_len = read(sockfd, &response_len_ns, sizeof(uint16_t))) !=
-            sizeof(response_len_ns)) {
-        perror("Error reading message length from socket");
+    MessageT* received_msg = message_receive_all(rtable->sockfd);
+    if (!received_msg){
+        perror("Error reading message from socket");
         network_close(rtable);
         return NULL;
     }
-    short response_len = ntohs(response_len_ns);
-
-    void* read_buf = malloc(response_len);
-    if ((read_len = read(sockfd, read_buf, response_len)) !=
-            response_len) {
-        perror("Error reading packed message from socket");
-        network_close(rtable);
-        return NULL;
-    }
-
-    MessageT* received_msg = message_t__unpack(NULL, response_len, read_buf);
-
-    free(buf);
-    free(read_buf);
 
     return received_msg;
 }

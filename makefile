@@ -12,6 +12,7 @@ TABLE_CLIENT_R = $(addprefix $(OBJ_DIR)/,data.o \
 	entry.o \
 	table_client.o \
 	sdmessage.pb-c.o \
+	message.o\
 	client_stub.o \
 	network_client.o)
 TABLE_SERVER_R = $(addprefix $(OBJ_DIR)/,data.o \
@@ -19,6 +20,7 @@ TABLE_SERVER_R = $(addprefix $(OBJ_DIR)/,data.o \
 	list.o \
 	table.o \
 	sdmessage.pb-c.o \
+	message.o\
 	table_server.o \
 	table_skel.o \
 	network_server.o)
@@ -48,4 +50,4 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 include $(wildcard $(DEP_DIR)/*.d)
 
 clean:
-	rm $(OBJ_DIR)/*.o $(OBJ_DIR)/*.a $(BIN_DIR)/*
+	rm $(OBJ_DIR)/*.o $(LIB_DIR)/*.a $(BIN_DIR)/*

@@ -41,11 +41,11 @@ int main(int argc, char *argv[]) {
 
                 //XXX does data need to be null terminated? Doesn't seem so...
                 struct data_t* data_obj = data_create(strlen(data), data);
-                struct entry_t* entry = entry_create(key, data_obj);
+                struct entry_t* entry = entry_create(strdup(key), data_dup(data_obj));
 
                 int ret_put = rtable_put(rtable, entry);
                 if (ret_put == 0) {
-                    printf("Entry with key \"%s\" was added", key);
+                    printf("Entry with key \"%s\" was added\n", key);
                 } else {
                     printf(
                         "There was an error adding entry with key \"%s\"", key
@@ -53,6 +53,8 @@ int main(int argc, char *argv[]) {
                 }
 
                 entry_destroy(entry);
+                free(data_obj);
+                //cant use data_destroy here, becuase data->data is a reference that is freed elsewhere
                 break;
             }
 
@@ -68,10 +70,7 @@ int main(int argc, char *argv[]) {
                 struct data_t* data = rtable_get(rtable, key);
 
                 if (!data) {
-                    printf(
-                        "There was an error retrieving data from key %s",
-                        key
-                    );
+                    printf("Error in rtable_get or key not found!\n");
                     break;
                 }
 
@@ -92,9 +91,9 @@ int main(int argc, char *argv[]) {
                 int ret_destroy = rtable_del(rtable, key);
 
                 if (!ret_destroy) {
-                    printf("Key %s was destroyed\n", key);
+                    printf("Entry removed\n");
                 } else {
-                    printf("Key %s does not exist or there was an error\n", key);
+                    printf("Error in rtable_del or key not found!\n");
                 }
 
                 break;

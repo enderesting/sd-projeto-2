@@ -23,13 +23,16 @@ struct rtable_t *rtable_connect(char *address_port) {
     char* server_address = strndup(address_port, hostname_len);
     int server_port = atoi(colon + 1);
 
-    struct rtable_t* rtable = malloc(sizeof(struct rtable_t*));
+    struct rtable_t* rtable = (struct rtable_t*) malloc(sizeof(struct rtable_t));
 
     rtable->server_address = server_address;
     rtable->server_port = server_port;
 
     //FIXME Error checking
-    network_connect(rtable);
+    if(network_connect(rtable)<0){
+        printf("Error in connecting to table.");
+        return NULL;
+    }
 
     return rtable;
 }
@@ -57,24 +60,24 @@ int rtable_disconnect(struct rtable_t *rtable) {
 int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {
 
     if (!rtable) return -1;
-    MessageT* msg = (MessageT*) calloc(1, sizeof(struct MessageT*));
+    MessageT* msg = (MessageT*) calloc(1, sizeof(MessageT));
     message_t__init(msg);
-    EntryT* ent = (EntryT*) calloc(1, sizeof(struct EntryT*));
+    EntryT* ent = (EntryT*) calloc(1, sizeof(EntryT));
     entry_t__init(ent);
-    ent->key = entry->key;
-    memcpy(&(ent->value.data), entry->value->data, entry->value->datasize);
+    ent->key = strdup(entry->key);
     ent->value.len = entry->value->datasize;
+    ent->value.data = malloc(ent->value.len);
+    // ent->value.data = entry->value->data;//doesnt copy it in
+    memcpy(ent->value.data, entry->value->data, entry->value->datasize);
     msg->opcode = MESSAGE_T__OPCODE__OP_PUT;
     msg->c_type = MESSAGE_T__C_TYPE__CT_ENTRY;
     msg->entry = ent;
 
     MessageT* res = network_send_receive(rtable, msg);
-    entry_t__free_unpacked(ent, NULL);
-    message_t__free_unpacked(msg, NULL);;
 
     if (res->opcode == MESSAGE_T__OPCODE__OP_BAD) {
         message_t__free_unpacked(res, NULL);
-        printf("Your function call was given incorrect and/or missing parameters");
+        printf("Your function call was given incorrect and/or missing parameters\n");
         return -1;
     }
 
@@ -84,6 +87,9 @@ int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {
         return -1;
     }
 
+
+    // entry_t__free_unpacked(ent, NULL); //offending free fails
+    message_t__free_unpacked(msg, NULL);
     message_t__free_unpacked(res, NULL);
     return 0;
 }
@@ -95,19 +101,17 @@ struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
 
     if(!rtable) return NULL;
 
-    MessageT* msg = (MessageT*) calloc(1, sizeof(struct MessageT*));
+    MessageT* msg = (MessageT*) calloc(1, sizeof(MessageT));
     message_t__init(msg);
     msg->opcode = MESSAGE_T__OPCODE__OP_GET;
     msg->c_type = MESSAGE_T__C_TYPE__CT_KEY;
-    msg->key = key;
+    msg->key = strdup(key);
 
     MessageT* res = network_send_receive(rtable, msg);
 
-    message_t__free_unpacked(msg, NULL);
-
     if (res->opcode == MESSAGE_T__OPCODE__OP_BAD) {
         message_t__free_unpacked(res, NULL);
-        printf("Your function call was given incorrect and/or missing parameters");
+        printf("Your function call was given incorrect and/or missing parameters\n");
         return NULL;
     }
 
@@ -121,6 +125,7 @@ struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
     data->datasize = res->value.len;
     data->data = strndup((char*) res->value.data, data->datasize);
 
+    message_t__free_unpacked(msg, NULL);
     message_t__free_unpacked(res, NULL);
 
     return data;
@@ -132,18 +137,18 @@ struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
  */
 int rtable_del(struct rtable_t *rtable, char *key) {
 
-    MessageT* msg = (MessageT*) calloc(1, sizeof(struct MessageT*));
+    MessageT* msg = (MessageT*) calloc(1, sizeof(MessageT));
     message_t__init(msg);
     msg->opcode = MESSAGE_T__OPCODE__OP_DEL;
     msg->c_type = MESSAGE_T__C_TYPE__CT_KEY;
-    msg->key = key;
+    msg->key = strdup(key);
 
     MessageT* res = network_send_receive(rtable, msg);
     message_t__free_unpacked(msg, NULL);
 
     if (res->opcode == MESSAGE_T__OPCODE__OP_BAD) {
         message_t__free_unpacked(res, NULL);
-        printf("Your function call was given incorrect and/or missing parameters");
+        printf("Your function call was given incorrect and/or missing parameters\n");
         return -1;
     }
 
@@ -166,13 +171,12 @@ int rtable_size(struct rtable_t *rtable) {
 
     if(!rtable) return -1;
 
-    MessageT* msg = (MessageT*) calloc(1, sizeof(struct MessageT*));
+    MessageT* msg = (MessageT*) calloc(1, sizeof(MessageT));
     message_t__init(msg);
     msg->opcode = MESSAGE_T__OPCODE__OP_SIZE;
     msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT;
 
     MessageT* res = network_send_receive(rtable, msg);
-    message_t__free_unpacked(msg, NULL);
 
     if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR &&
         res->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
@@ -181,6 +185,7 @@ int rtable_size(struct rtable_t *rtable) {
     }
 
     int size = (int)res->result;
+    message_t__free_unpacked(msg, NULL);
     message_t__free_unpacked(res, NULL);
 
     return size;
@@ -194,13 +199,12 @@ char **rtable_get_keys(struct rtable_t *rtable) {
 
     if(!rtable) return NULL;
 
-    MessageT* msg = (MessageT*) calloc(1, sizeof(struct MessageT*));
+    MessageT* msg = (MessageT*) calloc(1, sizeof(MessageT));
     message_t__init(msg);
     msg->opcode = MESSAGE_T__OPCODE__OP_GETKEYS;
     msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
 
     MessageT* res = network_send_receive(rtable, msg);
-    message_t__free_unpacked(msg, NULL);
 
     if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR &&
         res->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
@@ -214,6 +218,7 @@ char **rtable_get_keys(struct rtable_t *rtable) {
     }
     key_arr[res->n_keys] = NULL;
 
+    message_t__free_unpacked(msg, NULL);
     message_t__free_unpacked(res, NULL);
     return key_arr;
 }
@@ -240,13 +245,12 @@ struct entry_t **rtable_get_table(struct rtable_t *rtable) {
 
     if(!rtable) return NULL;
 
-    MessageT* msg = (MessageT*) calloc(1, sizeof(struct MessageT*));
+    MessageT* msg = (MessageT*) calloc(1, sizeof(MessageT));
     message_t__init(msg);
     msg->opcode = MESSAGE_T__OPCODE__OP_GETTABLE;
     msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
 
     MessageT* res = network_send_receive(rtable, msg);
-    message_t__free_unpacked(msg, NULL);
 
     if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR &&
         res->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
@@ -263,6 +267,7 @@ struct entry_t **rtable_get_table(struct rtable_t *rtable) {
     }
     entry_arr[res->n_entries] = NULL;
 
+    message_t__free_unpacked(msg, NULL);
     message_t__free_unpacked(res, NULL);
     return entry_arr;
 }
