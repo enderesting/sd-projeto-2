@@ -12,14 +12,11 @@
 #include "table_skel.h"
 #include "sdmessage.pb-c.h"
 #include "message_private.h"
+#include "table_server.h"
+#include "table_server-private.h"
 
 //tamanho maximo da mensagem enviada pelo cliente
 #define MAX_MSG 2048
-
-int is_connected = 0;
-struct table_t *global_table;
-int global_socket;
-// int server_open = 0;
 
 /* Função para preparar um socket de receção de pedidos de ligação
  * num determinado porto.
@@ -41,7 +38,7 @@ int network_server_init(short port){
     //&(int){1}     - 1 as in enable the previous option
     //sizeof(int)   - specification indicates that this option takes an int value
     if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int))==-1){
-        error("setsockopt(SO_REUSEADDR) failed");
+        perror("setsockopt(SO_REUSEADDR) failed");
         return -1;
     }
 
@@ -63,8 +60,7 @@ int network_server_init(short port){
         close(sockfd);
         return -1;
     };
-    global_socket = sockfd;
-    // server_open = 1;
+
     return sockfd;
 
 }
@@ -81,44 +77,53 @@ int network_server_init(short port){
  */
 
 int network_main_loop(int listening_socket, struct table_t *table){
-    // handling SIGPIPE
-    // sigaction(SIGPIPE, &(sigaction){sigpipe_handler}, NULL); // CHECKTHIS: should we use sigaction instead?
-    // reference: https://stackoverflow.com/questions/18935446/program-received-signal-sigpipe-broken-pipe?noredirect=1&lq=1
-    signal(SIGPIPE,signal_handler); //CHECKTHIS: should this be in table_server instead?
-    signal(SIGINT, signal_handler);
-    global_table = table;
-
     //connect to socket, send/receive
     int connsockfd, ret;
     struct sockaddr_in client_addr;
-    while(1){
-        if(connsockfd = accept(listening_socket,(struct sockaddr *) &client_addr,sizeof(client_addr))!= -1){
-            is_connected = 1;
-            while (is_connected){
-                //receive a message, deserialize it
-                MessageT *msg = network_receive(listening_socket);
-                if(!msg){
-                    perror("Error in receiving"); //CHECKTHIS should it close socket on error?
-                    close(connsockfd);
-                    break;
-                }
-                //get table_skel to process and get response
-                if((ret = invoke(msg,table)) < 0){
-                    perror("Error in remote processing"); //CHECKTHIS should it close socket on error?
-                    close(connsockfd);
-                    break;     
-                }
-                //wait until response is here?
-                if (network_send(listening_socket, msg) == -1){
-                    perror("Error in sending");
-                    close(connsockfd);
-                    break;
-                }
-                message_t__free_unpacked(msg,NULL);
+    socklen_t size_sockaddr_in = sizeof(client_addr);
+    int bad_termination = 0;
+
+    while (
+        !bad_termination || !terminated ||
+        (connsockfd = accept(listening_socket, (struct sockaddr *)&client_addr,
+                             &size_sockaddr_in)) != -1) {
+        connected = 1;
+        while (!bad_termination && !terminated && connected) {
+            // receive a message, deserialize it
+            MessageT *msg = network_receive(listening_socket);
+            if (!msg) {
+                perror("Error in receiving message from client");
+                close(connsockfd);
+                break;
             }
+
+            // get table_skel to process and get response
+            if ((ret = invoke(msg, table)) < 0) {
+                perror("Error in processing command in internal table, shutting "
+                    "server down");
+                close(connsockfd);
+                if(!terminated) bad_termination = 1;
+                break;
+            }
+
+            // wait until response is here?
+            if (network_send(listening_socket, msg) == -1) {
+                perror("Error in sending message to client");
+                close(connsockfd);
+                break;
+            }
+
+            message_t__free_unpacked(msg, NULL);
         }
     }
+
+    if (bad_termination || connsockfd == -1) {
+        return -1;
+    }
+
+    return 0;
 }
+
 
 /* A função network_receive() deve:
  * - Ler os bytes da rede, a partir do client_socket indicado;
@@ -147,22 +152,5 @@ int network_send(int client_socket, MessageT *msg){
  * Retorna 0 (OK) ou -1 em caso de erro.
  */
 int network_server_close(int socket){
-    close(socket);
-    table_skel_destroy(global_table);
-    //free all the stuff that needs to be freed
-}
-
-
-void signal_handler(int signal) //TODO: add header of this 
-{
-    switch(signal){
-        case SIGPIPE:{
-            printf("Caught SIGPIPE, ignore and continue"); 
-            is_connected = 0;
-        }
-        case SIGINT:{
-            network_server_close(global_socket);
-        }
-    }
-
+    return close(socket);
 }
