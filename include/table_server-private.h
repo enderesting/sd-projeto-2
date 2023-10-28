@@ -1,5 +1,5 @@
-#ifndef _TABLE_SERVER_PRIVATE_H
-#define _TABLE_SERVER_PRIVATE_H
+#ifndef _TABLE_CLIENT_PRIVATE_H
+#define _TABLE_CLIENT_PRIVATE_H
 #include <signal.h>
 
 volatile sig_atomic_t terminated = 0;

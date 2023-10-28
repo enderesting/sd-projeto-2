@@ -7,7 +7,6 @@
 #include "entry.h"
 #include "network_client.h"
 #include "sdmessage.pb-c.h"
-#include "table_client-private.h"
 
 /* Função para estabelecer uma associação entre o cliente e o servidor,
  * em que address_port é uma string no formato <hostname>:<port>.
@@ -76,8 +75,6 @@ int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {
 
     MessageT* res = network_send_receive(rtable, msg);
 
-    if (!res) return -1;
-
     if (res->opcode == MESSAGE_T__OPCODE__OP_BAD) {
         message_t__free_unpacked(res, NULL);
         printf("Your function call was given incorrect and/or missing parameters\n");
@@ -111,8 +108,6 @@ struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
     msg->key = strdup(key);
 
     MessageT* res = network_send_receive(rtable, msg);
-
-    if (!res) return NULL;
 
     if (res->opcode == MESSAGE_T__OPCODE__OP_BAD) {
         message_t__free_unpacked(res, NULL);
@@ -151,8 +146,6 @@ int rtable_del(struct rtable_t *rtable, char *key) {
     MessageT* res = network_send_receive(rtable, msg);
     message_t__free_unpacked(msg, NULL);
 
-    if (!res) return -1;
-
     if (res->opcode == MESSAGE_T__OPCODE__OP_BAD) {
         message_t__free_unpacked(res, NULL);
         printf("Your function call was given incorrect and/or missing parameters\n");
@@ -185,8 +178,6 @@ int rtable_size(struct rtable_t *rtable) {
 
     MessageT* res = network_send_receive(rtable, msg);
 
-    if (!res) return -1;
-
     if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR &&
         res->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
         message_t__free_unpacked(res, NULL);
@@ -214,8 +205,6 @@ char **rtable_get_keys(struct rtable_t *rtable) {
     msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
 
     MessageT* res = network_send_receive(rtable, msg);
-
-    if (!res) return NULL;
 
     if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR &&
         res->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
@@ -262,8 +251,6 @@ struct entry_t **rtable_get_table(struct rtable_t *rtable) {
     msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
 
     MessageT* res = network_send_receive(rtable, msg);
-
-    if (!res) return NULL;
 
     if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR &&
         res->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
