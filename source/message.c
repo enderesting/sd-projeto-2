@@ -8,7 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 //extra
-#include "message_private.h"
+#include "message-private.h"
 #include "table_skel.h"
 #include "sdmessage.pb-c.h"
 

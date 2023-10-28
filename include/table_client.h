@@ -2,6 +2,9 @@
 #define _TABLE_CLIENT_H
 
 #include <stdlib.h>
+#include "entry.h"
+#include "table_client-private.h"
+#include "client_stub.h"
 
 #define PUT_STR "put"
 #define GET_STR "get"

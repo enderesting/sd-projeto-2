@@ -2,8 +2,8 @@
 #define _TABLE_SERVER_PRIVATE_H
 #include <signal.h>
 
-volatile sig_atomic_t terminated = 0;
-volatile sig_atomic_t connected = 0;
+extern volatile sig_atomic_t terminated;
+extern volatile sig_atomic_t connected;
 
 void sigint_handler(int sig);
 
