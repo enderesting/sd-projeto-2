@@ -14,8 +14,14 @@
 
 #define MAX_MSG 2048
 
-//TODO: actually implement this so it has the ability to send/read multiple packets
-//returns -1 on error and 0 otherwise.
+// Given a socket, write the given message into the connection.
+// First a short carrying the size of the message will be written
+// into the socket, followed by the serialized MessageT.
+// The serialized message can be bigger than the MAX_MSG, in which case
+// it will be written into the socket in packets.
+//
+// Returns -1 on error, otherwise return the number of total bytes sent,
+// including the size indicating short.
 int message_send_all(int other_socket, MessageT *msg){
     short content_size = message_t__get_packed_size(msg);
     short content_size_ns = htons(content_size);
@@ -29,11 +35,12 @@ int message_send_all(int other_socket, MessageT *msg){
     message_t__pack(msg,content_buf);
 
     //send the msg size first
-    int write_len;
+    int total_write_len, write_len;
     if ((write_len = write(other_socket, size_buf, sizeof(u_int16_t))) != sizeof(u_int16_t)){
         perror("Error sending msg size to socket");
         return -1;
     }
+    total_write_len += write_len;
 
     //send the msg
 
@@ -52,28 +59,36 @@ int message_send_all(int other_socket, MessageT *msg){
             perror("Error writing size to client socket");
             return -1;
         }
-        content_buf += MAX_MSG;     // move pointer till after the MAX_MSG written
-        content_size -= MAX_MSG;    // the amount needed to send is smaller.
+        content_buf += write_len;     // move pointer till after the MAX_MSG written
+        content_size -= write_len;    // the amount needed to send is smaller.
+        total_write_len += write_len;
     }
-
 
     if ((write_len = write(other_socket, content_buf, content_size)) != content_size){
         perror("Error writing content to client socket");
         return -1;
     }
+    total_write_len += write_len;
 
     free(content_buf);
     free(size_buf);
-    return 0;
+    return total_write_len;
 }
 
+//Given a socket, read the content and unpack it into MessageT format.
+// First a short carrying the size of the message will be read
+// into the socket, followed by the serialized MessageT.
+// The serialized message can be bigger than the MAX_MSG, in which case
+// it will be read into the socket in packets and unpacked at the end.
+//
+// Returns NULL on error and MessageT otherwise.
 MessageT *message_receive_all(int other_socket){
 
 
     //reading size
     short response_size_ns;
 
-    int read_len;
+    int total_read_len,read_len;
     if ((read_len = read(other_socket, &response_size_ns, sizeof(uint16_t))) !=
             sizeof(response_size_ns)) {
         perror("Error reading message length from socket");
