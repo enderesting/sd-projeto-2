@@ -162,14 +162,11 @@ int rtable_del(struct rtable_t *rtable, char *key) {
         return -1;
     }
 
-    if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR &&
-        res->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
+    if ((res->opcode == MESSAGE_T__OPCODE__OP_ERROR &&
+         res->c_type == MESSAGE_T__C_TYPE__CT_NONE )||
+                res->c_type == MESSAGE_T__C_TYPE__CT_BAD) {
         message_t__free_unpacked(res, NULL);
         return -1;
-    }
-    if (res->c_type == MESSAGE_T__C_TYPE__CT_BAD) {
-        message_t__free_unpacked(res, NULL);
-        return 2;
     }
     else {
         // free(rtable_get(rtable, key)); 
