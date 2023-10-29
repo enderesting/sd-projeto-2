@@ -2,7 +2,7 @@
 #define _NETWORK_CLIENT_H
 
 #include "client_stub.h"
-#include "sdmessage.pb-c.h"
+#include "message-private.h"
 
 /* Esta função deve:
  * - Obter o endereço do servidor (struct sockaddr_in) com base na

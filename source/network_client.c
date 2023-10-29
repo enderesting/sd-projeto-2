@@ -9,11 +9,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "client_stub.h"
+// #include "client_stub.h"
 #include "network_client.h"
-#include "message_private.h"
-#include "sdmessage.pb-c.h"
-#include "client_stub-private.h"
+#include "table_client-private.h" //hmm
+// #include "client_stub-private.h"
+// #include "table_client-private.h"
 
 /* Esta função deve:
  * - Obter o endereço do servidor (struct sockaddr_in) com base na
@@ -47,7 +47,7 @@ int network_connect(struct rtable_t *rtable) {
     }
 
     rtable->sockfd = sockfd;
-
+    connected_to_server = 1;
     return 0;
 }
 
@@ -90,5 +90,6 @@ int network_close(struct rtable_t *rtable) {
         return -1;
     }
 
+    connected_to_server = 0;
     return 0;
 }

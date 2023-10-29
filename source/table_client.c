@@ -1,10 +1,18 @@
-#include "client_stub.h"
-#include "data.h"
-#include "entry.h"
-#include "table_client.h"
+#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "table_client.h"
+// #include "client_stub.h"
+// #include "data.h"
+// #include "entry.h"
+// #include "table_client-private.h"
+
+// #include "table_server.h"
+// #include "table_server-private.h"
+
+volatile sig_atomic_t connected_to_server = 0;
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
@@ -22,8 +30,10 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
 
+    signal(SIGPIPE, sigpipe_handler);
+
     int terminated = 0;
-    while (!terminated) {
+    while (!terminated && connected_to_server) {
         printf("Command: ");
         char line[100]; //FIXME Remove magic number
         fgets(line, 99, stdin);
@@ -39,7 +49,6 @@ int main(int argc, char *argv[]) {
                     break;
                 }
 
-                //XXX does data need to be null terminated? Doesn't seem so...
                 struct data_t* data_obj = data_create(strlen(data), data);
                 struct entry_t* entry = entry_create(strdup(key), data_dup(data_obj));
 
@@ -54,7 +63,8 @@ int main(int argc, char *argv[]) {
 
                 entry_destroy(entry);
                 free(data_obj);
-                //cant use data_destroy here, becuase data->data is a reference that is freed elsewhere
+                //FIXME cant use data_destroy here, becuase data->data is a
+                // reference that is freed elsewhere
                 break;
             }
 
@@ -194,4 +204,9 @@ operation parse_operation(char *op_str) {
     } 
 
     return INVALID;
+}
+
+
+void sigpipe_handler(int sig) {
+    connected_to_server = 0;
 }

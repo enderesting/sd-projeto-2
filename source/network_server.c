@@ -9,11 +9,9 @@
 #include <stdlib.h>
 //extra
 #include "network_server.h"
-#include "table_skel.h"
-#include "sdmessage.pb-c.h"
-#include "message_private.h"
-#include "table_server.h"
-#include "table_server-private.h"
+// #include "table_skel.h"
+// #include "table_server.h"
+// #include "table_server-private.h"
 
 //tamanho maximo da mensagem enviada pelo cliente
 #define MAX_MSG 2048
