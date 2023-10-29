@@ -9,12 +9,16 @@
 #include <stdlib.h>
 //extra
 #include "network_server.h"
+#include "table_server-private.h"
 // #include "table_skel.h"
 // #include "table_server.h"
 // #include "table_server-private.h"
 
 //tamanho maximo da mensagem enviada pelo cliente
 #define MAX_MSG 2048
+
+extern volatile sig_atomic_t terminated;
+extern volatile sig_atomic_t connected;
 
 /* Função para preparar um socket de receção de pedidos de ligação
  * num determinado porto.
@@ -81,14 +85,16 @@ int network_main_loop(int listening_socket, struct table_t *table){
     socklen_t size_sockaddr_in = sizeof(client_addr);
     int bad_termination = 0;
     printf("Server ready, waiting for connections\n");
-    fflush(stdout);
 
     while (
-        (!bad_termination) &&
+        !bad_termination &&
+        !terminated &&
         (connsockfd = accept(listening_socket, (struct sockaddr *)&client_addr,
-                             &size_sockaddr_in)) != -1) {
+                             &size_sockaddr_in))
+    ) {
         printf("Client connection established\n");
         fflush(stdout);
+
         connected = 1;
         while (!bad_termination && !terminated && connected) {
             // receive a message, deserialize it
@@ -118,15 +124,20 @@ int network_main_loop(int listening_socket, struct table_t *table){
             message_t__free_unpacked(msg, NULL);
         }
 
-        if(terminated) {
+        if (!connected && !bad_termination && !terminated) {
             printf("Client connection closed\n");
             printf("Server ready, waiting for connections\n");
             fflush(stdout);
         }
     }
 
-    if (bad_termination || connsockfd == -1) {
+    if (bad_termination) {
+        printf("Server experienced an internal error. Shutting down abnormally!\n");
         return -1;
+    }
+
+    if (terminated) {
+        printf("Received request to shut down server gracefully. Shutting down...\n");
     }
 
     return 0;

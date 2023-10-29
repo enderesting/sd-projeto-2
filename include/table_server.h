@@ -1,5 +1,5 @@
-#ifndef _TABLE_CLIENT_H
-#define _TABLE_CLIENT_H
+#ifndef _TABLE_SERVER_H
+#define _TABLE_SERVER_H
 
 #include <stdlib.h>
 #include "table_skel.h"

@@ -4,8 +4,8 @@
 // #include "table.h"
 // #include "sdmessage.pb-c.h"
 #include "table_skel.h"
-#include "table_server.h"
 #include "message-private.h"
+#include "table_server-private.h"
 
 
 /* Função para preparar um socket de receção de pedidos de ligação

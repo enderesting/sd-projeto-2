@@ -5,12 +5,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
+#include <unistd.h>
 
+#include "table_server-private.h"
 #include "table_server.h"
 
-volatile sig_atomic_t terminated;
-volatile sig_atomic_t connected;
-
+volatile sig_atomic_t terminated = 0;
+volatile sig_atomic_t connected = 0;
 
 int main(int argc, char *argv[]) {
     //processing args for port & n_list
@@ -19,8 +20,7 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
 
-    signal(SIGINT, sigint_handler);
-    signal(SIGPIPE, sigpipe_handler);
+    set_sig_handlers();
 
     //stores the chars after the first numerical digits are taken.
     //e.g. "123abc" -> it will store "abc"
@@ -51,6 +51,26 @@ int main(int argc, char *argv[]) {
     table_skel_destroy(table);
 
     return ret_net;
+}
+
+void set_sig_handlers() {
+    struct sigaction new_sigint;
+    struct sigaction new_sigpipe;
+    struct sigaction old_sigint;
+    struct sigaction old_sigpipe;
+
+    new_sigint.sa_handler = sigint_handler;
+    sigemptyset(&new_sigint.sa_mask);
+    sigaddset(&new_sigint.sa_mask, SIGINT);
+    new_sigint.sa_flags = 0;
+
+    new_sigpipe.sa_handler = sigpipe_handler;
+    sigemptyset(&new_sigpipe.sa_mask);
+    sigaddset(&new_sigpipe.sa_mask, SIGPIPE);
+    new_sigpipe.sa_flags = 0;
+
+    sigaction(SIGINT, &new_sigint, &old_sigint);
+    sigaction(SIGPIPE, &new_sigpipe, &old_sigpipe);
 }
 
 void sigint_handler(int signal) {
