@@ -27,7 +27,7 @@ int table_skel_destroy(struct table_t *table){
 */
 int invoke(MessageT *msg, struct table_t *table){
     int res = -1;
-    MessageT* new_msg = (MessageT*) calloc(1, sizeof(struct MessageT*));
+    MessageT* new_msg = (MessageT*) calloc(1, sizeof(MessageT));
     message_t__init(new_msg);
     switch (msg->opcode){
         case MESSAGE_T__OPCODE__OP_PUT:{
@@ -58,7 +58,11 @@ int invoke(MessageT *msg, struct table_t *table){
                 new_msg->c_type = MESSAGE_T__C_TYPE__CT_VALUE;
                 res = 0;
             }
-            else new_msg = respond_err_in_exec(new_msg);
+            else if(!gotten_value) {
+                new_msg->value.data = NULL;
+                res = 0;
+            }
+            //else new_msg = respond_err_in_exec(new_msg);
             break;
         }
 
@@ -71,6 +75,9 @@ int invoke(MessageT *msg, struct table_t *table){
             res = table_remove(table,msg->key);
             if (res == 0){
                 new_msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
+            }
+            else if(res == 1) {
+                new_msg->c_type = MESSAGE_T__C_TYPE__CT_BAD;
             }
             else new_msg = respond_err_in_exec(new_msg);
             break;
