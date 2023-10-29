@@ -76,6 +76,9 @@ int invoke(MessageT *msg, struct table_t *table){
             if (res == 0){
                 new_msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
             }
+            else if(res == 1) {
+                new_msg->c_type = MESSAGE_T__C_TYPE__CT_BAD;
+            }
             else new_msg = respond_err_in_exec(new_msg);
             break;
         }

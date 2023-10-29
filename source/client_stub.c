@@ -124,6 +124,11 @@ struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
         return NULL;
     }
 
+    if(!res->value.data){
+        message_t__free_unpacked(res, NULL);
+        return NULL;
+    }
+
     struct data_t* data = (struct data_t*) malloc(sizeof(struct data_t));
     data->datasize = res->value.len;
     data->data = malloc(data->datasize);
@@ -161,6 +166,10 @@ int rtable_del(struct rtable_t *rtable, char *key) {
         res->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
         message_t__free_unpacked(res, NULL);
         return -1;
+    }
+    if (res->c_type == MESSAGE_T__C_TYPE__CT_BAD) {
+        message_t__free_unpacked(res, NULL);
+        return 2;
     }
     else {
         // free(rtable_get(rtable, key)); 

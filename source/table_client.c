@@ -103,7 +103,8 @@ int main(int argc, char *argv[]) {
 
                 if (!ret_destroy) {
                     printf("Entry removed\n");
-                } else {
+                } 
+                else {
                     printf("Error in rtable_del or key not found!\n");
                 }
 
