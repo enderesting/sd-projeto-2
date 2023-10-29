@@ -185,12 +185,13 @@ struct entry_t **table_get_entries(struct table_t *table){
             int datasize = node->entry->value->datasize;
             void* data = node->entry->value->data;
 
-            entries_arr[c] = (struct entry_t*) malloc(sizeof(struct entry_t*));
+            entries_arr[c] = (struct entry_t*) malloc(sizeof(struct entry_t));
             entries_arr[c]->key = strdup(key);
 
             entries_arr[c]->value =
-                (struct data_t*) malloc(sizeof(struct data_t*));
+                (struct data_t*) malloc(sizeof(struct data_t));
             entries_arr[c]->value->datasize = datasize;
+            entries_arr[c]->value->data = malloc(datasize);
             memcpy(entries_arr[c]->value->data, data, datasize);
 
             node = node->next;
