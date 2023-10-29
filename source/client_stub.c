@@ -178,7 +178,7 @@ int rtable_size(struct rtable_t *rtable) {
     MessageT* msg = (MessageT*) calloc(1, sizeof(MessageT));
     message_t__init(msg);
     msg->opcode = MESSAGE_T__OPCODE__OP_SIZE;
-    msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT;
+    msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
 
     MessageT* res = network_send_receive(rtable, msg);
 
