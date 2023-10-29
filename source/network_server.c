@@ -24,7 +24,7 @@ int network_server_init(short port){
     
     int sockfd = socket(AF_INET, SOCK_STREAM,0);
     if (sockfd<0){
-        perror("Erro ao criar socket");
+        perror("Erro ao criar socket\n");
         return -1;
     }
 
@@ -36,7 +36,7 @@ int network_server_init(short port){
     //&(int){1}     - 1 as in enable the previous option
     //sizeof(int)   - specification indicates that this option takes an int value
     if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int))==-1){
-        perror("setsockopt(SO_REUSEADDR) failed");
+        perror("setsockopt(SO_REUSEADDR) failed\n");
         return -1;
     }
 
@@ -48,13 +48,13 @@ int network_server_init(short port){
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);    // binds to all local interfaces
 
     if (bind(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0){
-        perror("Error in Bind()");
+        perror("Error in Bind()\n");
         close(sockfd);
         return -1;
     };
 
     if (listen(sockfd, 5) < 0){ // only accepts 1 client, no request is queued?
-        perror("Error in Listen()");
+        perror("Error in Listen()\n");
         close(sockfd);
         return -1;
     };
@@ -80,17 +80,21 @@ int network_main_loop(int listening_socket, struct table_t *table){
     struct sockaddr_in client_addr;
     socklen_t size_sockaddr_in = sizeof(client_addr);
     int bad_termination = 0;
+    printf("Server ready, waiting for connections\n");
+    fflush(stdout);
 
     while (
-        !bad_termination || !terminated ||
+        (!bad_termination) &&
         (connsockfd = accept(listening_socket, (struct sockaddr *)&client_addr,
                              &size_sockaddr_in)) != -1) {
+        printf("Client connection established\n");
+        fflush(stdout);
         connected = 1;
         while (!bad_termination && !terminated && connected) {
             // receive a message, deserialize it
-            MessageT *msg = network_receive(listening_socket);
+            MessageT *msg = network_receive(connsockfd);
             if (!msg) {
-                perror("Error in receiving message from client");
+                perror("Error in receiving message from client\n");
                 close(connsockfd);
                 break;
             }
@@ -98,20 +102,26 @@ int network_main_loop(int listening_socket, struct table_t *table){
             // get table_skel to process and get response
             if ((ret = invoke(msg, table)) < 0) {
                 perror("Error in processing command in internal table, shutting "
-                    "server down");
+                    "server down\n");
                 close(connsockfd);
                 if(!terminated) bad_termination = 1;
                 break;
             }
 
             // wait until response is here?
-            if (network_send(listening_socket, msg) == -1) {
-                perror("Error in sending message to client");
+            if (network_send(connsockfd, msg) == -1) {
+                perror("Error in sending message to client\n");
                 close(connsockfd);
                 break;
             }
 
             message_t__free_unpacked(msg, NULL);
+        }
+
+        if(terminated) {
+            printf("Client connection closed\n");
+            printf("Server ready, waiting for connections\n");
+            fflush(stdout);
         }
     }
 
