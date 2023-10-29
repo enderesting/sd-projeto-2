@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
     struct rtable_t* rtable = rtable_connect(argv[1]);
 
     if (!rtable) {
-        perror("Error connecting to remote server");
+        perror("Error connecting to remote server\n");
         exit(-1);
     }
 
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
                     printf("Entry with key \"%s\" was added\n", key);
                 } else {
                     printf(
-                        "There was an error adding entry with key \"%s\"", key
+                        "There was an error adding entry with key \"%s\"\n", key
                     );
                 }
 
@@ -85,7 +85,8 @@ int main(int argc, char *argv[]) {
                 }
 
                 printf("%.*s\n", data->datasize, (char*) data->data);
-                data_destroy(data);
+                free(data->data);
+                free(data);
                 break;
             }
 
@@ -112,9 +113,9 @@ int main(int argc, char *argv[]) {
             case SIZE: {
                 int size = rtable_size(rtable);
                 if (size < 0) {
-                    printf("There was an error retrieving table's size");
+                    printf("There was an error retrieving table's size\n");
                 } else {
-                    printf("%d\n", size);
+                    printf("Table size: %d\n", size);
                 }
                 break;
             }
@@ -123,16 +124,14 @@ int main(int argc, char *argv[]) {
                 char** keys = rtable_get_keys(rtable);
 
                 if (!keys) {
-                    printf("There was an error retrieving keys");
+                    printf("There was an error retrieving keys\n");
                     break;
                 }
-
-                printf("Keys in table:\n");
 
                 int i = 0;
                 char* key = keys[i];
                 while (key) {
-                    printf("'%s'\n", key);
+                    printf("%s\n", key);
                     key = keys[++i];
                 }
 
@@ -144,16 +143,16 @@ int main(int argc, char *argv[]) {
                 struct entry_t** entries = rtable_get_table(rtable);
 
                 if (!entries) {
-                    printf("There was an error retrieving table");
+                    printf("There was an error retrieving table\n");
                     break;
                 }
 
-                printf("Entries in table:\n");
+                //printf("Entries in table:\n");
 
                 int i = 0;
                 struct entry_t* entry = entries[i];
                 while (entry) {
-                    printf("'%s': %.*s", entry->key, entry->value->datasize,
+                    printf("%s: %.*s\n", entry->key, entry->value->datasize,
                            (char*) entry->value->data);
                     entry = entries[++i];
                 }
@@ -174,7 +173,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (rtable_disconnect(rtable) == -1) {
-        perror("Error disconnecting from remote server");
+        perror("Error disconnecting from remote server\n");
         exit(-1);
     }
 
