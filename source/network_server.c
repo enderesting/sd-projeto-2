@@ -90,7 +90,7 @@ int network_main_loop(int listening_socket, struct table_t *table){
         !bad_termination &&
         !terminated &&
         (connsockfd = accept(listening_socket, (struct sockaddr *)&client_addr,
-                             &size_sockaddr_in))
+                             &size_sockaddr_in) != -1)
     ) {
         printf("Client connection established\n");
         fflush(stdout);
