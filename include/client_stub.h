@@ -1,8 +1,13 @@
 #ifndef _CLIENT_STUB_H
 #define _CLIENT_STUB_H
 
-#include "data.h"
+// #include "data.h"
 #include "entry.h"
+#include "client_stub-private.h"
+#include "network_client.h"
+// #include "sdmessage.pb-c.h"
+
+
 
 /* Remote table, que deve conter as informações necessárias para comunicar
  * com o servidor. A definir pelo grupo em client_stub-private.h

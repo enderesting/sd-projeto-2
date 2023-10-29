@@ -1,8 +1,12 @@
 #ifndef _NETWORK_SERVER_H
 #define _NETWORK_SERVER_H
 
-#include "table.h"
-#include "sdmessage.pb-c.h"
+// #include "table.h"
+// #include "sdmessage.pb-c.h"
+#include "table_skel.h"
+#include "table_server.h"
+#include "message-private.h"
+
 
 /* Função para preparar um socket de receção de pedidos de ligação
  * num determinado porto.

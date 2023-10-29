@@ -1,10 +1,18 @@
-#include "client_stub.h"
-#include "data.h"
-#include "entry.h"
-#include "table_client.h"
+#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "table_client.h"
+// #include "client_stub.h"
+// #include "data.h"
+// #include "entry.h"
+// #include "table_client-private.h"
+
+// #include "table_server.h"
+// #include "table_server-private.h"
+
+volatile sig_atomic_t connected_to_server = 0;
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
@@ -18,12 +26,14 @@ int main(int argc, char *argv[]) {
     struct rtable_t* rtable = rtable_connect(argv[1]);
 
     if (!rtable) {
-        perror("Error connecting to remote server");
+        perror("Error connecting to remote server\n");
         exit(-1);
     }
 
+    signal(SIGPIPE, sigpipe_handler);
+
     int terminated = 0;
-    while (!terminated) {
+    while (!terminated && connected_to_server) {
         printf("Command: ");
         char line[100]; //FIXME Remove magic number
         fgets(line, 99, stdin);
@@ -39,20 +49,22 @@ int main(int argc, char *argv[]) {
                     break;
                 }
 
-                //XXX does data need to be null terminated? Doesn't seem so...
                 struct data_t* data_obj = data_create(strlen(data), data);
-                struct entry_t* entry = entry_create(key, data_obj);
+                struct entry_t* entry = entry_create(strdup(key), data_dup(data_obj));
 
                 int ret_put = rtable_put(rtable, entry);
                 if (ret_put == 0) {
-                    printf("Entry with key \"%s\" was added", key);
+                    printf("Entry with key \"%s\" was added\n", key);
                 } else {
                     printf(
-                        "There was an error adding entry with key \"%s\"", key
+                        "There was an error adding entry with key \"%s\"\n", key
                     );
                 }
 
                 entry_destroy(entry);
+                free(data_obj);
+                //FIXME cant use data_destroy here, becuase data->data is a
+                // reference that is freed elsewhere
                 break;
             }
 
@@ -68,15 +80,13 @@ int main(int argc, char *argv[]) {
                 struct data_t* data = rtable_get(rtable, key);
 
                 if (!data) {
-                    printf(
-                        "There was an error retrieving data from key %s",
-                        key
-                    );
+                    printf("Error in rtable_get or key not found!\n");
                     break;
                 }
 
                 printf("%.*s\n", data->datasize, (char*) data->data);
-                data_destroy(data);
+                free(data->data);
+                free(data);
                 break;
             }
 
@@ -92,9 +102,10 @@ int main(int argc, char *argv[]) {
                 int ret_destroy = rtable_del(rtable, key);
 
                 if (!ret_destroy) {
-                    printf("Key %s was destroyed\n", key);
-                } else {
-                    printf("Key %s does not exist or there was an error\n", key);
+                    printf("Entry removed\n");
+                } 
+                else {
+                    printf("Error in rtable_del or key not found!\n");
                 }
 
                 break;
@@ -103,9 +114,9 @@ int main(int argc, char *argv[]) {
             case SIZE: {
                 int size = rtable_size(rtable);
                 if (size < 0) {
-                    printf("There was an error retrieving table's size");
+                    printf("There was an error retrieving table's size\n");
                 } else {
-                    printf("%d\n", size);
+                    printf("Table size: %d\n", size);
                 }
                 break;
             }
@@ -114,16 +125,14 @@ int main(int argc, char *argv[]) {
                 char** keys = rtable_get_keys(rtable);
 
                 if (!keys) {
-                    printf("There was an error retrieving keys");
+                    printf("There was an error retrieving keys\n");
                     break;
                 }
-
-                printf("Keys in table:\n");
 
                 int i = 0;
                 char* key = keys[i];
                 while (key) {
-                    printf("'%s'\n", key);
+                    printf("%s\n", key);
                     key = keys[++i];
                 }
 
@@ -135,16 +144,16 @@ int main(int argc, char *argv[]) {
                 struct entry_t** entries = rtable_get_table(rtable);
 
                 if (!entries) {
-                    printf("There was an error retrieving table");
+                    printf("There was an error retrieving table\n");
                     break;
                 }
 
-                printf("Entries in table:\n");
+                //printf("Entries in table:\n");
 
                 int i = 0;
                 struct entry_t* entry = entries[i];
                 while (entry) {
-                    printf("'%s': %.*s", entry->key, entry->value->datasize,
+                    printf("%s: %.*s\n", entry->key, entry->value->datasize,
                            (char*) entry->value->data);
                     entry = entries[++i];
                 }
@@ -165,7 +174,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (rtable_disconnect(rtable) == -1) {
-        perror("Error disconnecting from remote server");
+        perror("Error disconnecting from remote server\n");
         exit(-1);
     }
 
@@ -196,4 +205,9 @@ operation parse_operation(char *op_str) {
     } 
 
     return INVALID;
+}
+
+
+void sigpipe_handler(int sig) {
+    connected_to_server = 0;
 }
