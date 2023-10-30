@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 //extra
 #include "message-private.h"
 #include "table_skel.h"
@@ -35,6 +36,9 @@ int message_send_all(int other_socket, MessageT *msg){
     //copy content into buffer
     memcpy(size_buf,&content_size_ns,sizeof(u_int16_t));
     message_t__pack(msg,content_buf);
+
+    // FIXME write() error checks should follow the same structure
+    // as in message_receive_all
 
     //send the msg size first
     int total_write_len;
@@ -89,24 +93,27 @@ MessageT* message_receive_all(int other_socket, int* disconnected){
     *disconnected = 0;
 
     int read_len = read(other_socket, &response_size_ns, sizeof(uint16_t));
-    if (read_len == -1 || read_len > sizeof(response_size_ns)) {
-        perror("Error reading message length from socket");
-        return NULL;
-    } else if (read_len < sizeof(response_size_ns)) {
+    if ((read_len == -1 && errno == EINTR) ||
+        (read_len >= 0 && read_len < sizeof(response_size_ns))) {
         *disconnected = 1;
         return NULL;
+    } else if (read_len == -1 || read_len > sizeof(response_size_ns)) {
+        perror("Error reading message length from socket");
+        return NULL;
     }
+
     short response_size = ntohs(response_size_ns);
 
     //reading
     u_int8_t* response_buf = (u_int8_t*) calloc(response_size,sizeof(u_int8_t));
     while (response_size > MAX_MSG) {
         read_len = read(other_socket, response_buf, MAX_MSG);
-        if (read_len == -1 || read_len > MAX_MSG) {
-            perror("Error reading packed message from socket");
-            return NULL;
-       } else if (read_len < MAX_MSG) {
+        if ((read_len == -1 && errno == EINTR) ||
+            (read_len >= 0 && read_len < MAX_MSG)) {
             *disconnected = 1;
+            return NULL;
+        } else if (read_len == -1 || read_len > MAX_MSG) {
+            perror("Error reading packed message from socket");
             return NULL;
         }
 
@@ -115,13 +122,14 @@ MessageT* message_receive_all(int other_socket, int* disconnected){
     }
 
     read_len = read(other_socket, response_buf, response_size);
-        if (read_len == -1 || read_len > response_size) {
-            perror("Error reading packed message from socket");
-            return NULL;
-        } else if (read_len < response_size) {
-            *disconnected = 1;
-            return NULL;
-        }
+    if ((read_len == -1 && errno == EINTR) ||
+        (read_len >= 0 && read_len < response_size)) {
+        *disconnected = 1;
+        return NULL;
+    } else if (read_len == -1 || read_len > response_size) {
+        perror("Error reading packed message from socket");
+        return NULL;
+    }
 
     MessageT* ret = message_t__unpack(NULL, response_size, response_buf);
     free(response_buf);
