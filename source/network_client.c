@@ -65,15 +65,27 @@ MessageT *network_send_receive(struct rtable_t *rtable, MessageT *msg) {
     
     int sockfd = rtable->sockfd;
 
-    if (message_send_all(sockfd,msg)<0){
-        perror("Error writing to client socket");
+    int sent = message_send_all(sockfd, msg);
+
+    if (sent == -1) {
+        printf("Error in sending message to server\n");
+        network_close(rtable);
+        return NULL;
+    } else if (sent == 0) {
+        printf("Server disconnected\n");
         network_close(rtable);
         return NULL;
     }
 
-    MessageT* received_msg = message_receive_all(rtable->sockfd);
-    if (!received_msg){
-        perror("Error reading message from socket");
+    int disconnected;
+    MessageT* received_msg = message_receive_all(rtable->sockfd, &disconnected);
+
+    if (disconnected) {
+        printf("Server disconnected\n");
+        network_close(rtable);
+        return NULL;
+    } else if (!received_msg) {
+        printf("Error in receiving message from client\n");
         network_close(rtable);
         return NULL;
     }
