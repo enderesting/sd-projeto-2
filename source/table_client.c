@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
 
-    signal(SIGPIPE, sigpipe_handler);
+    // signal(SIGPIPE, sigpipe_handler);
 
     int terminated = 0;
     while (!terminated && connected_to_server) {
@@ -208,6 +208,6 @@ operation parse_operation(char *op_str) {
 }
 
 
-void sigpipe_handler(int sig) {
-    connected_to_server = 0;
-}
+// void sigpipe_handler(int sig) {
+//     connected_to_server = 0;
+// }

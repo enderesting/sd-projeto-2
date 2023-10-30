@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 //table_server
 // #include "client_stub.h"
 // #include "data.h"
@@ -8,9 +9,9 @@
 
 #include "table_server.h"
 
-volatile sig_atomic_t terminated;
-volatile sig_atomic_t connected;
 
+volatile sig_atomic_t terminated = 0;
+volatile sig_atomic_t connected = 0;
 
 int main(int argc, char *argv[]) {
     //processing args for port & n_list
@@ -19,8 +20,9 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
 
-    signal(SIGINT, sigint_handler);
-    signal(SIGPIPE, sigpipe_handler);
+    set_sig_handlers();
+    // signal(SIGINT, sigint_handler);
+    // signal(SIGPIPE, sigpipe_handler);
 
     //stores the chars after the first numerical digits are taken.
     //e.g. "123abc" -> it will store "abc"
@@ -51,6 +53,21 @@ int main(int argc, char *argv[]) {
     table_skel_destroy(table);
 
     return ret_net;
+}
+
+
+void set_sig_handlers() {
+    struct sigaction sigint_act;
+    sigaction(SIGINT, NULL, &sigint_act); //read sigaction from SIGINT and put it in sigint_act
+    sigint_act.sa_handler = sigint_handler;
+    sigint_act.sa_flags &= ~SA_RESTART; //kill that SA_RESTART
+    sigaction(SIGINT, &sigint_act, NULL); //replace it?
+
+    struct sigaction sigpipe_act;
+    sigaction(SIGPIPE, NULL, &sigpipe_act); 
+    sigpipe_act.sa_handler = sigpipe_handler;
+    sigpipe_act.sa_flags &= ~SA_RESTART;
+    sigaction(SIGPIPE, &sigpipe_act, NULL);
 }
 
 void sigint_handler(int signal) {

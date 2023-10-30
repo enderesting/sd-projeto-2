@@ -35,6 +35,7 @@ int invoke(MessageT *msg, struct table_t *table){
             // CHECKTHIS: is this the correct way of doing it
             struct data_t *value = data_create(entry_size, msg->entry->value.data);
             if (!entry_size || !value){
+                free(value);
                 msg = respond_bad_op(msg);
                 break;
             }
@@ -42,6 +43,7 @@ int invoke(MessageT *msg, struct table_t *table){
             if (res == 0){
                 msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
             } else msg = respond_err_in_exec(msg);
+            free(value);
             break;
         }
 
