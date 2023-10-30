@@ -24,7 +24,7 @@ struct rtable_t *rtable_connect(char *address_port) {
     struct rtable_t* rtable = (struct rtable_t*) malloc(sizeof(struct rtable_t));
 
     rtable->server_address = server_address;
-    rtable->server_port = server_port;
+    rtable->server_port = server_port; // this is fucked? why.
 
     //FIXME Error checking
     if(network_connect(rtable)<0){

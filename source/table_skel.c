@@ -27,39 +27,39 @@ int table_skel_destroy(struct table_t *table){
 */
 int invoke(MessageT *msg, struct table_t *table){
     int res = -1;
-    MessageT* new_msg = (MessageT*) calloc(1, sizeof(MessageT));
-    message_t__init(new_msg);
+    // MessageT* new_msg = (MessageT*) calloc(1, sizeof(MessageT));
+    // message_t__init(new_msg);
     switch (msg->opcode){
         case MESSAGE_T__OPCODE__OP_PUT:{
             int entry_size = msg->entry->value.len;
             // CHECKTHIS: is this the correct way of doing it
             struct data_t *value = data_create(entry_size, msg->entry->value.data);
             if (!entry_size || !value){
-                new_msg = respond_bad_op(new_msg);
+                msg = respond_bad_op(msg);
                 break;
             }
             res = table_put(table,msg->entry->key,value);
             if (res == 0){
-                new_msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
-            } else new_msg = respond_err_in_exec(new_msg);
+                msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
+            } else msg = respond_err_in_exec(msg);
             break;
         }
 
         case MESSAGE_T__OPCODE__OP_GET:{
             char* key = msg->key;
             if (!key){
-                new_msg = respond_bad_op(new_msg);
+                msg = respond_bad_op(msg);
                 break;
             }
             struct data_t* gotten_value = table_get(table,msg->key);
             if (gotten_value){
-                new_msg->value.len = gotten_value->datasize;
-                new_msg->value.data =  gotten_value->data;
-                new_msg->c_type = MESSAGE_T__C_TYPE__CT_VALUE;
+                msg->value.len = gotten_value->datasize;
+                msg->value.data =  gotten_value->data;
+                msg->c_type = MESSAGE_T__C_TYPE__CT_VALUE;
                 res = 0;
             }
             else if(!gotten_value) {
-                new_msg->value.data = NULL;
+                msg->value.data = NULL;
                 res = 0;
             }
             //else new_msg = respond_err_in_exec(new_msg);
@@ -69,39 +69,39 @@ int invoke(MessageT *msg, struct table_t *table){
         case MESSAGE_T__OPCODE__OP_DEL:{
             char* key = msg->key;
             if (!key){
-                new_msg = respond_bad_op(new_msg);
+                msg = respond_bad_op(msg);
                 break;
             }
             res = table_remove(table,msg->key);
             if (res == 0){
-                new_msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
+                msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
             }
             else if(res == 1) {
-                new_msg->c_type = MESSAGE_T__C_TYPE__CT_BAD;
+                msg->c_type = MESSAGE_T__C_TYPE__CT_BAD;
             }
-            else new_msg = respond_err_in_exec(new_msg);
+            else msg = respond_err_in_exec(msg);
             break;
         }
 
         case MESSAGE_T__OPCODE__OP_SIZE:{
             res = table_size(table);
             if (res>=0){
-                new_msg->result = res;
-                new_msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT;
+                msg->result = res;
+                msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT;
             }
-            else new_msg = respond_err_in_exec(new_msg);
+            else msg = respond_err_in_exec(msg);
             break;
         }
 
         case MESSAGE_T__OPCODE__OP_GETKEYS:{
             char** keys = table_get_keys(table);
             if (keys){
-                new_msg->n_keys = table_size(table);
-                new_msg->keys = keys;
-                new_msg->c_type = MESSAGE_T__C_TYPE__CT_KEYS;
+                msg->n_keys = table_size(table);
+                msg->keys = keys;
+                msg->c_type = MESSAGE_T__C_TYPE__CT_KEYS;
                 res = 0;
             }
-            else new_msg = respond_err_in_exec(new_msg);
+            else msg = respond_err_in_exec(msg);
             break;
         }
 
@@ -112,18 +112,20 @@ int invoke(MessageT *msg, struct table_t *table){
                 EntryT** entries = (EntryT**) calloc(tab_size+1,
                     sizeof(struct _EntryT*));
                 for (int i=0; i<tab_size; i++){
+                    entries[i] = (EntryT*) malloc(sizeof(EntryT));
                     entry_t__init(entries[i]); 
                     entries[i]->key = strdup(old_entries[i]->key);
                     entries[i]->value.len = old_entries[i]->value->datasize;
+                    entries[i]->value.data = malloc(entries[i]->value.len);
                     memcpy(entries[i]->value.data, old_entries[i]->value->data,
                            old_entries[i]->value->datasize);
                 }
-                new_msg->n_entries = tab_size;
-                new_msg->entries = entries;
-                new_msg->c_type = MESSAGE_T__C_TYPE__CT_TABLE;
+                msg->n_entries = tab_size;
+                msg->entries = entries;
+                msg->c_type = MESSAGE_T__C_TYPE__CT_TABLE;
                 res = 0;
             }
-            else new_msg = respond_err_in_exec(new_msg);
+            else msg = respond_err_in_exec(msg);
             free(old_entries);
             break;
         }
@@ -133,11 +135,11 @@ int invoke(MessageT *msg, struct table_t *table){
     }
 
     if(res>=0){
-        new_msg->opcode = msg->opcode+1;
+        msg->opcode = msg->opcode+1;
     }
 
-    message_t__free_unpacked(msg,NULL); 
-    *msg = *new_msg; //TODO: is this the correct parsing?
+    // message_t__free_unpacked(msg,NULL); 
+    // *msg = *new_msg; //TODO: is this the correct parsing? parrently not
 
     return res;
 }
