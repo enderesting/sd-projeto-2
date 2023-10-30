@@ -1,3 +1,10 @@
+/* Grupo 50
+ * Filipe Costa - 55549
+ * Yichen Cao - 58165
+ * Emily Sá - 58200
+ * Github repo: https://github.com/padrezulmiro/sd-projeto/
+ */
+
 #include <netinet/in.h>
 #include <stdint.h>
 #include <stdlib.h>
