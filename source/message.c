@@ -44,9 +44,6 @@ int message_send_all(int other_socket, MessageT *msg){
     memcpy(size_buf,&content_size_ns,sizeof(u_int16_t));
     message_t__pack(msg,content_buf);
 
-    // FIXME write() error checks should follow the same structure
-    // as in message_receive_all
-
     //send the msg size first
     int total_write_len;
     int write_len = write(other_socket, size_buf, sizeof(u_int16_t));
