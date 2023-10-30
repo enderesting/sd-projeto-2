@@ -3,9 +3,10 @@
 
 #include "table.h"
 #include "sdmessage.pb-c.h"
+#include <stdint.h>
 
 int message_send_all(int client_socket, MessageT *msg);
 
-MessageT *message_receive_all(int client_socket);
+MessageT *message_receive_all(int client_socket, int* disconnected);
 
 #endif
