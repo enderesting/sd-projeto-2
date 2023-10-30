@@ -5,6 +5,8 @@
 extern volatile sig_atomic_t terminated;
 extern volatile sig_atomic_t connected;
 
+void set_sig_handlers();
+
 void sigint_handler(int sig);
 
 void sigpipe_handler(int sig);

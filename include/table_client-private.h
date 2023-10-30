@@ -4,6 +4,6 @@
 
 extern volatile sig_atomic_t connected_to_server;
 
-void sigpipe_handler(int sig);
+// void sigpipe_handler(int sig);
 
 #endif

@@ -84,7 +84,7 @@ int network_main_loop(int listening_socket, struct table_t *table){
     fflush(stdout);
 
     while (
-        (!bad_termination) &&
+        !bad_termination && !terminated &&
         (connsockfd = accept(listening_socket, (struct sockaddr *)&client_addr,
                              &size_sockaddr_in)) != -1) {
         printf("Client connection established\n");
@@ -118,15 +118,19 @@ int network_main_loop(int listening_socket, struct table_t *table){
             message_t__free_unpacked(msg, NULL);
         }
 
-        if(terminated) {
+        if (!connected && !bad_termination && !terminated) {
             printf("Client connection closed\n");
             printf("Server ready, waiting for connections\n");
             fflush(stdout);
         }
     }
 
-    if (bad_termination || connsockfd == -1) {
+    if (bad_termination) {
+        printf("Server experienced an internal error. Shutting down abnormally!\n");
         return -1;
+    }
+    if (terminated) {
+        printf("Received request to shut down server gracefully. Shutting down...\n");
     }
 
     return 0;
