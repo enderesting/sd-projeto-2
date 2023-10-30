@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include "table_skel.h"
+#include "table_server-private.h"
 #include "network_server.h"
 
 #define PUT_STR "put"
