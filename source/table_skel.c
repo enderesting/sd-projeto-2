@@ -33,9 +33,10 @@ int invoke(MessageT *msg, struct table_t *table){
         case MESSAGE_T__OPCODE__OP_PUT:{
             int entry_size = msg->entry->value.len;
             // CHECKTHIS: is this the correct way of doing it
-            struct data_t *value = data_create(entry_size, msg->entry->value.data);
+            void* v = malloc(entry_size);
+            memcpy(v,msg->entry->value.data,entry_size);
+            struct data_t* value = data_create(entry_size, v);
             if (!entry_size || !value){
-                free(value);
                 msg = respond_bad_op(msg);
                 break;
             }
@@ -43,7 +44,7 @@ int invoke(MessageT *msg, struct table_t *table){
             if (res == 0){
                 msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
             } else msg = respond_err_in_exec(msg);
-            free(value);
+            data_destroy(value);
             break;
         }
 
@@ -53,10 +54,11 @@ int invoke(MessageT *msg, struct table_t *table){
                 msg = respond_bad_op(msg);
                 break;
             }
-            struct data_t* gotten_value = table_get(table,msg->key);
+            struct data_t* gotten_value = table_get(table,(msg->key));
             if (gotten_value){
                 msg->value.len = gotten_value->datasize;
-                msg->value.data =  gotten_value->data;
+                msg->value.data = malloc(msg->value.len);
+                memcpy(msg->value.data,gotten_value->data,msg->value.len);
                 msg->c_type = MESSAGE_T__C_TYPE__CT_VALUE;
                 res = 0;
             }
@@ -64,6 +66,7 @@ int invoke(MessageT *msg, struct table_t *table){
                 msg->value.data = NULL;
                 res = 0;
             }
+            data_destroy(gotten_value);
             //else new_msg = respond_err_in_exec(new_msg);
             break;
         }
@@ -121,6 +124,7 @@ int invoke(MessageT *msg, struct table_t *table){
                     entries[i]->value.data = malloc(entries[i]->value.len);
                     memcpy(entries[i]->value.data, old_entries[i]->value->data,
                            old_entries[i]->value->datasize);
+                    entry_destroy(old_entries[i]);
                 }
                 msg->n_entries = tab_size;
                 msg->entries = entries;
