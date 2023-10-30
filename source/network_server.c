@@ -17,9 +17,6 @@
 //extra
 #include "network_server.h"
 #include "sdmessage.pb-c.h"
-// #include "table_skel.h"
-// #include "table_server.h"
-// #include "table_server-private.h"
 
 //tamanho maximo da mensagem enviada pelo cliente
 #define MAX_MSG 2048
@@ -118,7 +115,7 @@ int network_main_loop(int listening_socket, struct table_t *table){
                 break;
             }
 
-            // wait until response is here?
+            // wait until response is here
             if (network_send(connsockfd, msg) <= 0) {
                 close(connsockfd);
                 break;

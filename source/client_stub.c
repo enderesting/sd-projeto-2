@@ -8,10 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-
-// #include "data.h"
 #include "client_stub.h"
-// #include "table_client-private.h"
 
 /* Função para estabelecer uma associação entre o cliente e o servidor,
  * em que address_port é uma string no formato <hostname>:<port>.
@@ -19,7 +16,6 @@
  */
 struct rtable_t *rtable_connect(char *address_port) {
 
-    //error checking
     if(!address_port) return NULL;
 
     char* colon = strchr(address_port, ':');
@@ -31,11 +27,12 @@ struct rtable_t *rtable_connect(char *address_port) {
     struct rtable_t* rtable = (struct rtable_t*) malloc(sizeof(struct rtable_t));
 
     rtable->server_address = server_address;
-    rtable->server_port = server_port; // this is fucked? why.
+    rtable->server_port = server_port;
 
-    //FIXME Error checking
     if(network_connect(rtable)<0){
         printf("Error in connecting to table.");
+        free(server_address);
+        free(rtable);
         return NULL;
     }
 
@@ -49,13 +46,12 @@ struct rtable_t *rtable_connect(char *address_port) {
 int rtable_disconnect(struct rtable_t *rtable) {
     if (!rtable) return -1;
 
-    //FIXME Error checking
-    network_close(rtable);
+    int ret = network_close(rtable);
 
     free(rtable->server_address);
     free(rtable);
 
-    return 0;
+    return ret;
 }
 
 /* Função para adicionar um elemento na tabela.
@@ -72,7 +68,6 @@ int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {
     ent->key = strdup(entry->key);
     ent->value.len = entry->value->datasize;
     ent->value.data = malloc(ent->value.len);
-    // ent->value.data = entry->value->data;//doesnt copy it in
     memcpy(ent->value.data, entry->value->data, entry->value->datasize);
     msg->opcode = MESSAGE_T__OPCODE__OP_PUT;
     msg->c_type = MESSAGE_T__C_TYPE__CT_ENTRY;
@@ -95,7 +90,6 @@ int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {
     }
 
 
-    // entry_t__free_unpacked(ent, NULL); //offending free fails
     message_t__free_unpacked(msg, NULL);
     message_t__free_unpacked(res, NULL);
     return 0;
@@ -176,10 +170,9 @@ int rtable_del(struct rtable_t *rtable, char *key) {
     }
     if (res->c_type == MESSAGE_T__C_TYPE__CT_BAD) {
         message_t__free_unpacked(res, NULL);
-        return 2;
+        return -1;
     }
     else {
-        // free(rtable_get(rtable, key)); 
         message_t__free_unpacked(res, NULL);
         return 0;
     }

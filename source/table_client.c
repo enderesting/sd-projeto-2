@@ -5,19 +5,13 @@
  * Github repo: https://github.com/padrezulmiro/sd-projeto/
  */
 
+#define MAX_MSG 2048
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "table_client.h"
-// #include "client_stub.h"
-// #include "data.h"
-// #include "entry.h"
-// #include "table_client-private.h"
-
-// #include "table_server.h"
-// #include "table_server-private.h"
 
 volatile sig_atomic_t connected_to_server = 0;
 
@@ -27,9 +21,6 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
 
-    //FIXME Error checking needs to be done in several parts of this function
-
-    //char* address_port = argv[1];
     struct rtable_t* rtable = rtable_connect(argv[1]);
 
     if (!rtable) {
@@ -37,12 +28,10 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
 
-    // signal(SIGPIPE, sigpipe_handler);
-
     int terminated = 0;
     while (!terminated && connected_to_server) {
         printf("Command: ");
-        char line[100]; //FIXME Remove magic number
+        char line[MAX_MSG];
         fgets(line, 99, stdin);
         char* ret_fgets = strtok(line, "");
         switch (parse_operation(ret_fgets)) {
@@ -70,8 +59,6 @@ int main(int argc, char *argv[]) {
 
                 entry_destroy(entry);
                 free(data_obj);
-                //FIXME cant use data_destroy here, becuase data->data is a
-                // reference that is freed elsewhere
                 break;
             }
 
@@ -155,8 +142,6 @@ int main(int argc, char *argv[]) {
                     break;
                 }
 
-                //printf("Entries in table:\n");
-
                 int i = 0;
                 struct entry_t* entry = entries[i];
                 while (entry) {
@@ -213,8 +198,3 @@ operation parse_operation(char *op_str) {
 
     return INVALID;
 }
-
-
-// void sigpipe_handler(int sig) {
-//     connected_to_server = 0;
-// }

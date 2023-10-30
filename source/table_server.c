@@ -6,9 +6,6 @@
  */
 
 #define _GNU_SOURCE
-//table_server
-// #include "client_stub.h"
-// #include "data.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -21,15 +18,13 @@ volatile sig_atomic_t terminated = 0;
 volatile sig_atomic_t connected = 0;
 
 int main(int argc, char *argv[]) {
-    //processing args for port & n_list
+    // processing args for port & n_list
     if (argc != 3) {
         perror("Incorrect number of arguments\n");
         exit(-1);
     }
 
     set_sig_handlers();
-    // signal(SIGINT, sigint_handler);
-    // signal(SIGPIPE, sigpipe_handler);
 
     //stores the chars after the first numerical digits are taken.
     //e.g. "123abc" -> it will store "abc"
@@ -48,7 +43,7 @@ int main(int argc, char *argv[]) {
     }
 
     //initiates table
-    struct table_t* table = table_skel_init(strtol(argv[2],NULL,10)); //malformed arg still works?? 
+    struct table_t* table = table_skel_init(strtol(argv[2],NULL,10));
     if (!table){
         perror("Error initializing table\n");
         return -1;
@@ -68,7 +63,7 @@ void set_sig_handlers() {
     sigaction(SIGINT, NULL, &sigint_act); //read sigaction from SIGINT and put it in sigint_act
     sigint_act.sa_handler = sigint_handler;
     sigint_act.sa_flags &= ~SA_RESTART; //kill that SA_RESTART
-    sigaction(SIGINT, &sigint_act, NULL); //replace it?
+    sigaction(SIGINT, &sigint_act, NULL); //replace it
 
     struct sigaction sigpipe_act;
     sigaction(SIGPIPE, NULL, &sigpipe_act); 

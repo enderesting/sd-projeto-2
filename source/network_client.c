@@ -16,11 +16,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-// #include "client_stub.h"
 #include "network_client.h"
-#include "table_client-private.h" //hmm
-// #include "client_stub-private.h"
-// #include "table_client-private.h"
+#include "table_client-private.h" 
 
 /* Esta função deve:
  * - Obter o endereço do servidor (struct sockaddr_in) com base na
@@ -68,7 +65,6 @@ int network_connect(struct rtable_t *rtable) {
  * - Retornar a mensagem de-serializada ou NULL em caso de erro.
  */
 MessageT *network_send_receive(struct rtable_t *rtable, MessageT *msg) {
-    //FIXME error handling is not implemented
     
     int sockfd = rtable->sockfd;
 

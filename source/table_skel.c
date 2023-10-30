@@ -34,12 +34,9 @@ int table_skel_destroy(struct table_t *table){
 */
 int invoke(MessageT *msg, struct table_t *table){
     int res = -1;
-    // MessageT* new_msg = (MessageT*) calloc(1, sizeof(MessageT));
-    // message_t__init(new_msg);
     switch (msg->opcode){
         case MESSAGE_T__OPCODE__OP_PUT:{
             int entry_size = msg->entry->value.len;
-            // CHECKTHIS: is this the correct way of doing it
             void* v = malloc(entry_size);
             memcpy(v,msg->entry->value.data,entry_size);
             struct data_t* value = data_create(entry_size, v);
@@ -74,7 +71,6 @@ int invoke(MessageT *msg, struct table_t *table){
                 res = 0;
             }
             data_destroy(gotten_value);
-            //else new_msg = respond_err_in_exec(new_msg);
             break;
         }
 
@@ -150,9 +146,6 @@ int invoke(MessageT *msg, struct table_t *table){
     if(res>=0){
         msg->opcode = msg->opcode+1;
     }
-
-    // message_t__free_unpacked(msg,NULL); 
-    // *msg = *new_msg; //TODO: is this the correct parsing? parrently not
 
     return res;
 }
