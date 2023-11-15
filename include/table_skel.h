@@ -3,6 +3,7 @@
 
 #include "table.h"
 #include "table_skel-private.h"
+#include "table_server.h"
 #include "sdmessage.pb-c.h"
 
 /* Inicia o skeleton da tabela.

@@ -143,14 +143,14 @@ int invoke(MessageT *msg, struct table_t *table){
         case MESSAGE_T__OPCODE__OP_STATS:{   
             //global_stats is the struct statistics_t that the server 
             //initializes and uses as a global variable
-            if(!global_stats) {
+            if(!resources.global_stats) {
                 msg = respond_err_in_exec(msg);
             }
 
             else {
-                msg->stats->n_clientes = global_stats->n_clientes;
-                msg->stats->n_operacoes = global_stats->n_operacoes;
-                msg->stats->total_time = global_stats->total_time;
+                msg->stats->n_clientes = resources.global_stats->n_clientes;
+                msg->stats->n_operacoes = resources.global_stats->n_operacoes;
+                msg->stats->total_time = resources.global_stats->total_time;
                 msg->c_type = MESSAGE_T__C_TYPE__CT_STATS;
                 res = 0;
             }
