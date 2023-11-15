@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "table_skel.h"
+#include "stats.h"
 
 
 /* Inicia o skeleton da tabela.
@@ -136,6 +137,23 @@ int invoke(MessageT *msg, struct table_t *table){
             }
             else msg = respond_err_in_exec(msg);
             free(old_entries);
+            break;
+        }
+
+        case MESSAGE_T__OPCODE__OP_STATS:{   
+            //global_stats is the struct statistics_t that the server 
+            //initializes and uses as a global variable
+            if(!global_stats) {
+                msg = respond_err_in_exec(msg);
+            }
+
+            else {
+                msg->stats->n_clientes = global_stats->n_clientes;
+                msg->stats->n_operacoes = global_stats->n_operacoes;
+                msg->stats->total_time = global_stats->total_time;
+                msg->c_type = MESSAGE_T__C_TYPE__CT_STATS;
+                res = 0;
+            }
             break;
         }
 
