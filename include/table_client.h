@@ -20,8 +20,9 @@
 #define GETKEYS_STR "getkeys\n"
 #define GETTABLE_STR "gettable\n"
 #define QUIT_STR "quit\n"
+#define STATS_STR "stats\n"
 
-typedef enum { PUT, GET, DEL, SIZE, GETKEYS, GETTABLE, QUIT, INVALID } operation;
+typedef enum { PUT, GET, DEL, SIZE, GETKEYS, GETTABLE, QUIT, STATS, INVALID } operation;
 
 typedef enum { ENTRY, KEY, NONE } content;
 

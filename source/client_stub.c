@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "client_stub.h"
+#include "stats.h"
 
 /* Função para estabelecer uma associação entre o cliente e o servidor,
  * em que address_port é uma string no formato <hostname>:<port>.
@@ -309,4 +310,35 @@ void rtable_free_entries(struct entry_t **entries) {
     }
 
     free(entries);
+}
+
+/* Obtém as estatísticas do servidor. 
+ */
+struct statistics_t *rtable_stats(struct rtable_t *rtable) {
+
+    if(!rtable) return NULL;
+
+    MessageT* msg = (MessageT*) calloc(1, sizeof(MessageT));
+    message_t__init(msg);
+    msg->opcode = MESSAGE_T__OPCODE__OP_STATS;
+    msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
+
+    MessageT* res = network_send_receive(rtable, msg);
+
+    if (!res) return NULL;
+
+    if (res->opcode == MESSAGE_T__OPCODE__OP_ERROR &&
+        res->c_type == MESSAGE_T__C_TYPE__CT_NONE) {
+        message_t__free_unpacked(res, NULL);
+        return NULL;
+    }
+
+    struct statistics_t* stat = (struct statistics_t*) calloc(1, sizeof(struct statistics_t));
+    stat->n_clientes = res->stats->n_clientes;
+    stat->n_operacoes = res->stats->n_operacoes;
+    stat->total_time = res->stats->total_time;
+
+    message_t__free_unpacked(msg, NULL);
+    message_t__free_unpacked(res, NULL);
+    return stat;
 }
