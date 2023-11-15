@@ -13,6 +13,8 @@
 
 #include "table_server.h"
 
+server_resources resources = {}; //TODO
+
 
 volatile sig_atomic_t terminated = 0;
 volatile sig_atomic_t connected = 0;
