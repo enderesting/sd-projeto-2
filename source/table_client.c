@@ -10,8 +10,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
+#include "sdmessage.pb-c.h"
 #include "table_client.h"
+#include "stats.h"
 
 volatile sig_atomic_t connected_to_server = 0;
 
@@ -154,13 +155,25 @@ int main(int argc, char *argv[]) {
                 break;
             }
 
+            case STATS: {
+                struct statistics_t* stats = rtable_stats(rtable);
+        
+                if (!stats) {
+                    printf("There was an error retrieving stats\n");
+                    break;
+                }
+
+                printf("Number of connected clients: %d\n Number of operations: %d\nTotal time spent: %d\n", stats->n_clientes, stats->n_operacoes, stats->total_time);
+                break;
+            }
+
             case QUIT:
                 terminated = 1;
                 printf("Bye, bye!\n");
                 break;
 
             default:
-                printf("Invalid command. Please try again.\nUsage: p[ut] <key> <value> | g[et] <key> | d[el] <key> | s[ize] | [get]k[eys] | [get]t[able] | q[uit]\n");
+                printf("Invalid command. Please try again.\nUsage: p[ut] <key> <value> | g[et] <key> | d[el] <key> | s[ize] | [get]k[eys] | [get]t[able] | st[ats] | q[uit]\n");
                 break;
         }
     }
@@ -182,6 +195,8 @@ operation parse_operation(char *op_str) {
         return GETTABLE;
     } else if (strcmp(op_str, QUIT_STR) == 0 || strcmp(op_str, "q\n") == 0) {
         return QUIT;
+    } else if (strcmp(op_str, STATS_STR) == 0 || strcmp(op_str, "st\n") == 0) {
+        return STATS;
     }
 
     char* operation = strtok(op_str, " ");
