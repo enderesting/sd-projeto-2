@@ -5,6 +5,7 @@
  * Github repo: https://github.com/padrezulmiro/sd-projeto/
  */
 
+#include "table_server-private.h"
 #define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
@@ -43,20 +44,31 @@ int main(int argc, char *argv[]) {
     }
 
     //initiates table
-    struct table_t* table = table_skel_init(strtol(argv[2],NULL,10));
+    int n_lists = strtol(argv[2],NULL,10);
+    int ret_resources = init_server_resources(n_lists);
+    if (ret_resources == -1) {
+        return -1;
+    }
+
+    int ret_net = network_main_loop(sockfd, resources.table);
+
+    network_server_close(sockfd);
+    table_skel_destroy(resources.table);
+
+    return ret_net;
+}
+
+int init_server_resources(int n_lists) {
+    struct table_t* table = table_skel_init(n_lists);
     if (!table){
         perror("Error initializing table\n");
         return -1;
     }
 
-    int ret_net = network_main_loop(sockfd,table);
+    resources.table = table;
 
-    network_server_close(sockfd);
-    table_skel_destroy(table);
-
-    return ret_net;
+    return 0;
 }
-
 
 void set_sig_handlers() {
     struct sigaction sigint_act;

@@ -14,9 +14,11 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <pthread.h>
 //extra
 #include "network_server.h"
 #include "sdmessage.pb-c.h"
+#include "server_thread.h"
 
 //tamanho maximo da mensagem enviada pelo cliente
 #define MAX_MSG 2048
@@ -81,60 +83,40 @@ int network_server_init(short port){
 
 int network_main_loop(int listening_socket, struct table_t *table){
     //connect to socket, send/receive
-    int connsockfd, ret;
+    int connsockfd;
+    int ret;
+
     struct sockaddr_in client_addr;
     socklen_t size_sockaddr_in = sizeof(client_addr);
-    int bad_termination = 0;
+
+    // FIXME Number of threads should be provided from the outside
+    int thread_i = 0;
+    int n_threads = 5;
+    pthread_t threads[n_threads];
+
     printf("Server ready, waiting for connections\n");
-    fflush(stdout);
 
-    while (
-        !bad_termination &&
-        !terminated &&
-        (connsockfd = accept(listening_socket, (struct sockaddr *)&client_addr,
-                             &size_sockaddr_in)) != -1
-    ) {
-        printf("Client connection established\n");
-        fflush(stdout);
+    while (!terminated) {
+        connsockfd = accept(listening_socket, (struct sockaddr *) &client_addr,
+                             &size_sockaddr_in);
+        if (connsockfd != -1) {
+            printf("Client connection established\n");
 
-        connected = 1;
-        while (!bad_termination && !terminated && connected) {
-            // receive a message, deserialize it
-            MessageT *msg = network_receive(connsockfd);
-            if (!msg) {
+            connected = 1;
+
+            int ret_thread_create = pthread_create(&threads[thread_i++], NULL,
+                                                   &serve_conn,
+                                                   (void*) &connsockfd);
+            if (ret_thread_create != 0) {
+                printf("Unable to create server thread \n");
                 close(connsockfd);
-                break;
             }
-
-            // get table_skel to process and get response
-            if ((ret = invoke(msg, table)) < 0) {
-                perror("Error in processing command in internal table, shutting "
-                    "server down\n");
-                close(connsockfd);
-                if(!terminated) bad_termination = 1;
-                break;
-            }
-
-            // wait until response is here
-            if (network_send(connsockfd, msg) <= 0) {
-                close(connsockfd);
-                break;
-            }
-
-            message_t__free_unpacked(msg, NULL);
-        }
-
-        if (!connected && !bad_termination && !terminated) {
-            printf("Client connection closed\n");
-            printf("Server ready, waiting for connections\n");
-            fflush(stdout);
+        } else {
+            printf("Unable to establish connection. Waiting for other "
+                   "connections. \n");
         }
     }
 
-    if (bad_termination) {
-        printf("Server experienced an internal error. Shutting down abnormally!\n");
-        return -1;
-    }
     if (terminated) {
         printf("\nReceived request to shut down server gracefully. Shutting down...\n");
     }
