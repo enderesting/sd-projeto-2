@@ -9,6 +9,12 @@ message entry_t			/* Formato da mensagem EntryT */
 	bytes  value	= 2;
 }
 
+message statistics_t {
+	sint32 n_clientes = 1;
+	sint32 n_operacoes = 2;
+    sint32 total_time = 3;
+}
+
 message message_t			/* Formato da mensagem MessageT */
 {
 	enum Opcode {		/* Opcodes da mensagem */
@@ -19,6 +25,7 @@ message message_t			/* Formato da mensagem MessageT */
 		OP_SIZE	= 40;
 		OP_GETKEYS	= 50;
 		OP_GETTABLE	= 60;
+		OP_STATS = 70;
 		OP_ERROR	= 99;
 	}
 
@@ -31,6 +38,7 @@ message message_t			/* Formato da mensagem MessageT */
 		CT_KEYS	= 50;
 		CT_TABLE	= 60;
 		CT_NONE	= 70;
+		CT_STATS = 80;
 	}
 
 /* Campos disponíveis na mensagem genérica (cada mensagem concreta, de
@@ -44,6 +52,7 @@ message message_t			/* Formato da mensagem MessageT */
 	sint32		result	= 6;
 	repeated string	keys		= 7;
 	repeated entry_t	entries	= 8;
+	statistics_t stats = 9;
 };
 
 

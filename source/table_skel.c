@@ -9,7 +9,7 @@
 #include <string.h>
 #include "table_skel.h"
 
-
+struct timeval tv;
 /* Inicia o skeleton da tabela.
  * O main() do servidor deve chamar esta função antes de poder usar a
  * função invoke(). O parâmetro n_lists define o número de listas a
@@ -17,6 +17,7 @@
  * Retorna a tabela criada ou NULL em caso de erro.
  */
 struct table_t *table_skel_init(int n_lists){
+    // struct timezone tz;
     return table_create(n_lists);
 }
 
@@ -26,6 +27,11 @@ struct table_t *table_skel_init(int n_lists){
  */
 int table_skel_destroy(struct table_t *table){
     return table_destroy(table);
+}
+
+int return_time(struct timeval* tv){
+    gettimeofday(tv,NULL);
+    return tv->tv_usec;
 }
 
 /* Executa na tabela table a operação indicada pelo opcode contido em msg 
@@ -44,7 +50,13 @@ int invoke(MessageT *msg, struct table_t *table){
                 msg = respond_bad_op(msg);
                 break;
             }
+            enter_write(resources.table_locks);
+            increase_operations(resources.global_stats);
+            int timestart = return_time(&tv);
             res = table_put(table,msg->entry->key,value);
+            int timeend = return_time(&tv);
+            increase_time(resources.global_stats,(timeend-timestart));
+            exit_write(resources.table_locks);
             if (res == 0){
                 msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
             } else msg = respond_err_in_exec(msg);
@@ -58,7 +70,13 @@ int invoke(MessageT *msg, struct table_t *table){
                 msg = respond_bad_op(msg);
                 break;
             }
+            enter_read(resources.table_locks);
+            increase_operations(resources.global_stats);
+            int timestart = return_time(&tv);
             struct data_t* gotten_value = table_get(table,(msg->key));
+            int timeend = return_time(&tv);
+            increase_time(resources.global_stats,(timeend-timestart));
+            exit_read(resources.table_locks);
             if (gotten_value){
                 msg->value.len = gotten_value->datasize;
                 msg->value.data = malloc(msg->value.len);
@@ -80,7 +98,13 @@ int invoke(MessageT *msg, struct table_t *table){
                 msg = respond_bad_op(msg);
                 break;
             }
+            enter_write(resources.table_locks);
+            increase_operations(resources.global_stats);
+            int timestart = return_time(&tv);
             res = table_remove(table,msg->key);
+            int timeend = return_time(&tv);
+            increase_time(resources.global_stats,(timeend-timestart));
+            exit_write(resources.table_locks);
             if (res == 0){
                 msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
             }
@@ -92,7 +116,13 @@ int invoke(MessageT *msg, struct table_t *table){
         }
 
         case MESSAGE_T__OPCODE__OP_SIZE:{
+            enter_read(resources.table_locks);
+            increase_operations(resources.global_stats);
+            int timestart = return_time(&tv);
             res = table_size(table);
+            int timeend = return_time(&tv);
+            increase_time(resources.global_stats,(timeend-timestart));
+            exit_read(resources.table_locks);
             if (res>=0){
                 msg->result = res;
                 msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT;
@@ -102,7 +132,13 @@ int invoke(MessageT *msg, struct table_t *table){
         }
 
         case MESSAGE_T__OPCODE__OP_GETKEYS:{
+            enter_read(resources.table_locks);
+            increase_operations(resources.global_stats);
+            int timestart = return_time(&tv);
             char** keys = table_get_keys(table);
+            int timeend = return_time(&tv);
+            increase_time(resources.global_stats,(timeend-timestart));
+            exit_read(resources.table_locks);
             if (keys){
                 msg->n_keys = table_size(table);
                 msg->keys = keys;
@@ -114,7 +150,13 @@ int invoke(MessageT *msg, struct table_t *table){
         }
 
         case MESSAGE_T__OPCODE__OP_GETTABLE:{
+            enter_read(resources.table_locks);
+            increase_operations(resources.global_stats);
+            int timestart = return_time(&tv);
             int tab_size = table_size(table);
+            int timeend = return_time(&tv);
+            increase_time(resources.global_stats,(timeend-timestart));
+            exit_read(resources.table_locks);
             struct entry_t** old_entries = table_get_entries(table);
             if (old_entries){
                 EntryT** entries = (EntryT**) calloc(tab_size+1,
@@ -136,6 +178,24 @@ int invoke(MessageT *msg, struct table_t *table){
             }
             else msg = respond_err_in_exec(msg);
             free(old_entries);
+            break;
+        }
+
+        case MESSAGE_T__OPCODE__OP_STATS:{   
+            //global_stats is the struct statistics_t that the server 
+            //initializes and uses as a global variable
+            enter_read(resources.stats_locks);
+            // struct statistics_t ret;
+            if(!resources.global_stats){
+                msg = respond_err_in_exec(msg);
+            }else{
+                msg->stats->n_clientes = resources.global_stats->n_clientes;
+                msg->stats->n_operacoes = resources.global_stats->n_operacoes;
+                msg->stats->total_time = resources.global_stats->total_time;
+                msg->c_type = MESSAGE_T__C_TYPE__CT_STATS;
+                res = 0;
+            }
+            exit_read(resources.stats_locks);
             break;
         }
 

@@ -16,6 +16,7 @@ PROTOBUF_C__BEGIN_DECLS
 
 
 typedef struct _EntryT EntryT;
+typedef struct _StatisticsT StatisticsT;
 typedef struct _MessageT MessageT;
 
 
@@ -29,6 +30,7 @@ typedef enum _MessageT__Opcode {
   MESSAGE_T__OPCODE__OP_SIZE = 40,
   MESSAGE_T__OPCODE__OP_GETKEYS = 50,
   MESSAGE_T__OPCODE__OP_GETTABLE = 60,
+  MESSAGE_T__OPCODE__OP_STATS = 70,
   MESSAGE_T__OPCODE__OP_ERROR = 99
     PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(MESSAGE_T__OPCODE)
 } MessageT__Opcode;
@@ -40,7 +42,8 @@ typedef enum _MessageT__CType {
   MESSAGE_T__C_TYPE__CT_RESULT = 40,
   MESSAGE_T__C_TYPE__CT_KEYS = 50,
   MESSAGE_T__C_TYPE__CT_TABLE = 60,
-  MESSAGE_T__C_TYPE__CT_NONE = 70
+  MESSAGE_T__C_TYPE__CT_NONE = 70,
+  MESSAGE_T__C_TYPE__CT_STATS = 80
     PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(MESSAGE_T__C_TYPE)
 } MessageT__CType;
 
@@ -55,6 +58,18 @@ struct  _EntryT
 #define ENTRY_T__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&entry_t__descriptor) \
     , (char *)protobuf_c_empty_string, {0,NULL} }
+
+
+struct  _StatisticsT
+{
+  ProtobufCMessage base;
+  int32_t n_clientes;
+  int32_t n_operacoes;
+  int32_t total_time;
+};
+#define STATISTICS_T__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&statistics_t__descriptor) \
+    , 0, 0, 0 }
 
 
 struct  _MessageT
@@ -74,10 +89,11 @@ struct  _MessageT
   char **keys;
   size_t n_entries;
   EntryT **entries;
+  StatisticsT *stats;
 };
 #define MESSAGE_T__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&message_t__descriptor) \
-    , MESSAGE_T__OPCODE__OP_BAD, MESSAGE_T__C_TYPE__CT_BAD, NULL, (char *)protobuf_c_empty_string, {0,NULL}, 0, 0,NULL, 0,NULL }
+    , MESSAGE_T__OPCODE__OP_BAD, MESSAGE_T__C_TYPE__CT_BAD, NULL, (char *)protobuf_c_empty_string, {0,NULL}, 0, 0,NULL, 0,NULL, NULL }
 
 
 /* EntryT methods */
@@ -98,6 +114,25 @@ EntryT *
                       const uint8_t       *data);
 void   entry_t__free_unpacked
                      (EntryT *message,
+                      ProtobufCAllocator *allocator);
+/* StatisticsT methods */
+void   statistics_t__init
+                     (StatisticsT         *message);
+size_t statistics_t__get_packed_size
+                     (const StatisticsT   *message);
+size_t statistics_t__pack
+                     (const StatisticsT   *message,
+                      uint8_t             *out);
+size_t statistics_t__pack_to_buffer
+                     (const StatisticsT   *message,
+                      ProtobufCBuffer     *buffer);
+StatisticsT *
+       statistics_t__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   statistics_t__free_unpacked
+                     (StatisticsT *message,
                       ProtobufCAllocator *allocator);
 /* MessageT methods */
 void   message_t__init
@@ -123,6 +158,9 @@ void   message_t__free_unpacked
 typedef void (*EntryT_Closure)
                  (const EntryT *message,
                   void *closure_data);
+typedef void (*StatisticsT_Closure)
+                 (const StatisticsT *message,
+                  void *closure_data);
 typedef void (*MessageT_Closure)
                  (const MessageT *message,
                   void *closure_data);
@@ -133,6 +171,7 @@ typedef void (*MessageT_Closure)
 /* --- descriptors --- */
 
 extern const ProtobufCMessageDescriptor entry_t__descriptor;
+extern const ProtobufCMessageDescriptor statistics_t__descriptor;
 extern const ProtobufCMessageDescriptor message_t__descriptor;
 extern const ProtobufCEnumDescriptor    message_t__opcode__descriptor;
 extern const ProtobufCEnumDescriptor    message_t__c_type__descriptor;

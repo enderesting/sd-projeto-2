@@ -52,6 +52,51 @@ void   entry_t__free_unpacked
   assert(message->base.descriptor == &entry_t__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
+void   statistics_t__init
+                     (StatisticsT         *message)
+{
+  static const StatisticsT init_value = STATISTICS_T__INIT;
+  *message = init_value;
+}
+size_t statistics_t__get_packed_size
+                     (const StatisticsT *message)
+{
+  assert(message->base.descriptor == &statistics_t__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t statistics_t__pack
+                     (const StatisticsT *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &statistics_t__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t statistics_t__pack_to_buffer
+                     (const StatisticsT *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &statistics_t__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+StatisticsT *
+       statistics_t__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (StatisticsT *)
+     protobuf_c_message_unpack (&statistics_t__descriptor,
+                                allocator, len, data);
+}
+void   statistics_t__free_unpacked
+                     (StatisticsT *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &statistics_t__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
 void   message_t__init
                      (MessageT         *message)
 {
@@ -148,7 +193,71 @@ const ProtobufCMessageDescriptor entry_t__descriptor =
   (ProtobufCMessageInit) entry_t__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCEnumValue message_t__opcode__enum_values_by_number[8] =
+static const ProtobufCFieldDescriptor statistics_t__field_descriptors[3] =
+{
+  {
+    "n_clientes",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_SINT32,
+    0,   /* quantifier_offset */
+    offsetof(StatisticsT, n_clientes),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "n_operacoes",
+    2,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_SINT32,
+    0,   /* quantifier_offset */
+    offsetof(StatisticsT, n_operacoes),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "total_time",
+    3,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_SINT32,
+    0,   /* quantifier_offset */
+    offsetof(StatisticsT, total_time),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned statistics_t__field_indices_by_name[] = {
+  0,   /* field[0] = n_clientes */
+  1,   /* field[1] = n_operacoes */
+  2,   /* field[2] = total_time */
+};
+static const ProtobufCIntRange statistics_t__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 3 }
+};
+const ProtobufCMessageDescriptor statistics_t__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "statistics_t",
+  "StatisticsT",
+  "StatisticsT",
+  "",
+  sizeof(StatisticsT),
+  3,
+  statistics_t__field_descriptors,
+  statistics_t__field_indices_by_name,
+  1,  statistics_t__number_ranges,
+  (ProtobufCMessageInit) statistics_t__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCEnumValue message_t__opcode__enum_values_by_number[9] =
 {
   { "OP_BAD", "MESSAGE_T__OPCODE__OP_BAD", 0 },
   { "OP_PUT", "MESSAGE_T__OPCODE__OP_PUT", 10 },
@@ -157,21 +266,23 @@ static const ProtobufCEnumValue message_t__opcode__enum_values_by_number[8] =
   { "OP_SIZE", "MESSAGE_T__OPCODE__OP_SIZE", 40 },
   { "OP_GETKEYS", "MESSAGE_T__OPCODE__OP_GETKEYS", 50 },
   { "OP_GETTABLE", "MESSAGE_T__OPCODE__OP_GETTABLE", 60 },
+  { "OP_STATS", "MESSAGE_T__OPCODE__OP_STATS", 70 },
   { "OP_ERROR", "MESSAGE_T__OPCODE__OP_ERROR", 99 },
 };
 static const ProtobufCIntRange message_t__opcode__value_ranges[] = {
-{0, 0},{10, 1},{20, 2},{30, 3},{40, 4},{50, 5},{60, 6},{99, 7},{0, 8}
+{0, 0},{10, 1},{20, 2},{30, 3},{40, 4},{50, 5},{60, 6},{70, 7},{99, 8},{0, 9}
 };
-static const ProtobufCEnumValueIndex message_t__opcode__enum_values_by_name[8] =
+static const ProtobufCEnumValueIndex message_t__opcode__enum_values_by_name[9] =
 {
   { "OP_BAD", 0 },
   { "OP_DEL", 3 },
-  { "OP_ERROR", 7 },
+  { "OP_ERROR", 8 },
   { "OP_GET", 2 },
   { "OP_GETKEYS", 5 },
   { "OP_GETTABLE", 6 },
   { "OP_PUT", 1 },
   { "OP_SIZE", 4 },
+  { "OP_STATS", 7 },
 };
 const ProtobufCEnumDescriptor message_t__opcode__descriptor =
 {
@@ -180,15 +291,15 @@ const ProtobufCEnumDescriptor message_t__opcode__descriptor =
   "Opcode",
   "MessageT__Opcode",
   "",
-  8,
+  9,
   message_t__opcode__enum_values_by_number,
-  8,
+  9,
   message_t__opcode__enum_values_by_name,
-  8,
+  9,
   message_t__opcode__value_ranges,
   NULL,NULL,NULL,NULL   /* reserved[1234] */
 };
-static const ProtobufCEnumValue message_t__c_type__enum_values_by_number[8] =
+static const ProtobufCEnumValue message_t__c_type__enum_values_by_number[9] =
 {
   { "CT_BAD", "MESSAGE_T__C_TYPE__CT_BAD", 0 },
   { "CT_ENTRY", "MESSAGE_T__C_TYPE__CT_ENTRY", 10 },
@@ -198,11 +309,12 @@ static const ProtobufCEnumValue message_t__c_type__enum_values_by_number[8] =
   { "CT_KEYS", "MESSAGE_T__C_TYPE__CT_KEYS", 50 },
   { "CT_TABLE", "MESSAGE_T__C_TYPE__CT_TABLE", 60 },
   { "CT_NONE", "MESSAGE_T__C_TYPE__CT_NONE", 70 },
+  { "CT_STATS", "MESSAGE_T__C_TYPE__CT_STATS", 80 },
 };
 static const ProtobufCIntRange message_t__c_type__value_ranges[] = {
-{0, 0},{10, 1},{20, 2},{30, 3},{40, 4},{50, 5},{60, 6},{70, 7},{0, 8}
+{0, 0},{10, 1},{20, 2},{30, 3},{40, 4},{50, 5},{60, 6},{70, 7},{80, 8},{0, 9}
 };
-static const ProtobufCEnumValueIndex message_t__c_type__enum_values_by_name[8] =
+static const ProtobufCEnumValueIndex message_t__c_type__enum_values_by_name[9] =
 {
   { "CT_BAD", 0 },
   { "CT_ENTRY", 1 },
@@ -210,6 +322,7 @@ static const ProtobufCEnumValueIndex message_t__c_type__enum_values_by_name[8] =
   { "CT_KEYS", 5 },
   { "CT_NONE", 7 },
   { "CT_RESULT", 4 },
+  { "CT_STATS", 8 },
   { "CT_TABLE", 6 },
   { "CT_VALUE", 3 },
 };
@@ -220,15 +333,15 @@ const ProtobufCEnumDescriptor message_t__c_type__descriptor =
   "C_type",
   "MessageT__CType",
   "",
-  8,
+  9,
   message_t__c_type__enum_values_by_number,
-  8,
+  9,
   message_t__c_type__enum_values_by_name,
-  8,
+  9,
   message_t__c_type__value_ranges,
   NULL,NULL,NULL,NULL   /* reserved[1234] */
 };
-static const ProtobufCFieldDescriptor message_t__field_descriptors[8] =
+static const ProtobufCFieldDescriptor message_t__field_descriptors[9] =
 {
   {
     "opcode",
@@ -326,6 +439,18 @@ static const ProtobufCFieldDescriptor message_t__field_descriptors[8] =
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "stats",
+    9,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_MESSAGE,
+    0,   /* quantifier_offset */
+    offsetof(MessageT, stats),
+    &statistics_t__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned message_t__field_indices_by_name[] = {
   1,   /* field[1] = c_type */
@@ -335,12 +460,13 @@ static const unsigned message_t__field_indices_by_name[] = {
   6,   /* field[6] = keys */
   0,   /* field[0] = opcode */
   5,   /* field[5] = result */
+  8,   /* field[8] = stats */
   4,   /* field[4] = value */
 };
 static const ProtobufCIntRange message_t__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 8 }
+  { 0, 9 }
 };
 const ProtobufCMessageDescriptor message_t__descriptor =
 {
@@ -350,7 +476,7 @@ const ProtobufCMessageDescriptor message_t__descriptor =
   "MessageT",
   "",
   sizeof(MessageT),
-  8,
+  9,
   message_t__field_descriptors,
   message_t__field_indices_by_name,
   1,  message_t__number_ranges,

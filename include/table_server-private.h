@@ -8,19 +8,21 @@
 #ifndef _TABLE_SERVER_PRIVATE_H
 #define _TABLE_SERVER_PRIVATE_H
 #include <signal.h>
+#include <stats.h>
+#include <pthread.h>
+#include <mutex.h>
 
 extern volatile sig_atomic_t terminated;
 extern volatile sig_atomic_t connected;
 
 typedef struct server_resources {
     struct table_t* table;
-    // TODO Add pointer to stats struct
-    // TODO Add mutexes
-    // TODO Add mutex cond vars
-    
+    struct statistics_t* global_stats; // TODO Add pointer to stats struct
+    mutex_locks table_locks;
+    mutex_locks stats_locks;
 } server_resources;
 
-server_resources resources;
+extern server_resources resources;
 
 int init_server_resources(int n_lists);
 
