@@ -8,8 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "table_skel.h"
-#include <sys/time.h>
-#include <time.h>
 
 struct timeval tv;
 /* Inicia o skeleton da tabela.
