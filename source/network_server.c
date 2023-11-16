@@ -5,6 +5,9 @@
  * Github repo: https://github.com/padrezulmiro/sd-projeto/
  */
 
+#define _GNU_SOURCE
+#include <asm-generic/errno-base.h>
+#include <asm-generic/errno.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
@@ -15,6 +18,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <fcntl.h>
+#include <errno.h>
 //extra
 #include "network_server.h"
 #include "sdmessage.pb-c.h"
@@ -34,6 +39,8 @@ int network_server_init(short port){
         perror("Erro ao criar socket\n");
         return -1;
     }
+
+    fcntl(sockfd, F_SETFL, O_NONBLOCK);
 
     //https://linux.die.net/man/3/setsockopt <- reference
     //https://stackoverflow.com/questions/24194961/how-do-i-use-setsockoptso-reuseaddr
@@ -86,25 +93,58 @@ int network_main_loop(int listening_socket, struct table_t *table){
     int connsockfd;
     int ret;
 
+    int server_error = 0;
+
     struct sockaddr_in client_addr;
     socklen_t size_sockaddr_in = sizeof(client_addr);
 
     // FIXME Number of threads should be provided from the outside
-    int thread_i = 0;
     int n_threads = 5;
     pthread_t threads[n_threads];
+    int active_threads[n_threads];
 
     printf("Server ready, waiting for connections\n");
 
-    while (!terminated) {
+    while (!terminated && !server_error) {
+        for (int i = 0; i < n_threads; i++) {
+            if (active_threads[i]) {
+                // FIXME can NULL be used to ignore retval?
+                int ret_join = pthread_tryjoin_np(threads[i], NULL);
+                if (ret_join == 0) active_threads[i] = 0;
+                else if (errno == EBUSY) continue;
+                else {
+                    server_error = 1;
+                    break;
+                }
+            }
+        }
+        if (server_error) continue;
+
+        int vacant_thread = -1;
+        for (int i; i < n_threads; i++) {
+            if (!active_threads[i]) vacant_thread = i;
+        }
+
+        if (vacant_thread == -1) {
+            sleep(2);
+            continue;
+        }
+
         connsockfd = accept(listening_socket, (struct sockaddr *) &client_addr,
-                             &size_sockaddr_in);
+                            &size_sockaddr_in);
+
+        if (connsockfd == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+            sleep(2);
+            continue;
+        }
+
         if (connsockfd != -1) {
             printf("Client connection established\n");
 
+            // XXX Revise this
             connected = 1;
 
-            int ret_thread_create = pthread_create(&threads[thread_i++], NULL,
+            int ret_thread_create = pthread_create(&threads[vacant_thread], NULL,
                                                    &serve_conn,
                                                    (void*) &connsockfd);
             if (ret_thread_create != 0) {
