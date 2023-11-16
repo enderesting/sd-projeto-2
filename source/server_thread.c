@@ -13,7 +13,7 @@
 #include "sdmessage.pb-c.h"
 #include "network_server.h"
 
-void* server_conn(void* connsockfd) {
+void* serve_conn(void* connsockfd) {
     int ret;
     int processing_error = 0;
 
