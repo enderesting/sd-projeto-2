@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <stats.h>
 #include <pthread.h>
+#include <mutex.h>
 
 extern volatile sig_atomic_t terminated;
 extern volatile sig_atomic_t connected;
@@ -17,14 +18,8 @@ extern volatile sig_atomic_t connected;
 typedef struct server_resources {
     struct table_t* table;
     struct statistics_t* global_stats; // TODO Add pointer to stats struct
-    // TODO Add mutex variables
-    int writers_waiting;
-    int readers_reading;
-    int writer_active;
-    // TODO Add mutex cond vars
-    pthread_mutex_t m;
-    pthread_cond_t c;
-
+    mutex_locks table_locks;
+    mutex_locks stats_locks;
 } server_resources;
 
 extern server_resources resources;
