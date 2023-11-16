@@ -15,6 +15,8 @@ $(shell mkdir -p $(LIB_DIR) >/dev/null)
 LIB_TABLE_R = $(addprefix $(OBJ_DIR)/,data.o entry.o list.o table.o)
 TABLE_CLIENT_R = $(addprefix $(OBJ_DIR)/,data.o \
 	entry.o \
+	stats.o \
+	mutex.o \
 	table_client.o \
 	sdmessage.pb-c.o \
 	message.o\
@@ -22,6 +24,8 @@ TABLE_CLIENT_R = $(addprefix $(OBJ_DIR)/,data.o \
 	network_client.o)
 TABLE_SERVER_R = $(addprefix $(OBJ_DIR)/,data.o \
 	entry.o \
+	stats.o \
+	mutex.o \
 	list.o \
 	table.o \
 	sdmessage.pb-c.o \

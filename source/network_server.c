@@ -1,3 +1,10 @@
+/* Grupo 50
+ * Filipe Costa - 55549
+ * Yichen Cao - 58165
+ * Emily Sá - 58200
+ * Github repo: https://github.com/padrezulmiro/sd-projeto/
+ */
+
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
@@ -9,9 +16,7 @@
 #include <stdlib.h>
 //extra
 #include "network_server.h"
-// #include "table_skel.h"
-// #include "table_server.h"
-// #include "table_server-private.h"
+#include "sdmessage.pb-c.h"
 
 //tamanho maximo da mensagem enviada pelo cliente
 #define MAX_MSG 2048
@@ -84,17 +89,19 @@ int network_main_loop(int listening_socket, struct table_t *table){
     fflush(stdout);
 
     while (
-        (!bad_termination) &&
+        !bad_termination &&
+        !terminated &&
         (connsockfd = accept(listening_socket, (struct sockaddr *)&client_addr,
-                             &size_sockaddr_in)) != -1) {
+                             &size_sockaddr_in)) != -1
+    ) {
         printf("Client connection established\n");
         fflush(stdout);
+
         connected = 1;
         while (!bad_termination && !terminated && connected) {
             // receive a message, deserialize it
             MessageT *msg = network_receive(connsockfd);
             if (!msg) {
-                perror("Error in receiving message from client\n");
                 close(connsockfd);
                 break;
             }
@@ -108,9 +115,8 @@ int network_main_loop(int listening_socket, struct table_t *table){
                 break;
             }
 
-            // wait until response is here?
-            if (network_send(connsockfd, msg) == -1) {
-                perror("Error in sending message to client\n");
+            // wait until response is here
+            if (network_send(connsockfd, msg) <= 0) {
                 close(connsockfd);
                 break;
             }
@@ -118,15 +124,19 @@ int network_main_loop(int listening_socket, struct table_t *table){
             message_t__free_unpacked(msg, NULL);
         }
 
-        if(terminated) {
+        if (!connected && !bad_termination && !terminated) {
             printf("Client connection closed\n");
             printf("Server ready, waiting for connections\n");
             fflush(stdout);
         }
     }
 
-    if (bad_termination || connsockfd == -1) {
+    if (bad_termination) {
+        printf("Server experienced an internal error. Shutting down abnormally!\n");
         return -1;
+    }
+    if (terminated) {
+        printf("\nReceived request to shut down server gracefully. Shutting down...\n");
     }
 
     return 0;
@@ -140,10 +150,17 @@ int network_main_loop(int listening_socket, struct table_t *table){
  * Retorna a mensagem com o pedido ou NULL em caso de erro.
  */
 MessageT *network_receive(int client_socket){
-    // short buf_len = sizeof(uint16_t) + MAX_MSG;
-    // void* buf = malloc(buf_len);
-    // int nbytes;
-    return message_receive_all(client_socket);
+    int disconnected;
+    MessageT* msg = message_receive_all(client_socket, &disconnected);
+
+    if (disconnected) {
+        printf("Client disconnected\n");
+        printf("Server ready, waiting for connections\n");
+    } else if (!msg) {
+        printf("Error in receiving message from client\n");
+    }
+
+    return msg;
 }
 
 /* A função network_send() deve:
@@ -152,7 +169,17 @@ MessageT *network_receive(int client_socket){
  * Retorna 0 (OK) ou -1 em caso de erro.
  */
 int network_send(int client_socket, MessageT *msg){
-    return message_send_all(client_socket,msg);
+    int sent = message_send_all(client_socket,msg);
+
+    if (sent == -1) {
+        printf("Error in sending message to client\n");
+    } else if (sent == 0) {
+        printf("Client disconnected\n");
+        printf("Server ready, waiting for connections\n");
+    }
+
+    return sent;
+
 }
 
 /* Liberta os recursos alocados por network_server_init(), nomeadamente

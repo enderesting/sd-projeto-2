@@ -1,16 +1,18 @@
+/* Grupo 50
+ * Filipe Costa - 55549
+ * Yichen Cao - 58165
+ * Emily Sá - 58200
+ * Github repo: https://github.com/padrezulmiro/sd-projeto/
+ */
+
+#define MAX_MSG 2048
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
+#include "sdmessage.pb-c.h"
 #include "table_client.h"
-// #include "client_stub.h"
-// #include "data.h"
-// #include "entry.h"
-// #include "table_client-private.h"
-
-// #include "table_server.h"
-// #include "table_server-private.h"
+#include "stats.h"
 
 volatile sig_atomic_t connected_to_server = 0;
 
@@ -20,9 +22,6 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
 
-    //FIXME Error checking needs to be done in several parts of this function
-
-    //char* address_port = argv[1];
     struct rtable_t* rtable = rtable_connect(argv[1]);
 
     if (!rtable) {
@@ -30,12 +29,10 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
 
-    signal(SIGPIPE, sigpipe_handler);
-
     int terminated = 0;
     while (!terminated && connected_to_server) {
         printf("Command: ");
-        char line[100]; //FIXME Remove magic number
+        char line[MAX_MSG];
         fgets(line, 99, stdin);
         char* ret_fgets = strtok(line, "");
         switch (parse_operation(ret_fgets)) {
@@ -63,8 +60,6 @@ int main(int argc, char *argv[]) {
 
                 entry_destroy(entry);
                 free(data_obj);
-                //FIXME cant use data_destroy here, becuase data->data is a
-                // reference that is freed elsewhere
                 break;
             }
 
@@ -148,8 +143,6 @@ int main(int argc, char *argv[]) {
                     break;
                 }
 
-                //printf("Entries in table:\n");
-
                 int i = 0;
                 struct entry_t* entry = entries[i];
                 while (entry) {
@@ -162,13 +155,25 @@ int main(int argc, char *argv[]) {
                 break;
             }
 
+            case STATS: {
+                struct statistics_t* stats = rtable_stats(rtable);
+        
+                if (!stats) {
+                    printf("There was an error retrieving stats\n");
+                    break;
+                }
+
+                printf("Number of connected clients: %d\n Number of operations: %d\nTotal time spent: %d\n", stats->n_clientes, stats->n_operacoes, stats->total_time);
+                break;
+            }
+
             case QUIT:
                 terminated = 1;
                 printf("Bye, bye!\n");
                 break;
 
             default:
-                printf("Invalid command. Please try again.\nUsage: p[ut] <key> <value> | g[et] <key> | d[el] <key> | s[ize] | [get]k[eys] | [get]t[able] | q[uit]\n");
+                printf("Invalid command. Please try again.\nUsage: p[ut] <key> <value> | g[et] <key> | d[el] <key> | s[ize] | [get]k[eys] | [get]t[able] | st[ats] | q[uit]\n");
                 break;
         }
     }
@@ -190,6 +195,8 @@ operation parse_operation(char *op_str) {
         return GETTABLE;
     } else if (strcmp(op_str, QUIT_STR) == 0 || strcmp(op_str, "q\n") == 0) {
         return QUIT;
+    } else if (strcmp(op_str, STATS_STR) == 0 || strcmp(op_str, "st\n") == 0) {
+        return STATS;
     }
 
     char* operation = strtok(op_str, " ");
@@ -205,9 +212,4 @@ operation parse_operation(char *op_str) {
     } 
 
     return INVALID;
-}
-
-
-void sigpipe_handler(int sig) {
-    connected_to_server = 0;
 }

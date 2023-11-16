@@ -1,6 +1,11 @@
-//table_server
-// #include "client_stub.h"
-// #include "data.h"
+/* Grupo 50
+ * Filipe Costa - 55549
+ * Yichen Cao - 58165
+ * Emily Sá - 58200
+ * Github repo: https://github.com/padrezulmiro/sd-projeto/
+ */
+
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -8,19 +13,20 @@
 
 #include "table_server.h"
 
-volatile sig_atomic_t terminated;
-volatile sig_atomic_t connected;
+server_resources resources = {}; //TODO
 
+
+volatile sig_atomic_t terminated = 0;
+volatile sig_atomic_t connected = 0;
 
 int main(int argc, char *argv[]) {
-    //processing args for port & n_list
+    // processing args for port & n_list
     if (argc != 3) {
         perror("Incorrect number of arguments\n");
         exit(-1);
     }
 
-    signal(SIGINT, sigint_handler);
-    signal(SIGPIPE, sigpipe_handler);
+    set_sig_handlers();
 
     //stores the chars after the first numerical digits are taken.
     //e.g. "123abc" -> it will store "abc"
@@ -39,7 +45,7 @@ int main(int argc, char *argv[]) {
     }
 
     //initiates table
-    struct table_t* table = table_skel_init(strtol(argv[2],NULL,10)); //malformed arg still works?? 
+    struct table_t* table = table_skel_init(strtol(argv[2],NULL,10));
     if (!table){
         perror("Error initializing table\n");
         return -1;
@@ -51,6 +57,21 @@ int main(int argc, char *argv[]) {
     table_skel_destroy(table);
 
     return ret_net;
+}
+
+
+void set_sig_handlers() {
+    struct sigaction sigint_act;
+    sigaction(SIGINT, NULL, &sigint_act); //read sigaction from SIGINT and put it in sigint_act
+    sigint_act.sa_handler = sigint_handler;
+    sigint_act.sa_flags &= ~SA_RESTART; //kill that SA_RESTART
+    sigaction(SIGINT, &sigint_act, NULL); //replace it
+
+    struct sigaction sigpipe_act;
+    sigaction(SIGPIPE, NULL, &sigpipe_act); 
+    sigpipe_act.sa_handler = sigpipe_handler;
+    sigpipe_act.sa_flags &= ~SA_RESTART;
+    sigaction(SIGPIPE, &sigpipe_act, NULL);
 }
 
 void sigint_handler(int signal) {

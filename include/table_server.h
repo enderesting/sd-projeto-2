@@ -1,5 +1,12 @@
-#ifndef _TABLE_CLIENT_H
-#define _TABLE_CLIENT_H
+/* Grupo 50
+ * Filipe Costa - 55549
+ * Yichen Cao - 58165
+ * Emily Sá - 58200
+ * Github repo: https://github.com/padrezulmiro/sd-projeto/
+ */
+
+#ifndef _TABLE_SERVER_H
+#define _TABLE_SERVER_H
 
 #include <stdlib.h>
 #include "table_skel.h"
