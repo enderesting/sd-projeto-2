@@ -5,7 +5,7 @@
 #include "entry.h"
 #include "client_stub-private.h"
 #include "network_client.h"
-// #include "sdmessage.pb-c.h"
+#include "sdmessage.pb-c.h"
 
 
 

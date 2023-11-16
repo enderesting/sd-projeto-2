@@ -15,16 +15,15 @@ $(shell mkdir -p $(LIB_DIR) >/dev/null)
 LIB_TABLE_R = $(addprefix $(OBJ_DIR)/,data.o entry.o list.o table.o)
 TABLE_CLIENT_R = $(addprefix $(OBJ_DIR)/,data.o \
 	entry.o \
-	stats.o \
 	mutex.o \
 	table_client.o \
 	sdmessage.pb-c.o \
 	message.o\
 	client_stub.o \
-	network_client.o)
+	network_client.o \
+	stats.o)
 TABLE_SERVER_R = $(addprefix $(OBJ_DIR)/,data.o \
 	entry.o \
-	stats.o \
 	mutex.o \
 	list.o \
 	table.o \
@@ -32,7 +31,8 @@ TABLE_SERVER_R = $(addprefix $(OBJ_DIR)/,data.o \
 	message.o\
 	table_server.o \
 	table_skel.o \
-	network_server.o)
+	network_server.o \
+	stats.o)
 
 # CFLAGS = -Wall -Werror -g -MMD -MP -MF -I $(INC_DIR)
 
@@ -42,6 +42,8 @@ ARCHIVE = ar -rcs
 PROTO_LIB = -I/usr/local/include -L/usr/local/lib -lprotobuf-c
 
 all: libtable table_client table_server
+
+$(OBJ_DIR)/sdmessage.pb-c.o: sdmessage.proto
 
 libtable: $(LIB_TABLE_R)
 	$(ARCHIVE) $(LIB_DIR)/$@.a $^

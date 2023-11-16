@@ -9,6 +9,7 @@
 #define _TABLE_SERVER_H
 
 #include <stdlib.h>
+// #include <pthread.h>
 #include "table_skel.h"
 #include "table_server-private.h"
 #include "network_server.h"
@@ -20,6 +21,7 @@
 #define GETKEYS_STR "getkeys"
 #define GETTABLE_STR "gettable"
 #define QUIT_STR "quit"
+
 
 // typedef enum { PUT, GET, DEL, SIZE, GETKEYS, GETTABLE, QUIT, INVALID } operation;
 

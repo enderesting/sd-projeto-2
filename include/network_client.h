@@ -1,7 +1,8 @@
 #ifndef _NETWORK_CLIENT_H
 #define _NETWORK_CLIENT_H
 
-#include "client_stub.h"
+// #include "client_stub.h"
+#include "client_stub-private.h"
 #include "message-private.h"
 
 /* Esta função deve:

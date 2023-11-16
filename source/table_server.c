@@ -10,11 +10,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
+#include <pthread.h>
 
 #include "table_server.h"
-
 server_resources resources = {}; //TODO
-
 
 volatile sig_atomic_t terminated = 0;
 volatile sig_atomic_t connected = 0;
@@ -50,6 +49,27 @@ int main(int argc, char *argv[]) {
         perror("Error initializing table\n");
         return -1;
     }
+
+    resources.table = table;
+    struct statistics_t* stats = (struct statistics_t*) calloc(1,sizeof(struct statistics_t));
+    stats->n_clientes = 0;
+    stats->n_operacoes = 0;
+    stats->total_time=0;
+    resources.global_stats = stats;
+    mutex_locks tab_locks;
+    tab_locks.readers_reading = 0;
+    tab_locks.writer_active = 0;
+    tab_locks.writers_waiting = 0;
+    tab_locks.c = (pthread_cond_t) PTHREAD_COND_INITIALIZER;
+    tab_locks.m = (pthread_mutex_t) PTHREAD_MUTEX_INITIALIZER;
+    resources.table_locks = tab_locks;
+    mutex_locks stat_locks;
+    stat_locks.readers_reading = 0;
+    stat_locks.writer_active = 0;
+    stat_locks.writers_waiting = 0;
+    stat_locks.c = (pthread_cond_t) PTHREAD_COND_INITIALIZER;
+    stat_locks.m = (pthread_mutex_t) PTHREAD_MUTEX_INITIALIZER;
+    resources.stats_locks = stat_locks;
 
     int ret_net = network_main_loop(sockfd,table);
 
