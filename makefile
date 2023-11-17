@@ -40,7 +40,7 @@ CFLAGS = -Wall -Werror -g -MMD -MP -I $(INC_DIR)
 ARCHIVE = ar -rcs
 PROTO_LIB = -I/usr/local/include -L/usr/local/lib -lprotobuf-c
 
-all: $(LIB_DIR)/libtable $(addprefix $(BIN_DIR)/,table_client \
+all: $(LIB_DIR)/libtable.a $(addprefix $(BIN_DIR)/,table_client \
 												table_server)
 
 $(SRC_DIR)/sdmessage.pb-c.c: sdmessage.proto
@@ -48,8 +48,8 @@ $(SRC_DIR)/sdmessage.pb-c.c: sdmessage.proto
 	mv sdmessage.pb-c.c $(SRC_DIR)
 	mv sdmessage.pb-c.h $(INC_DIR)
 
-$(LIB_DIR)/libtable: $(LIB_TABLE_R)
-	$(ARCHIVE) $@.a $^
+$(LIB_DIR)/libtable.a: $(LIB_TABLE_R)
+	$(ARCHIVE) $@ $^
 
 $(BIN_DIR)/table_client: $(TABLE_CLIENT_R)
 	$(CC) $^ $(PROTO_LIB) $(LIB_DIR)/libtable.a -o $@
