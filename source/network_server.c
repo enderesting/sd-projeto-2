@@ -103,6 +103,7 @@ int network_main_loop(int listening_socket, struct table_t *table){
     int n_threads = 5;
     pthread_t threads[n_threads];
     int active_threads[n_threads];
+    memset(active_threads, 0, n_threads * sizeof(int));
 
     printf("Server ready, waiting for connections\n");
 
@@ -123,7 +124,7 @@ int network_main_loop(int listening_socket, struct table_t *table){
 
         // tries to find a vacant thread
         int vacant_thread = -1;
-        for (int i; i < n_threads; i++) {
+        for (int i = 0; i < n_threads; i++) {
             if (!active_threads[i]) vacant_thread = i; // marks any vacant threads but just one
         }
 
@@ -143,10 +144,11 @@ int network_main_loop(int listening_socket, struct table_t *table){
 
         if (connsockfd != -1) {
             printf("Client connection established\n");
+            int *i = malloc(sizeof(int));
+            *i = connsockfd;
 
             int ret_thread_create =
-                pthread_create(&threads[vacant_thread], NULL, &serve_conn,
-                               (void*) &connsockfd);
+                pthread_create(&threads[vacant_thread], NULL, &serve_conn, (void*) i);
             if (ret_thread_create != 0) {
                 printf("Unable to create server thread \n");
                 close(connsockfd);
