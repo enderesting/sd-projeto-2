@@ -91,7 +91,7 @@ int network_server_init(short port){
 int network_main_loop(int listening_socket, struct table_t *table){
     //connect to socket, send/receive
     int connsockfd;
-    int ret;
+    //int ret;
 
     int server_error = 0;
 

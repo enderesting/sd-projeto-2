@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    resources.table = table;
+    //resources.table = table;
     struct statistics_t* stats = (struct statistics_t*) calloc(1,sizeof(struct statistics_t));
     stats->n_clientes = 0;
     stats->n_operacoes = 0;
