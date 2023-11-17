@@ -10,7 +10,7 @@
 #include <signal.h>
 #include <stats.h>
 #include <pthread.h>
-#include <mutex.h>
+#include "mutex.h"
 
 extern volatile sig_atomic_t terminated;
 extern volatile sig_atomic_t connected;

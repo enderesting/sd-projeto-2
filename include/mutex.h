@@ -1,3 +1,6 @@
+#ifndef _MUTEX_H
+#define _MUTEX_H
+
 #include <pthread.h>
 // #include <network_server.h>
 
@@ -23,3 +26,5 @@ void exit_read(mutex_locks locks);
 void enter_write(mutex_locks locks);
 
 void exit_write(mutex_locks locks);
+
+#endif

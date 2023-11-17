@@ -51,11 +51,11 @@ int invoke(MessageT *msg, struct table_t *table){
                 break;
             }
             enter_write(resources.table_locks);
-            increase_operations(resources.global_stats);
+            increase_operations(resources.global_stats,resources.stats_locks);
             int timestart = return_time(&tv);
             res = table_put(table,msg->entry->key,value);
             int timeend = return_time(&tv);
-            increase_time(resources.global_stats,(timeend-timestart));
+            increase_time(resources.global_stats,resources.stats_locks,(timeend-timestart));
             exit_write(resources.table_locks);
             if (res == 0){
                 msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
@@ -71,11 +71,11 @@ int invoke(MessageT *msg, struct table_t *table){
                 break;
             }
             enter_read(resources.table_locks);
-            increase_operations(resources.global_stats);
+            increase_operations(resources.global_stats,resources.stats_locks);
             int timestart = return_time(&tv);
             struct data_t* gotten_value = table_get(table,(msg->key));
             int timeend = return_time(&tv);
-            increase_time(resources.global_stats,(timeend-timestart));
+            increase_time(resources.global_stats,resources.stats_locks,(timeend-timestart));
             exit_read(resources.table_locks);
             if (gotten_value){
                 msg->value.len = gotten_value->datasize;
@@ -99,11 +99,11 @@ int invoke(MessageT *msg, struct table_t *table){
                 break;
             }
             enter_write(resources.table_locks);
-            increase_operations(resources.global_stats);
+            increase_operations(resources.global_stats,resources.stats_locks);
             int timestart = return_time(&tv);
             res = table_remove(table,msg->key);
             int timeend = return_time(&tv);
-            increase_time(resources.global_stats,(timeend-timestart));
+            increase_time(resources.global_stats,resources.stats_locks,(timeend-timestart));
             exit_write(resources.table_locks);
             if (res == 0){
                 msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
@@ -117,11 +117,11 @@ int invoke(MessageT *msg, struct table_t *table){
 
         case MESSAGE_T__OPCODE__OP_SIZE:{
             enter_read(resources.table_locks);
-            increase_operations(resources.global_stats);
+            increase_operations(resources.global_stats,resources.stats_locks);
             int timestart = return_time(&tv);
             res = table_size(table);
             int timeend = return_time(&tv);
-            increase_time(resources.global_stats,(timeend-timestart));
+            increase_time(resources.global_stats,resources.stats_locks,(timeend-timestart));
             exit_read(resources.table_locks);
             if (res>=0){
                 msg->result = res;
@@ -133,11 +133,11 @@ int invoke(MessageT *msg, struct table_t *table){
 
         case MESSAGE_T__OPCODE__OP_GETKEYS:{
             enter_read(resources.table_locks);
-            increase_operations(resources.global_stats);
+            increase_operations(resources.global_stats,resources.stats_locks);
             int timestart = return_time(&tv);
             char** keys = table_get_keys(table);
             int timeend = return_time(&tv);
-            increase_time(resources.global_stats,(timeend-timestart));
+            increase_time(resources.global_stats,resources.stats_locks,(timeend-timestart));
             exit_read(resources.table_locks);
             if (keys){
                 msg->n_keys = table_size(table);
@@ -151,11 +151,11 @@ int invoke(MessageT *msg, struct table_t *table){
 
         case MESSAGE_T__OPCODE__OP_GETTABLE:{
             enter_read(resources.table_locks);
-            increase_operations(resources.global_stats);
+            increase_operations(resources.global_stats,resources.stats_locks);
             int timestart = return_time(&tv);
             int tab_size = table_size(table);
             int timeend = return_time(&tv);
-            increase_time(resources.global_stats,(timeend-timestart));
+            increase_time(resources.global_stats,resources.stats_locks,(timeend-timestart));
             exit_read(resources.table_locks);
             struct entry_t** old_entries = table_get_entries(table);
             if (old_entries){
