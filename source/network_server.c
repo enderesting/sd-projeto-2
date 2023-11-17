@@ -5,6 +5,9 @@
  * Github repo: https://github.com/padrezulmiro/sd-projeto/
  */
 
+#define _GNU_SOURCE
+#include <asm-generic/errno-base.h>
+#include <asm-generic/errno.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
@@ -14,9 +17,13 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <pthread.h>
+#include <fcntl.h>
+#include <errno.h>
 //extra
 #include "network_server.h"
 #include "sdmessage.pb-c.h"
+#include "server_thread.h"
 
 //tamanho maximo da mensagem enviada pelo cliente
 #define MAX_MSG 2048
@@ -32,6 +39,8 @@ int network_server_init(short port){
         perror("Erro ao criar socket\n");
         return -1;
     }
+
+    fcntl(sockfd, F_SETFL, O_NONBLOCK);
 
     //https://linux.die.net/man/3/setsockopt <- reference
     //https://stackoverflow.com/questions/24194961/how-do-i-use-setsockoptso-reuseaddr
@@ -81,62 +90,85 @@ int network_server_init(short port){
 
 int network_main_loop(int listening_socket, struct table_t *table){
     //connect to socket, send/receive
-    int connsockfd, ret;
+    int connsockfd;
+    int ret;
+
+    int server_error = 0;
+
     struct sockaddr_in client_addr;
     socklen_t size_sockaddr_in = sizeof(client_addr);
-    int bad_termination = 0;
+
+    // Number of threads should be provided from the outside?
+    // The teacher mentioned this wasn't properly defined
+    int n_threads = 5;
+    pthread_t threads[n_threads];
+    int active_threads[n_threads];
+
     printf("Server ready, waiting for connections\n");
-    fflush(stdout);
 
-    while (
-        !bad_termination &&
-        !terminated &&
-        (connsockfd = accept(listening_socket, (struct sockaddr *)&client_addr,
-                             &size_sockaddr_in)) != -1
-    ) {
-        printf("Client connection established\n");
-        fflush(stdout);
-
-        connected = 1;
-        while (!bad_termination && !terminated && connected) {
-            // receive a message, deserialize it
-            MessageT *msg = network_receive(connsockfd);
-            if (!msg) {
-                close(connsockfd);
-                break;
+    while (!terminated && !server_error) {
+        for (int i = 0; i < n_threads; i++) {
+            if (active_threads[i]) { //if the thread is vacant/inactive then it wouldnt be tested at all
+                //tries to join child thread, but if its not done, just move onto check the rest
+                int ret_join = pthread_tryjoin_np(threads[i], NULL); 
+                if (ret_join == 0) active_threads[i] = 0;
+                else if (errno == EBUSY) continue; 
+                else {
+                    server_error = 1;
+                    break;
+                }
             }
+        }
+        if (server_error) continue;
 
-            // get table_skel to process and get response
-            if ((ret = invoke(msg, table)) < 0) {
-                perror("Error in processing command in internal table, shutting "
-                    "server down\n");
-                close(connsockfd);
-                if(!terminated) bad_termination = 1;
-                break;
-            }
-
-            // wait until response is here
-            if (network_send(connsockfd, msg) <= 0) {
-                close(connsockfd);
-                break;
-            }
-
-            message_t__free_unpacked(msg, NULL);
+        // tries to find a vacant thread
+        int vacant_thread = -1;
+        for (int i; i < n_threads; i++) {
+            if (!active_threads[i]) vacant_thread = i; // marks any vacant threads but just one
         }
 
-        if (!connected && !bad_termination && !terminated) {
-            printf("Client connection closed\n");
-            printf("Server ready, waiting for connections\n");
-            fflush(stdout);
+        if (vacant_thread == -1) {
+            sleep(2);
+            printf("Server can't accept any more connections! \n");
+            continue;
+        }
+
+        connsockfd = accept(listening_socket, (struct sockaddr *) &client_addr,
+                            &size_sockaddr_in);
+
+        if (connsockfd == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+            sleep(2);
+            continue;
+        }
+
+        if (connsockfd != -1) {
+            printf("Client connection established\n");
+
+            int ret_thread_create =
+                pthread_create(&threads[vacant_thread], NULL, &serve_conn,
+                               (void*) &connsockfd);
+            if (ret_thread_create != 0) {
+                printf("Unable to create server thread \n");
+                close(connsockfd);
+            }
+
+            printf("Resuming listening for more connections... \n");
+        } else {
+            printf("Unable to establish connection. Waiting for other "
+                   "connections. \n");
         }
     }
 
-    if (bad_termination) {
-        printf("Server experienced an internal error. Shutting down abnormally!\n");
-        return -1;
-    }
     if (terminated) {
         printf("\nReceived request to shut down server gracefully. Shutting down...\n");
+    } else if (server_error) {
+        printf("\nServer experienced a fatal error! Shutting down...\n");
+    }
+
+    for (int i = 0; i < n_threads; i++) {
+        if (active_threads[i]) {
+            pthread_detach(threads[i]);
+        }
     }
 
     return 0;
