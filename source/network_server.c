@@ -108,10 +108,11 @@ int network_main_loop(int listening_socket, struct table_t *table){
 
     while (!terminated && !server_error) {
         for (int i = 0; i < n_threads; i++) {
-            if (active_threads[i]) {
-                int ret_join = pthread_tryjoin_np(threads[i], NULL);
+            if (active_threads[i]) { //if the thread is vacant/inactive then it wouldnt be tested at all
+                //tries to join child thread, but if its not done, just move onto check the rest
+                int ret_join = pthread_tryjoin_np(threads[i], NULL); 
                 if (ret_join == 0) active_threads[i] = 0;
-                else if (errno == EBUSY) continue;
+                else if (errno == EBUSY) continue; 
                 else {
                     server_error = 1;
                     break;
@@ -120,9 +121,10 @@ int network_main_loop(int listening_socket, struct table_t *table){
         }
         if (server_error) continue;
 
+        // tries to find a vacant thread
         int vacant_thread = -1;
         for (int i; i < n_threads; i++) {
-            if (!active_threads[i]) vacant_thread = i;
+            if (!active_threads[i]) vacant_thread = i; // marks any vacant threads but just one
         }
 
         if (vacant_thread == -1) {
