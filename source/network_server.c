@@ -113,7 +113,7 @@ int network_main_loop(int listening_socket, struct table_t *table){
                 //tries to join child thread, but if its not done, just move onto check the rest
                 int ret_join = pthread_tryjoin_np(threads[i], NULL); 
                 if (ret_join == 0) active_threads[i] = 0;
-                else if (errno == EBUSY) continue; 
+                else if (ret_join == EBUSY) continue; 
                 else {
                     server_error = 1;
                     break;
@@ -146,6 +146,7 @@ int network_main_loop(int listening_socket, struct table_t *table){
             printf("Client connection established\n");
             int *i = malloc(sizeof(int));
             *i = connsockfd;
+            active_threads[vacant_thread] = 1;
 
             int ret_thread_create =
                 pthread_create(&threads[vacant_thread], NULL, &serve_conn, (void*) i);
