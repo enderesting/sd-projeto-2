@@ -17,13 +17,13 @@ void* serve_conn(void* connsockfd) {
     int ret;
     int processing_error = 0;
 
-    while (!processing_error && !terminated && connected) {
+    while (!processing_error && !terminated) {
         // receive a message, deserialize it
         MessageT *msg = network_receive(* (int*) connsockfd);
         if (!msg) {
             close(* (int*) connsockfd);
             if(!terminated) processing_error = 1;
-            break;
+            continue;
         }
 
         // get table_skel to process and get response
@@ -32,20 +32,24 @@ void* serve_conn(void* connsockfd) {
                 "server down\n");
             close(* (int*) connsockfd);
             if(!terminated) processing_error = 1;
-            break;
+            message_t__free_unpacked(msg, NULL);
+            continue;
         }
 
         // wait until response is here
         if (network_send(* (int*) connsockfd, msg) <= 0) {
             close(* (int*) connsockfd);
             if(!terminated) processing_error = 1;
-            break;
+            message_t__free_unpacked(msg, NULL);
+            continue;
         }
 
         message_t__free_unpacked(msg, NULL);
     }
 
-    int* return_val = malloc(sizeof(int));
-    *return_val = processing_error ? -1 : 0;
-    return (void*) return_val;
+    close(* (int*) connsockfd);
+
+    // int* return_val = malloc(sizeof(int));
+    // *return_val = processing_error ? -1 : 0;
+    return NULL;
 }

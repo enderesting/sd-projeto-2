@@ -98,7 +98,8 @@ int network_main_loop(int listening_socket, struct table_t *table){
     struct sockaddr_in client_addr;
     socklen_t size_sockaddr_in = sizeof(client_addr);
 
-    // FIXME Number of threads should be provided from the outside
+    // Number of threads should be provided from the outside?
+    // The teacher mentioned this wasn't properly defined
     int n_threads = 5;
     pthread_t threads[n_threads];
     int active_threads[n_threads];
@@ -108,7 +109,6 @@ int network_main_loop(int listening_socket, struct table_t *table){
     while (!terminated && !server_error) {
         for (int i = 0; i < n_threads; i++) {
             if (active_threads[i]) {
-                // FIXME can NULL be used to ignore retval?
                 int ret_join = pthread_tryjoin_np(threads[i], NULL);
                 if (ret_join == 0) active_threads[i] = 0;
                 else if (errno == EBUSY) continue;
@@ -127,6 +127,7 @@ int network_main_loop(int listening_socket, struct table_t *table){
 
         if (vacant_thread == -1) {
             sleep(2);
+            printf("Server can't accept any more connections! \n");
             continue;
         }
 
@@ -141,16 +142,15 @@ int network_main_loop(int listening_socket, struct table_t *table){
         if (connsockfd != -1) {
             printf("Client connection established\n");
 
-            // XXX Revise this
-            connected = 1;
-
-            int ret_thread_create = pthread_create(&threads[vacant_thread], NULL,
-                                                   &serve_conn,
-                                                   (void*) &connsockfd);
+            int ret_thread_create =
+                pthread_create(&threads[vacant_thread], NULL, &serve_conn,
+                               (void*) &connsockfd);
             if (ret_thread_create != 0) {
                 printf("Unable to create server thread \n");
                 close(connsockfd);
             }
+
+            printf("Resuming listening for more connections... \n");
         } else {
             printf("Unable to establish connection. Waiting for other "
                    "connections. \n");
@@ -159,6 +159,14 @@ int network_main_loop(int listening_socket, struct table_t *table){
 
     if (terminated) {
         printf("\nReceived request to shut down server gracefully. Shutting down...\n");
+    } else if (server_error) {
+        printf("\nServer experienced a fatal error! Shutting down...\n");
+    }
+
+    for (int i = 0; i < n_threads; i++) {
+        if (active_threads[i]) {
+            pthread_detach(threads[i]);
+        }
     }
 
     return 0;

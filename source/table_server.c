@@ -5,7 +5,6 @@
  * Github repo: https://github.com/padrezulmiro/sd-projeto/
  */
 
-#include "table_server-private.h"
 #define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
@@ -13,12 +12,12 @@
 #include <signal.h>
 
 #include "table_server.h"
+#include "table_server-private.h"
+
 
 server_resources resources = {}; //TODO
 
-
 volatile sig_atomic_t terminated = 0;
-volatile sig_atomic_t connected = 0;
 
 int main(int argc, char *argv[]) {
     // processing args for port & n_list
@@ -81,15 +80,11 @@ void set_sig_handlers() {
 
     struct sigaction sigpipe_act;
     sigaction(SIGPIPE, NULL, &sigpipe_act); 
-    sigpipe_act.sa_handler = sigpipe_handler;
+    sigpipe_act.sa_handler = SIG_IGN;
     sigpipe_act.sa_flags &= ~SA_RESTART;
     sigaction(SIGPIPE, &sigpipe_act, NULL);
 }
 
 void sigint_handler(int signal) {
     terminated = 1;
-}
-
-void sigpipe_handler(int signal) {
-    connected = 0;
 }
