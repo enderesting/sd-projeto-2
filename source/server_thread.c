@@ -16,7 +16,7 @@
 void* serve_conn(void* connsockfd) {
     int ret;
     int processing_error = 0;
-    change_client_num(resources.global_stats, 1);
+    change_client_num(resources.global_stats, resources.stats_locks, 1);
 
     while (!processing_error && !terminated) {
         // receive a message, deserialize it
@@ -49,7 +49,7 @@ void* serve_conn(void* connsockfd) {
     }
 
     close(* (int*) connsockfd);
-    change_client_num(resources.global_stats, -1);
+    change_client_num(resources.global_stats, resources.stats_locks, -1);
 
     // int* return_val = malloc(sizeof(int));
     // *return_val = processing_error ? -1 : 0;

@@ -32,11 +32,12 @@ TABLE_SERVER_R = $(addprefix $(OBJ_DIR)/,data.o \
 	table_server.o \
 	table_skel.o \
 	network_server.o \
+	server_thread.o \
 	stats.o)
 # CFLAGS = -Wall -Werror -g -MMD -MP -MF -I $(INC_DIR)
 
 CC = gcc
-CFLAGS = -Wall -Werror -g -MMD -MP -I $(INC_DIR)
+CFLAGS = -Wall -Werror -g -MMD -MP -I $(INC_DIR) -pthread
 ARCHIVE = ar -rcs
 PROTO_LIB = -I/usr/local/include -L/usr/local/lib -lprotobuf-c
 
