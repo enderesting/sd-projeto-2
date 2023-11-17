@@ -40,21 +40,22 @@ CFLAGS = -Wall -Werror -g -MMD -MP -I $(INC_DIR)
 ARCHIVE = ar -rcs
 PROTO_LIB = -I/usr/local/include -L/usr/local/lib -lprotobuf-c
 
-all: sdmessage libtable table_client table_server
+all: $(LIB_DIR)/libtable $(addprefix $(BIN_DIR)/,table_client \
+												table_server)
 
-sdmessage:
+$(SRC_DIR)/sdmessage.pb-c.c: sdmessage.proto
 	protoc-c --c_out=. sdmessage.proto
 	mv sdmessage.pb-c.c $(SRC_DIR)
 	mv sdmessage.pb-c.h $(INC_DIR)
 
-libtable: $(LIB_TABLE_R)
-	$(ARCHIVE) $(LIB_DIR)/$@.a $^
+$(LIB_DIR)/libtable: $(LIB_TABLE_R)
+	$(ARCHIVE) $@.a $^
 
-table_client: $(TABLE_CLIENT_R)
-	$(CC) $^ $(PROTO_LIB) $(LIB_DIR)/libtable.a -o $(BIN_DIR)/$@
+$(BIN_DIR)/table_client: $(TABLE_CLIENT_R)
+	$(CC) $^ $(PROTO_LIB) $(LIB_DIR)/libtable.a -o $@
 
-table_server: $(TABLE_SERVER_R)
-	$(CC) $^ $(PROTO_LIB) $(LIB_DIR)/libtable.a -o $(BIN_DIR)/$@
+$(BIN_DIR)/table_server: $(TABLE_SERVER_R)
+	$(CC) $^ $(PROTO_LIB) $(LIB_DIR)/libtable.a -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -MF $(DEP_DIR)/$*.d -c $< -o $@ 
