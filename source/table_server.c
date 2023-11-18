@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
     // processing args for port & n_list
     if (argc != 3) {
         printf("Incorrect number of arguments\n");
-        printf("Usage: table_server <port> <n_list>");
+        printf("Usage: table_server <port> <n_list>\n");
         exit(-1);
     }
 

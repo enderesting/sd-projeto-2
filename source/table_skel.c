@@ -190,6 +190,7 @@ int invoke(MessageT *msg, struct table_t *table){
                 msg = respond_err_in_exec(msg);
             }else{
                 StatisticsT* stats= (StatisticsT*) malloc(sizeof(StatisticsT));
+                statistics_t__init(stats);
                 stats->n_clientes = resources.global_stats->n_clientes;
                 stats->n_operacoes = resources.global_stats->n_operacoes;
                 stats->total_time = resources.global_stats->total_time;
