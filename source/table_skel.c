@@ -189,9 +189,11 @@ int invoke(MessageT *msg, struct table_t *table){
             if(!resources.global_stats){
                 msg = respond_err_in_exec(msg);
             }else{
-                msg->stats->n_clientes = resources.global_stats->n_clientes;
-                msg->stats->n_operacoes = resources.global_stats->n_operacoes;
-                msg->stats->total_time = resources.global_stats->total_time;
+                StatisticsT* stats= (StatisticsT*) malloc(sizeof(StatisticsT));
+                stats->n_clientes = resources.global_stats->n_clientes;
+                stats->n_operacoes = resources.global_stats->n_operacoes;
+                stats->total_time = resources.global_stats->total_time;
+                msg->stats = stats;
                 msg->c_type = MESSAGE_T__C_TYPE__CT_STATS;
                 res = 0;
             }

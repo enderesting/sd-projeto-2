@@ -21,7 +21,8 @@ volatile sig_atomic_t terminated = 0;
 int main(int argc, char *argv[]) {
     // processing args for port & n_list
     if (argc != 3) {
-        perror("Incorrect number of arguments\n");
+        printf("Incorrect number of arguments\n");
+        printf("Usage: table_server <port> <n_list>");
         exit(-1);
     }
 
