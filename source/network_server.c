@@ -100,7 +100,7 @@ int network_main_loop(int listening_socket, struct table_t *table){
 
     // Number of threads should be provided from the outside?
     // The teacher mentioned this wasn't properly defined
-    int n_threads = 5;
+    int n_threads = 3;
     pthread_t threads[n_threads];
     int active_threads[n_threads];
     memset(active_threads, 0, n_threads * sizeof(int));
@@ -168,9 +168,11 @@ int network_main_loop(int listening_socket, struct table_t *table){
         printf("\nServer experienced a fatal error! Shutting down...\n");
     }
 
+    // fcntl(listening_socket, F_SETFL, ~O_NONBLOCK);
+    
     for (int i = 0; i < n_threads; i++) {
         if (active_threads[i]) {
-            if (pthread_detach(threads[i])==0){
+            if (pthread_join(threads[i],NULL)==0){
                 printf("thread %d is detached and freed.\n", i);
             }
         }
