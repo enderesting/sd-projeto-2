@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <fcntl.h>
 
 #include "server_thread.h"
 #include "sdmessage.pb-c.h"
@@ -17,14 +18,22 @@ void* serve_conn(void* connsockfd) {
     int ret;
     int processing_error = 0;
     int connsockfd_i = * (int*) connsockfd;
+    // int flags = fcntl(connsockfd_i,F_GETFL,0);
+    int flags = fcntl(connsockfd_i, F_SETFL, O_NONBLOCK);
+    if (flags == -1){
+        terminated = 1;
+        printf("Error setting flags in file descriptor, shutting down.");
+    }
+
     change_client_num(resources.global_stats, resources.stats_locks, 1);
 
     while (!processing_error && !terminated) {
         // receive a message, deserialize it
         MessageT *msg = network_receive(connsockfd_i);
         if (!msg) {
-            close(* (int*) connsockfd);
-            if(!terminated) processing_error = 1;
+            // sleep(1);
+            // close(* (int*) connsockfd);
+            // if(!terminated) processing_error = 1;
             continue;
         }
 
@@ -50,6 +59,7 @@ void* serve_conn(void* connsockfd) {
     }
 
     close(* (int*) connsockfd);
+    free(connsockfd);
     change_client_num(resources.global_stats, resources.stats_locks, -1);
 
     // int* return_val = malloc(sizeof(int));

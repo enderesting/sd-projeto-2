@@ -97,12 +97,18 @@ MessageT* message_receive_all(int other_socket, int* disconnected){
     *disconnected = 0;
 
     int read_len = read(other_socket, &response_size_ns, sizeof(uint16_t));
+    if (read_len ==-1 && errno == EAGAIN){
+        sleep(1);
+        // printf("this is normal. continue\n");
+        return NULL;
+    }
+
     if ((read_len == -1 && errno == EINTR) ||
         (read_len >= 0 && read_len < sizeof(response_size_ns))) {
         *disconnected = 1;
         return NULL;
     } else if (read_len == -1 || read_len > sizeof(response_size_ns)) {
-        perror("Error reading message length from socket");
+        printf("Error reading message length from socket\n");
         return NULL;
     }
 

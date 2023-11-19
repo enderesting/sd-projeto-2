@@ -195,9 +195,10 @@ MessageT *network_receive(int client_socket){
     if (disconnected) {
         printf("Client disconnected\n");
         printf("Server ready, waiting for connections\n");
-    } else if (!msg) {
-        printf("Error in receiving message from client\n");
     }
+    // else if (!msg) {
+    //     printf("Error in receiving message from client\n");
+    // }
 
     return msg;
 }
