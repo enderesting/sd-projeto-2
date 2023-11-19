@@ -50,6 +50,7 @@ void* serve_conn(void* connsockfd) {
     }
 
     close(* (int*) connsockfd);
+    free(connsockfd);
     change_client_num(resources.global_stats, resources.stats_locks, -1);
 
     // int* return_val = malloc(sizeof(int));

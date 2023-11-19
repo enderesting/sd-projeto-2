@@ -172,6 +172,7 @@ int network_main_loop(int listening_socket, struct table_t *table){
     
     for (int i = 0; i < n_threads; i++) {
         if (active_threads[i]) {
+            pthread_kill(threads[i], SIGINT);
             if (pthread_join(threads[i],NULL)==0){
                 printf("thread %d is detached and freed.\n", i);
             }

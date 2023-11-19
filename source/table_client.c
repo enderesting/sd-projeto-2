@@ -164,6 +164,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 printf("Number of connected clients: %d\nNumber of operations: %d\nTotal time spent: %d\n", stats->n_clientes, stats->n_operacoes, stats->total_time);
+                free(stats);
                 break;
             }
 
