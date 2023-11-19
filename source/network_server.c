@@ -154,7 +154,7 @@ int network_main_loop(int listening_socket, struct table_t *table){
                 printf("Unable to create server thread \n");
                 close(connsockfd);
             }
-
+            // free(i); //unnecessary, the corresponding connsockfd are freed when each thread terminates
             printf("Resuming listening for more connections... \n");
         } else {
             printf("Unable to establish connection. Waiting for other "
@@ -170,7 +170,9 @@ int network_main_loop(int listening_socket, struct table_t *table){
 
     for (int i = 0; i < n_threads; i++) {
         if (active_threads[i]) {
-            pthread_detach(threads[i]);
+            if (pthread_detach(threads[i])==0){
+                printf("thread %d is detached and freed.\n", i);
+            }
         }
     }
 

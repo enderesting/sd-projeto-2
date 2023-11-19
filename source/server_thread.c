@@ -54,5 +54,6 @@ void* serve_conn(void* connsockfd) {
 
     // int* return_val = malloc(sizeof(int));
     // *return_val = processing_error ? -1 : 0;
+    // pthread_detach(pthread_self);
     return NULL;
 }

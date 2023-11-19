@@ -51,31 +51,11 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    //resources.table = table;
-    struct statistics_t* stats = (struct statistics_t*) calloc(1,sizeof(struct statistics_t));
-    stats->n_clientes = 0;
-    stats->n_operacoes = 0;
-    stats->total_time=0;
-    resources.global_stats = stats;
-    mutex_locks tab_locks;
-    tab_locks.readers_reading = 0;
-    tab_locks.writer_active = 0;
-    tab_locks.writers_waiting = 0;
-    tab_locks.c = (pthread_cond_t) PTHREAD_COND_INITIALIZER;
-    tab_locks.m = (pthread_mutex_t) PTHREAD_MUTEX_INITIALIZER;
-    resources.table_locks = tab_locks;
-    mutex_locks stat_locks;
-    stat_locks.readers_reading = 0;
-    stat_locks.writer_active = 0;
-    stat_locks.writers_waiting = 0;
-    stat_locks.c = (pthread_cond_t) PTHREAD_COND_INITIALIZER;
-    stat_locks.m = (pthread_mutex_t) PTHREAD_MUTEX_INITIALIZER;
-    resources.stats_locks = stat_locks;
-  
     int ret_net = network_main_loop(sockfd, resources.table);
 
     network_server_close(sockfd);
-    table_skel_destroy(resources.table);
+    // table_skel_destroy(resources.table);
+    destroy_server_resources();
 
     return ret_net;
 }
@@ -86,11 +66,50 @@ int init_server_resources(int n_lists) {
         perror("Error initializing table\n");
         return -1;
     }
-
     resources.table = table;
 
+    struct statistics_t* stats = (struct statistics_t*) calloc(1,sizeof(struct statistics_t));
+    stats->n_clientes = 0;
+    stats->n_operacoes = 0;
+    stats->total_time=0;
+    resources.global_stats = stats;
+
+
+    mutex_locks* tab_locks = (mutex_locks*) calloc(1,sizeof(mutex_locks));
+    tab_locks->readers_reading = 0;
+    tab_locks->writer_active = 0;
+    tab_locks->writers_waiting = 0;
+    tab_locks->c = (pthread_cond_t) PTHREAD_COND_INITIALIZER;
+    tab_locks->m = (pthread_mutex_t) PTHREAD_MUTEX_INITIALIZER;
+    resources.table_locks = tab_locks;
+
+    mutex_locks* stat_locks = (mutex_locks*) calloc(1,sizeof(mutex_locks));
+    stat_locks->readers_reading = 0;
+    stat_locks->writer_active = 0;
+    stat_locks->writers_waiting = 0;
+    stat_locks->c = (pthread_cond_t) PTHREAD_COND_INITIALIZER;
+    stat_locks->m = (pthread_mutex_t) PTHREAD_MUTEX_INITIALIZER;
+    resources.stats_locks = stat_locks;
+  
     return 0;
 }
+
+int destroy_server_resources(){
+    table_skel_destroy(resources.table);
+    free(resources.global_stats);
+    pthread_mutex_destroy(&resources.table_locks->m);
+    pthread_cond_destroy(&resources.table_locks->c);
+    free(resources.table_locks);
+    // free(&resources.table_locks->m);
+    // free(&resources.table_locks->c);
+    pthread_mutex_destroy(&resources.stats_locks->m);
+    pthread_cond_destroy(&resources.stats_locks->c);
+    free(resources.stats_locks);
+    // free(&resources.stats_locks->m);
+    // free(&resources.stats_locks->c);
+    return 0;
+}
+
 
 void set_sig_handlers() {
     struct sigaction sigint_act;
