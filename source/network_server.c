@@ -67,7 +67,7 @@ int network_server_init(short port){
         return -1;
     };
 
-    if (listen(sockfd, 5) < 0){ // only accepts 1 client, no request is queued?
+    if (listen(sockfd, 0) < 0){ // dw about backlog
         perror("Error in Listen()\n");
         close(sockfd);
         return -1;
@@ -100,7 +100,7 @@ int network_main_loop(int listening_socket, struct table_t *table){
 
     // Number of threads should be provided from the outside?
     // The teacher mentioned this wasn't properly defined
-    int n_threads = 3;
+    int n_threads = 2;
     pthread_t threads[n_threads];
     int active_threads[n_threads];
     memset(active_threads, 0, n_threads * sizeof(int));
