@@ -25,6 +25,51 @@ os clientes possam pedir para consultá-las.
 
 ### Threading
 
+A adaptação a um modelo multithreaded foi implementado via o uso da biblioteca
+POSIX `pthread`. 
+
+```c
+// source/network_server.c:147
+
+int ret_thread_create = pthread_create(&threads[vacant_thread], NULL, 
+                                       &serve_conn, (void*) &connsockfd);
+                                       
+// source/server_thread.c:21
+
+while (!processing_error && !terminated) {
+    // receive a message, deserialize it
+    MessageT *msg = network_receive(* (int*) connsockfd);
+    if (!msg) {
+        close(* (int*) connsockfd);
+        if(!terminated) processing_error = 1;
+        continue;
+    }
+
+    // get table_skel to process and get response
+    if ((ret = invoke(msg, resources.table)) < 0) {
+        printf("Error in processing command in internal table, shutting "
+            "server down\n");
+        close(* (int*) connsockfd);
+        if(!terminated) processing_error = 1;
+        message_t__free_unpacked(msg, NULL);
+        continue;
+    }
+
+    // wait until response is here
+    if (network_send(* (int*) connsockfd, msg) <= 0) {
+        close(* (int*) connsockfd);
+        if(!terminated) processing_error = 1;
+        message_t__free_unpacked(msg, NULL);
+        continue;
+    }
+
+    message_t__free_unpacked(msg, NULL);
+}
+```
+
+As threads são agora as responsáveis por comunicar com os clientes e responder
+aos seus pedidos via a função `invoke()`.
+
 ### Sincronização
 
 ### Estatísticas
