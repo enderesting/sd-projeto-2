@@ -91,16 +91,12 @@ int network_server_init(short port){
 int network_main_loop(int listening_socket, struct table_t *table){
     //connect to socket, send/receive
     int connsockfd;
-    //int ret;
-
     int server_error = 0;
 
     struct sockaddr_in client_addr;
     socklen_t size_sockaddr_in = sizeof(client_addr);
 
-    // Number of threads should be provided from the outside?
-    // The teacher mentioned this wasn't properly defined
-    int n_threads = 2;
+    int n_threads = 500;
     pthread_t threads[n_threads];
     int active_threads[n_threads];
     memset(active_threads, 0, n_threads * sizeof(int));
@@ -109,8 +105,10 @@ int network_main_loop(int listening_socket, struct table_t *table){
 
     while (!terminated && !server_error) {
         for (int i = 0; i < n_threads; i++) {
-            if (active_threads[i]) { //if the thread is vacant/inactive then it wouldnt be tested at all
-                //tries to join child thread, but if its not done, just move onto check the rest
+            //if the thread is vacant/inactive then it wouldnt be tested at all
+            if (active_threads[i]) { 
+                // tries to join child thread, but if its not done, just move
+                // onto check the rest
                 int ret_join = pthread_tryjoin_np(threads[i], NULL); 
                 if (ret_join == 0) active_threads[i] = 0;
                 else if (ret_join == EBUSY) continue; 
@@ -125,9 +123,11 @@ int network_main_loop(int listening_socket, struct table_t *table){
         // tries to find a vacant thread
         int vacant_thread = -1;
         for (int i = 0; i < n_threads; i++) {
-            if (!active_threads[i]) vacant_thread = i; // marks any vacant threads but just one
+            if (!active_threads[i]) {
+                vacant_thread = i;
+                break;
+            }
         }
-
         if (vacant_thread == -1) {
             sleep(2);
             printf("Server can't accept any more connections! \n");
@@ -144,17 +144,19 @@ int network_main_loop(int listening_socket, struct table_t *table){
 
         if (connsockfd != -1) {
             printf("Client connection established\n");
-            int *i = malloc(sizeof(int));
-            *i = connsockfd;
+
+            int* ptr_connsockfd = malloc(sizeof(int));
+            *ptr_connsockfd = connsockfd;
             active_threads[vacant_thread] = 1;
 
             int ret_thread_create =
-                pthread_create(&threads[vacant_thread], NULL, &serve_conn, (void*) i);
+                pthread_create(&threads[vacant_thread], NULL, &serve_conn,
+                               (void*) ptr_connsockfd);
             if (ret_thread_create != 0) {
                 printf("Unable to create server thread \n");
                 close(connsockfd);
             }
-            // free(i); //unnecessary, the corresponding connsockfd are freed when each thread terminates
+
             printf("Resuming listening for more connections... \n");
         } else {
             printf("Unable to establish connection. Waiting for other "
@@ -168,13 +170,11 @@ int network_main_loop(int listening_socket, struct table_t *table){
         printf("\nServer experienced a fatal error! Shutting down...\n");
     }
 
-    // fcntl(listening_socket, F_SETFL, ~O_NONBLOCK);
-    
     for (int i = 0; i < n_threads; i++) {
         if (active_threads[i]) {
             pthread_kill(threads[i], SIGINT);
             if (pthread_join(threads[i],NULL)==0){
-                printf("thread %d is detached and freed.\n", i);
+                printf("Thread %d was detached and freed.\n", i);
             }
         }
     }
