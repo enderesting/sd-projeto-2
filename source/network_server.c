@@ -96,7 +96,7 @@ int network_main_loop(int listening_socket, struct table_t *table){
     struct sockaddr_in client_addr;
     socklen_t size_sockaddr_in = sizeof(client_addr);
 
-    int n_threads = 500;
+    int n_threads = 5000;
     pthread_t threads[n_threads];
     int active_threads[n_threads];
     memset(active_threads, 0, n_threads * sizeof(int));
