@@ -92,3 +92,47 @@ typedef struct mutex_locks{
 
 ### Estatísticas
 
+Foi exigido que o servidor mantivesse em memória uma tabela de estatísticas relativos ao seu functionamento.
+Estas estatísticas são o número corrente de clientes a serem servidos, o número total de operações realizadas
+desde o começo do funcionamento do servidor e o tempo total a servir essas operações. Estas foram guardadas numa 
+`struct statistics_t`:
+
+```c
+// include/stats.h:13
+
+struct statistics_t {
+    int n_clientes;
+    int n_operacoes;
+    int total_time;
+};
+```
+
+Estas estatísticas também podem ser consultadas pelos clientes atráves da operação `stats`/`st`. De maneira a implementar
+esta operação foi adicionado um novo campo ao `sdmessage.proto` para refletir esta possibilidade nas mensagens serializadas:
+
+```
+// sdmessage.proto:12
+message statistics_t {
+  sint32 n_clientes = 1;
+  sint32 n_operacoes = 2;
+  sint32 total_time = 3;
+}
+```
+
+Um pedido das estatísticas sucedido retorna uma mensagem com `opcode OP_STATS+1` e `c_type CT_STATS`. Um pedido
+sem sucesso retorna `opcode OP_ERROR` e `c_type CT_NONE`.
+
+### Globals
+
+Os recursos comuns às threads encontram-se numa estrutura global `server_resources`:
+
+```c
+// include/table_server-private.h:18
+
+typedef struct server_resources {
+    struct table_t* table;
+    struct statistics_t* global_stats; // TODO Add pointer to stats struct
+    mutex_locks table_locks;
+    mutex_locks stats_locks;
+} server_resources;
+```
