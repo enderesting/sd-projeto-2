@@ -6,13 +6,7 @@ Emily Sá - 58200 <br>
 Github repo: https://github.com/enderesting/sd-projeto-2
 
 ## Build
-A compilação deste projeto é realizada correndo os comandos:
-
-```bash
-make
-```
-
-A makefile também admite uma receita para a remoção dos ficheiros compilados através de `make clean`
+A compilação deste projeto é realizada correndo o comando `make`. A makefile também admite uma receita para a remoção dos ficheiros compilados através de `make clean`
 
 ## About
 
@@ -29,12 +23,12 @@ A adaptação a um modelo multithreaded foi implementado via o uso da biblioteca
 POSIX `pthread`. 
 
 ```c
-// source/network_server.c:147
+// source/network_server.c:147, em network_main_loop()
 
 int ret_thread_create = pthread_create(&threads[vacant_thread], NULL, 
                                        &serve_conn, (void*) &connsockfd);
                                        
-// source/server_thread.c:21
+// source/server_thread.c:21, em serve_conn()
 
 while (!processing_error && !terminated) {
     // receive a message, deserialize it
@@ -71,6 +65,30 @@ As threads são agora as responsáveis por comunicar com os clientes e responder
 aos seus pedidos via a função `invoke()`.
 
 ### Sincronização
+
+As threads acedem a recursos comuns ao programa, nomeadamente a tabela hash que 
+foi desenvolvida na primeira fase deste projeto, mas também uma tabela de estatísticas 
+relativas ao funcionamento do servidor que foi adicionada nesta fase. Assim, o acesso 
+a estes recursos são secções críticas que devem ser protegidos por primitivas de sincronização,
+como mutexes.
+
+A implementação relativa ao _locking/unlocking_ dos mutexes encontra-se em `mutex.c`, via as 
+funções `enter_read()`, `enter_write()`, `exit_read()` e `exit_write()`, que aceitam um `struct mutex_locks` 
+composta pelos parâmetros necessários para controlar o acesso às secções críticas. Durante a execução
+do programa são usados dois conjuntos de `struct mutex_locks`, um para o acesso à tabela hash, e outro para o acesso
+à tabela de estatísticas.
+
+```c
+// include/mutex.h:14
+
+typedef struct mutex_locks{
+    int writers_waiting;
+    int readers_reading;
+    int writer_active;
+    pthread_mutex_t m;
+    pthread_cond_t c;
+} mutex_locks;
+```
 
 ### Estatísticas
 
