@@ -19,14 +19,14 @@ struct statistics_t {
 /* Recebe um valor value e aumenta o n_clientes na struct stats dada pelo valor,
  * o value, deve ser 1 ou -1, para quando um cliente se conecta e disconecta respetivamente.
  */
-void change_client_num(struct statistics_t* stats, mutex_locks locks,int value);
+void change_client_num(struct statistics_t* stats, mutex_locks* locks,int value);
 
 /* Recebe uma struct stats e aumenta o seu n_operacoes por 1.
  */
-void increase_operations(struct statistics_t* stats, mutex_locks locks);
+void increase_operations(struct statistics_t* stats, mutex_locks* locks);
 
 /* Recebe um valor time e aumenta o total_time na struct stats dada pelo valor.
  */
-void increase_time(struct statistics_t* stats, mutex_locks locks, int time);
+void increase_time(struct statistics_t* stats, mutex_locks* locks, int time);
 
 #endif

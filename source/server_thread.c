@@ -16,11 +16,12 @@
 void* serve_conn(void* connsockfd) {
     int ret;
     int processing_error = 0;
+    int connsockfd_i = * (int*) connsockfd;
     change_client_num(resources.global_stats, resources.stats_locks, 1);
 
     while (!processing_error && !terminated) {
         // receive a message, deserialize it
-        MessageT *msg = network_receive(* (int*) connsockfd);
+        MessageT *msg = network_receive(connsockfd_i);
         if (!msg) {
             close(* (int*) connsockfd);
             if(!terminated) processing_error = 1;
@@ -49,9 +50,11 @@ void* serve_conn(void* connsockfd) {
     }
 
     close(* (int*) connsockfd);
+    free(connsockfd);
     change_client_num(resources.global_stats, resources.stats_locks, -1);
 
     // int* return_val = malloc(sizeof(int));
     // *return_val = processing_error ? -1 : 0;
+    // pthread_detach(pthread_self);
     return NULL;
 }

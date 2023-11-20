@@ -18,13 +18,15 @@ extern volatile sig_atomic_t connected;
 typedef struct server_resources {
     struct table_t* table;
     struct statistics_t* global_stats; // TODO Add pointer to stats struct
-    mutex_locks table_locks;
-    mutex_locks stats_locks;
+    mutex_locks* table_locks;
+    mutex_locks* stats_locks;
 } server_resources;
 
 extern server_resources resources;
 
 int init_server_resources(int n_lists);
+
+int destroy_server_resources();
 
 void set_sig_handlers();
 

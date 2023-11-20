@@ -19,12 +19,12 @@ typedef struct mutex_locks{
     pthread_cond_t c;
 } mutex_locks;
 
-void enter_read(mutex_locks locks);
+void enter_read(mutex_locks* locks);
 
-void exit_read(mutex_locks locks);
+void exit_read(mutex_locks* locks);
 
-void enter_write(mutex_locks locks);
+void enter_write(mutex_locks* locks);
 
-void exit_write(mutex_locks locks);
+void exit_write(mutex_locks* locks);
 
 #endif
