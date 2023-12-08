@@ -17,7 +17,6 @@ extern volatile sig_atomic_t terminated;
 extern volatile sig_atomic_t connected;
 
 typedef struct server_address{
-    char* ip_port;
     char* ip;
     int port;
 } server_address;
