@@ -13,8 +13,14 @@
 #include "sdmessage.pb-c.h"
 #include "table_client.h"
 #include "stats.h"
+#include <zookeeper/zookeeper.h>
 
 volatile sig_atomic_t connected_to_server = 0;
+static zhandle_t *zh;
+typedef struct String_vector zoo_string; 
+
+/* placeholder so I get no intellisense errors */
+void my_watcher_func(zhandle_t *zzh, int type, int state, const char *path, void *watcherCtx) {}
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
@@ -22,9 +28,33 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
 
-    struct rtable_t* rtable = rtable_connect(argv[1]);
+    zh = zookeeper_init(argv[1], my_watcher_func, 20000, 0, NULL, 0);
+    const char* zoo_root = "/chain"; /* put here the location of the child nodes */
+	zoo_string* children_list =	(zoo_string *) malloc(sizeof(zoo_string));
 
-    if (!rtable) {
+    if(!zh) {
+        perror("Error connecting to remote server\n");
+        exit(-1);
+    }
+    
+    int retval = zoo_get_children(zh, zoo_root, 1, children_list); 
+
+    if (retval != ZOK) {
+        perror("Error getting child nodes\n");
+        exit(-1);
+    }
+
+    char* head_path;
+    char* tail_path;
+
+    for(int i = 0; i < strlen(children_list); i++) {
+        
+    }
+
+    struct rtable_t* rtable_head = rtable_connect(head_path);
+    struct rtable_t* rtable_tail = rtable_connect(tail_path);
+
+    if (!rtable_head || !rtable_tail) {
         perror("Error connecting to remote server\n");
         exit(-1);
     }
