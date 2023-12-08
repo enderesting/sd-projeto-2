@@ -10,15 +10,15 @@
 
 #include <zookeeper/zookeeper.h>
 
-void server_connection_handler(zhandle_t zh, int evt_type, int conn_state,
+void server_connection_handler(zhandle_t* zh, int evt_type, int conn_state,
                                const char *path, void* context);
 
-void client_connection_handler(zhandle_t zh, int evt_type, int conn_state,
+void client_connection_handler(zhandle_t* zh, int evt_type, int conn_state,
                                const char *path, void* context);
 
-void server_data_watcher(zhandle_t zh, int evt_type, int conn_state,
+void server_data_watcher(zhandle_t* zh, int evt_type, int conn_state,
                                const char *path, void* context);
 
-void client_data_watcher(zhandle_t zh, int evt_type, int conn_state,
+void client_data_watcher(zhandle_t* zh, int evt_type, int conn_state,
                                const char *path, void* context);
 #endif
