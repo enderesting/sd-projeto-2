@@ -10,7 +10,7 @@
 #include <signal.h>
 #include <stats.h>
 #include <pthread.h>
-#include <zookeeper/zookeeper.h>
+// #include <zookeeper/zookeeper.h>
 #include "mutex.h"
 #include "watcher_callbacks.h"
 #include "client_stub.h"

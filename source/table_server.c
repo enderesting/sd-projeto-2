@@ -21,9 +21,10 @@
 #define ZVALLEN 1024
 
 typedef struct String_vector zoo_string; 
-server_resources resources = {}; //TODO
+server_resources resources = {}; 
 volatile sig_atomic_t terminated = 0;
 volatile sig_atomic_t connected_to_zk = 0;
+volatile sig_atomic_t connected_to_server = 0; // FIXME: check if this right? used for copying. might be used later?
 char* root_path = "/chain";
 
 int main(int argc, char *argv[]) {
@@ -63,7 +64,7 @@ int main(int argc, char *argv[]) {
                 } 
             }
             zoo_string* children_list = (zoo_string*) malloc(sizeof(zoo_string));
-            if (ZOK == zoo_wget_children(resources.zh,root_path, &server_data_watcher,NULL,children_list)){
+            if (ZOK == zoo_wget_children(resources.zh,root_path, server_data_watcher,NULL,children_list)){
                 if (children_list){ // if /chain HAS children
                     //find tail node
                     char* last_node_addr = (char*) malloc(ZDATALEN * sizeof(char));
