@@ -14,15 +14,10 @@
 #include "mutex.h"
 #include "watcher_callbacks.h"
 #include "client_stub.h"
+#include "address.h"
 
 extern volatile sig_atomic_t terminated;
 extern volatile sig_atomic_t connected_to_zk;
-
-typedef struct server_address{
-    char* addr_str;
-    char* ip;
-    int port;
-} server_address;
 
 typedef struct server_resources {
     struct table_t* table;
@@ -42,9 +37,7 @@ extern server_resources resources;
 
 int dup_table_from_server(char* last_node_addr);
 
-server_address* interpret_addr(char* addr_str);
-
-int init_server_resources(int n_lists);
+int init_server_resources(int n_lists, char* my_addr);
 
 int destroy_server_resources();
 

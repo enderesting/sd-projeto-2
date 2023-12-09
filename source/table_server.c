@@ -18,11 +18,12 @@
 
 
 #define ZDATALEN 1024 * 1024
-
+#define ZVALLEN 1024
 
 typedef struct String_vector zoo_string; 
 server_resources resources = {}; //TODO
 volatile sig_atomic_t terminated = 0;
+volatile sig_atomic_t connected_to_zk = 0;
 char* root_path = "/chain";
 
 int main(int argc, char *argv[]) {
@@ -36,11 +37,9 @@ int main(int argc, char *argv[]) {
     set_sig_handlers();
 
     // handle arguments
-    resources.my_addr = interpret_addr(argv[3]); //FIXME: this is just to double check, im like half sure this isnt passed in correctly so it's first suspect if anything goes wrong
-    resources.zh = zookeeper_init(resources.my_addr->addr_str,server_connection_handler,2000,0,0,0);
     int n_lists = strtol(argv[2],NULL,10);
     // initiates table & initiate resources
-    int ret_resources = init_server_resources(n_lists);
+    int ret_resources = init_server_resources(n_lists,argv[3]);
     if (ret_resources == -1) {
         return -1;
     }
@@ -71,13 +70,23 @@ int main(int argc, char *argv[]) {
                     strcpy(last_node_addr, children_list->data[children_list->count-1]);
                     //duplicate the server
                     dup_table_from_server(last_node_addr); // gets table and put it into resources.table
+                    //register in zk?
                 }
                 //else just continue and start loop
                 break;
             }
         }
+        sleep(3);
     }
 
+    //get node_path
+    char node_path[120] = "";
+    strcat(node_path,root_path); 
+    strcat(node_path,"/node"); 
+    if (ZOK != zoo_create(resources.zh,node_path, "" ,10, & ZOO_OPEN_ACL_UNSAFE, ZOO_EPHEMERAL | ZOO_SEQUENCE, resources.id, ZVALLEN)){
+        fprintf(stderr,"Error Creating %s!\n", root_path);
+        exit(EXIT_FAILURE);
+    }
     int ret_net = network_main_loop(sockfd, resources.table); //start loop
     //it basically wont stop until server error/manual quits. if any changes happen cb will be called?
     network_server_close(sockfd);
@@ -109,28 +118,7 @@ int dup_table_from_server(char* last_node_addr){
     return 0;
 }
 
-server_address* interpret_addr(char* addr_str){
-    server_address* addr = (server_address*) malloc(sizeof(server_address));
-    if(!addr_str) return NULL;
-
-    char* colon = strchr(addr_str, ':');
-    int ip_len = colon - addr_str;
-
-    addr->ip = strndup(addr_str, ip_len); //FIXME: maybe error check ip...
-    char* endptr = NULL;
-    int port = strtol(colon + 1,&endptr,10);
-    if (strcmp(endptr,"")!=0){ // catches bad port and return. 
-        printf("Bad port number\n");
-        return NULL;
-    }
-    addr->port = port;
-    addr->addr_str = addr_str;
-
-    return addr;
-}
-
-
-int init_server_resources(int n_lists) {
+int init_server_resources(int n_lists, char* my_addr) {
     struct table_t* table = table_skel_init(n_lists);
     if (!table){
         perror("Error initializing table\n");
@@ -160,7 +148,17 @@ int init_server_resources(int n_lists) {
     stat_locks->c = (pthread_cond_t) PTHREAD_COND_INITIALIZER;
     stat_locks->m = (pthread_mutex_t) PTHREAD_MUTEX_INITIALIZER;
     resources.stats_locks = stat_locks;
-  
+
+    
+    resources.my_addr = (server_address*) malloc(sizeof(server_address));
+    interpret_addr(my_addr,resources.my_addr); 
+    resources.next_addr = (server_address*) malloc(sizeof(server_address)); // on initiation we dont know the next addr yet
+    resources.next_addr = NULL; //FIXME: is this even neccessary to explicitly set it to null?
+    resources.zh = zookeeper_init(resources.my_addr->addr_str,server_connection_handler,2000,0,0,0);
+    resources.id = malloc(ZVALLEN);
+    resources.next_id = malloc(ZVALLEN);
+    resources.next_id = NULL;
+
     return 0;
 }
 
@@ -170,13 +168,14 @@ int destroy_server_resources(){
     pthread_mutex_destroy(&resources.table_locks->m);
     pthread_cond_destroy(&resources.table_locks->c);
     free(resources.table_locks);
-    // free(&resources.table_locks->m);
-    // free(&resources.table_locks->c);
     pthread_mutex_destroy(&resources.stats_locks->m);
     pthread_cond_destroy(&resources.stats_locks->c);
     free(resources.stats_locks);
-    // free(&resources.stats_locks->m);
-    // free(&resources.stats_locks->c);
+    // FIXME: free addresses? 
+    destory_addr_struct(resources.my_addr);
+    destory_addr_struct(resources.next_addr);
+    free(resources.id);
+    free(resources.next_id);
     return 0;
 }
 
