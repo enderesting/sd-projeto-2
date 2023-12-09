@@ -12,24 +12,29 @@
 #include <pthread.h>
 #include <zookeeper/zookeeper.h>
 #include "mutex.h"
+#include "watcher_callbacks.h"
 
 extern volatile sig_atomic_t terminated;
 extern volatile sig_atomic_t connected;
 
 typedef struct server_address{
+    char* addr_str;
     char* ip;
     int port;
 } server_address;
 
 typedef struct server_resources {
     struct table_t* table;
-    struct statistics_t* global_stats; // TODO Add pointer to stats struct
+    struct statistics_t* global_stats; 
     mutex_locks* table_locks;
     mutex_locks* stats_locks;
     // extras, for zk
     zhandle_t* zh;
     server_address* my_addr;
     server_address* next_addr;
+    int next_sockfd;
+    char* id;
+    char* next_id;
 } server_resources;
 
 extern server_resources resources;

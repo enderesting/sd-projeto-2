@@ -16,8 +16,14 @@
 #include "table_server.h"
 #include "table_server-private.h"
 
+
+#define ZDATALEN 1024 * 1024
+
+
+typedef struct String_vector zoo_string; 
 server_resources resources = {}; //TODO
 volatile sig_atomic_t terminated = 0;
+char* root_path = "/chain";
 
 int main(int argc, char *argv[]) {
     // processing args for port & n_list
@@ -29,21 +35,67 @@ int main(int argc, char *argv[]) {
 
     set_sig_handlers();
 
-
-    // connects to zk session
-    // if server's first then it's good?
-    // else: connect to previous server and copy contents, disconnects. 
-    //       resets stats
-    //       register this server in zk
-    //       (the callback will probably jump into action at this point)
-
+    // handle arguments
     resources.my_addr = interpret_addr(argv[3]); //FIXME: this is just to double check, im like half sure this isnt passed in correctly so it's first suspect if anything goes wrong
-    // resources.zh = zookeeper_init(argv[1], connection_watcher, 2000, 0, 0, 0);
-
+    resources.zh = zookeeper_init(resources.my_addr->addr_str,server_connection_handler,2000,0,0,0);
     int n_lists = strtol(argv[2],NULL,10);
-    return boot_server(n_lists);
+    // initiates table & initiate resources
+    int ret_resources = init_server_resources(n_lists);
+    if (ret_resources == -1) {
+        return -1;
+    }
+
+    // hook up sockets
+    int sockfd = network_server_init(resources.my_addr->port);
+    if (sockfd==-1){
+        perror("Error initializing server\n");
+        return -1;
+    }
+
+    while(1){
+        if(connected){ //FIXME: check how connected is rewritten now
+            //if rootpath doesn't exist, create it  
+            if (ZNONODE == zoo_exists(resources.zh, root_path, 0, NULL)) {
+                if (ZOK == zoo_create(resources.zh, root_path, NULL, -1, & ZOO_OPEN_ACL_UNSAFE, 0, NULL, 0)) {
+                    fprintf(stderr, "%s created!\n", root_path);
+                } else {
+                    fprintf(stderr,"Error Creating %s!\n", root_path);
+                    exit(EXIT_FAILURE);
+                } 
+            }
+            zoo_string** children_list = (zoo_string**) malloc(sizeof(zoo_string*));
+            if (ZOK == zoo_wget_children(resources.zh,root_path, &server_data_watcher,NULL,children_list)){
+                if (children_list){ // if /chain HAS children
+                    //find tail node
+                    int index = (sizeof(children_list)/sizeof(children_list[0]))-1;
+                    char* last_node_addr = (char*) malloc(ZDATALEN * sizeof(char));
+                    strcpy(last_node_addr,children_list[index]->data);
+                    //duplicate the server
+                    duplicate_server(last_node_addr); // needs: prev server sockfd.  wait. i need its content
+                }
+                //else just continue and start loop
+                break;
+            }
+        }
+    }
+   
+
+    int ret_net = network_main_loop(sockfd, resources.table); //start loop
+    //it basically wont stop until server error/manual quits. if any changes happen cb will be called?
+    network_server_close(sockfd);
+    destroy_server_resources();
+
+    return ret_net;
 
 }
+
+int duplicate_server(zoo_string* last_node){
+    // setup sockfd information
+    // connect as client
+    // call gettables
+    // put that shit in entry by entry
+}
+
 
 server_address* interpret_addr(char* addr_str){
     server_address* addr = (server_address*) malloc(sizeof(server_address));
@@ -60,20 +112,12 @@ server_address* interpret_addr(char* addr_str){
         return NULL;
     }
     addr->port = port;
+    addr->addr_str = addr_str;
 
     return addr;
 }
 
 int boot_server(int n_lists){
-    //stores the chars after the first numerical digits are taken.
-    //e.g. "123abc" -> it will store "abc"
-    // char* endptr = NULL;
-    // int port = strtol(arg_server_addr, &endptr, 10); //1024 <= port_range <= 98303 <- is this arbritrary? idk
-    // if (strcmp(endptr,"")!=0){ // catches bad port and return. 
-    //     printf("Bad port number\n");
-    //     return -1;
-    // }
-
     //initializing server socket
     int sockfd = network_server_init(resources.my_addr->port);
     if (sockfd==-1){
