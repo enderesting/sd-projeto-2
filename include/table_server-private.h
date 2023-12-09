@@ -11,6 +11,7 @@
 #include <stats.h>
 #include <pthread.h>
 #include <zookeeper/zookeeper.h>
+#include "client_stub-private.h"
 #include "mutex.h"
 
 extern volatile sig_atomic_t terminated;
@@ -30,6 +31,9 @@ typedef struct server_resources {
     zhandle_t* zh;
     server_address* my_addr;
     server_address* next_addr;
+    struct rtable_t* next_server;
+    char* id;
+    char* next_id;
 } server_resources;
 
 extern server_resources resources;
