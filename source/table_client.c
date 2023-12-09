@@ -15,7 +15,8 @@
 #include "stats.h"
 #include <zookeeper/zookeeper.h>
 
-volatile sig_atomic_t connected_to_server = 0;
+volatile sig_atomic_t connected_to_head = 0;
+volatile sig_atomic_t connected_to_tail = 0;
 static zhandle_t *zh;
 typedef struct String_vector zoo_string; 
 
@@ -36,7 +37,7 @@ int main(int argc, char *argv[]) {
         perror("Error connecting to remote server\n");
         exit(-1);
     }
-    
+     /* should this be maybe inside main? */
     int retval = zoo_get_children(zh, zoo_root, 1, children_list); 
 
     if (retval != ZOK) {
@@ -48,8 +49,10 @@ int main(int argc, char *argv[]) {
     char* tail_path;
 
     for(int i = 0; i < strlen(children_list); i++) {
-        
+        /* for cycle to go through all the children locations and find the head and tail */
     }
+
+    /* get metadata from each (IP:Port) and put it in head_path and tail_path respectively */
 
     struct rtable_t* rtable_head = rtable_connect(head_path);
     struct rtable_t* rtable_tail = rtable_connect(tail_path);
@@ -60,7 +63,7 @@ int main(int argc, char *argv[]) {
     }
 
     int terminated = 0;
-    while (!terminated && connected_to_server) {
+    while (!terminated && connected_to_head && connected_to_tail) {
         printf("Command: ");
         char line[MAX_MSG];
         fgets(line, 99, stdin);
