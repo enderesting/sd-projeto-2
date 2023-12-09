@@ -45,14 +45,8 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
 
-    char* head_path;
-    char* tail_path;
-
-    for(int i = 0; i < strlen(children_list); i++) {
-        /* for cycle to go through all the children locations and find the head and tail */
-    }
-
-    /* get metadata from each (IP:Port) and put it in head_path and tail_path respectively */
+    char* head_path = children_list->data[0];
+    char* tail_path = children_list->data[children_list->count-1];
 
     struct rtable_t* rtable_head = rtable_connect(head_path);
     struct rtable_t* rtable_tail = rtable_connect(tail_path);
