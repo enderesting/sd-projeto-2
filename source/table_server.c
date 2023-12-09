@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
     }
 
     while(1){
-        if(connected){ //FIXME: check how connected is rewritten now
+        if(connected_to_zk){ //FIXME: check how connected is rewritten now
             //if rootpath doesn't exist, create it  
             if (ZNONODE == zoo_exists(resources.zh, root_path, 0, NULL)) {
                 if (ZOK == zoo_create(resources.zh, root_path, NULL, -1, & ZOO_OPEN_ACL_UNSAFE, 0, NULL, 0)) {
@@ -63,22 +63,20 @@ int main(int argc, char *argv[]) {
                     exit(EXIT_FAILURE);
                 } 
             }
-            zoo_string** children_list = (zoo_string**) malloc(sizeof(zoo_string*));
+            zoo_string* children_list = (zoo_string*) malloc(sizeof(zoo_string));
             if (ZOK == zoo_wget_children(resources.zh,root_path, &server_data_watcher,NULL,children_list)){
                 if (children_list){ // if /chain HAS children
                     //find tail node
-                    int index = (sizeof(children_list)/sizeof(children_list[0]))-1;
                     char* last_node_addr = (char*) malloc(ZDATALEN * sizeof(char));
-                    strcpy(last_node_addr,children_list[index]->data);
+                    strcpy(last_node_addr, children_list->data[children_list->count-1]);
                     //duplicate the server
-                    duplicate_server(last_node_addr); // needs: prev server sockfd.  wait. i need its content
+                    dup_table_from_server(last_node_addr); // gets table and put it into resources.table
                 }
                 //else just continue and start loop
                 break;
             }
         }
     }
-   
 
     int ret_net = network_main_loop(sockfd, resources.table); //start loop
     //it basically wont stop until server error/manual quits. if any changes happen cb will be called?
@@ -89,13 +87,27 @@ int main(int argc, char *argv[]) {
 
 }
 
-int duplicate_server(zoo_string* last_node){
-    // setup sockfd information
-    // connect as client
-    // call gettables
-    // put that shit in entry by entry
-}
 
+/*
+Given the ip of an open server, join it as a client and request the table through gettable.
+The copied tata is put into resources.table (later passed into network_main_loop)
+returns -1 if error, 0 if fine.
+*/
+int dup_table_from_server(char* last_node_addr){
+    // connect as client
+    struct rtable_t* rtable = rtable_connect(last_node_addr);
+    struct entry_t** entries = rtable_get_table(rtable);
+    int tab_size = rtable_size(rtable);
+    rtable_disconnect(rtable);
+    rtable_free_entries(entries);
+    if (!rtable || !entries || tab_size==-1) return -1;
+    int ret = 0;
+    for(int i = 0; i < tab_size;i++){ // mfer still think he's in python. fucking idiot
+        ret = table_put(resources.table,entries[i]->key,entries[i]->value);
+        if (ret == -1) return ret;
+    }
+    return 0;
+}
 
 server_address* interpret_addr(char* addr_str){
     server_address* addr = (server_address*) malloc(sizeof(server_address));
@@ -117,28 +129,6 @@ server_address* interpret_addr(char* addr_str){
     return addr;
 }
 
-int boot_server(int n_lists){
-    //initializing server socket
-    int sockfd = network_server_init(resources.my_addr->port);
-    if (sockfd==-1){
-        perror("Error initializing server\n");
-        return -1;
-    }
-
-    //initiates table
-    // int n_lists = strtol(arg_n_list,NULL,10);
-    int ret_resources = init_server_resources(n_lists);
-    if (ret_resources == -1) {
-        return -1;
-    }
-
-    int ret_net = network_main_loop(sockfd, resources.table);
-
-    network_server_close(sockfd);
-    destroy_server_resources();
-
-    return ret_net;
-}
 
 int init_server_resources(int n_lists) {
     struct table_t* table = table_skel_init(n_lists);

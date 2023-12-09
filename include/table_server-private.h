@@ -13,9 +13,10 @@
 #include <zookeeper/zookeeper.h>
 #include "mutex.h"
 #include "watcher_callbacks.h"
+#include "client_stub.h"
 
 extern volatile sig_atomic_t terminated;
-extern volatile sig_atomic_t connected;
+extern volatile sig_atomic_t connected_to_zk;
 
 typedef struct server_address{
     char* addr_str;
@@ -39,9 +40,9 @@ typedef struct server_resources {
 
 extern server_resources resources;
 
-server_address* interpret_addr(char* addr_str);
+int dup_table_from_server(char* last_node_addr);
 
-int boot_server(int n_lists);
+server_address* interpret_addr(char* addr_str);
 
 int init_server_resources(int n_lists);
 
