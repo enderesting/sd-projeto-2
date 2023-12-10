@@ -53,7 +53,7 @@ void server_watch_children(zhandle_t* zh, int evt_type, int conn_state,
             char* child_path = children_list->data[i];
             int path_cmp = strcmp(resources.id, child_path);
             if (path_cmp < 0) {
-                new_successor = child_path;
+                strcpy(new_successor, child_path);
                 break;
             }
         }
