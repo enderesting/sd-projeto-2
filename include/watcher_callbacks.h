@@ -10,6 +10,10 @@
 
 #include <zookeeper/zookeeper.h>
 
+#define ZDATALEN 1024 * 1024
+
+typedef struct String_vector zoo_string;
+
 void server_connection_handler(zhandle_t* zh, int evt_type, int conn_state,
                                const char *path, void* context);
 
