@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
 	int zoo_data_len = ZDATALEN; /* we gotta define ZDATALEN */
 
     zoo_get(zh, head_path, 0, zoo_data_head, zoo_data_len, NULL);
-    zoo_get(zh, head_path, 0, zoo_data_tail, zoo_data_len, NULL);
+    zoo_get(zh, tail_path, 0, zoo_data_tail, zoo_data_len, NULL);
 
     struct rtable_t* rtable_head = rtable_connect(zoo_data_head);
     struct rtable_t* rtable_tail = rtable_connect(zoo_data_tail);
@@ -67,21 +67,21 @@ int main(int argc, char *argv[]) {
             exit(-1);
         }
 
-        if(children_list->data != new_children_list->data) {
+        if(strcmp(children_list->data, new_children_list->data) == 1) {
             char* new_head_path = new_children_list->data[0];
             char* new_tail_path = new_children_list->data[children_list->count-1];
 
-            if(head_path != new_head_path) {
+            if(strcmp(head_path, new_head_path) == 1) {
                 rtable_disconnect(rtable_head);
                 strcpy(head_path, new_head_path);
                 zoo_get(zh, head_path, 0, zoo_data_head, zoo_data_len, NULL);
                 struct rtable_t* rtable_head = rtable_connect(zoo_data_head);
             }
 
-            if(tail_path != new_tail_path) {
+            if(strcmp(tail_path, new_tail_path) == 1) {
                 rtable_disconnect(rtable_tail);
                 strcpy(tail_path, new_tail_path);
-                zoo_get(zh, head_path, 0, zoo_data_tail, zoo_data_len, NULL);
+                zoo_get(zh, tail_path, 0, zoo_data_tail, zoo_data_len, NULL);
                 struct rtable_t* rtable_tail = rtable_connect(zoo_data_tail);
             }
         }

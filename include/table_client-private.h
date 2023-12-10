@@ -8,6 +8,8 @@
 #ifndef _TABLE_CLIENT_PRIVATE_H
 #define _TABLE_CLIENT_PRIVATE_H
 #include <signal.h>
+#include <zookeeper/zookeeper.h>
+#include "watcher_callbacks.h"
 
 extern volatile sig_atomic_t connected_to_head;
 extern volatile sig_atomic_t connected_to_tail;
