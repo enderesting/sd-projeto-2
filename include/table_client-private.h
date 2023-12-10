@@ -13,7 +13,7 @@
 
 extern volatile sig_atomic_t connected_to_head;
 extern volatile sig_atomic_t connected_to_tail;
-extern volatile sig_atomic_t connected_to_zk; 
+extern volatile sig_atomic_t client_connected_to_zk; 
 typedef struct String_vector zoo_string;
 
 #endif

@@ -18,7 +18,7 @@
 
 volatile sig_atomic_t connected_to_head = 0; 
 volatile sig_atomic_t connected_to_tail = 0; 
-volatile sig_atomic_t connected_to_zk = 0; 
+volatile sig_atomic_t client_connected_to_zk = 0; 
 static zhandle_t *zh;
 
 int main(int argc, char *argv[]) {
