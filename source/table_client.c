@@ -16,8 +16,9 @@
 #include <zookeeper/zookeeper.h>
 #include "watcher_callbacks.h"
 
-volatile sig_atomic_t connected_to_head = 0; /* need to be turned global */
-volatile sig_atomic_t connected_to_tail = 0; /* need to be turned global */
+volatile sig_atomic_t connected_to_head = 0; 
+volatile sig_atomic_t connected_to_tail = 0; 
+volatile sig_atomic_t connected_to_zk = 0; 
 static zhandle_t *zh;
 
 int main(int argc, char *argv[]) {
@@ -58,7 +59,7 @@ int main(int argc, char *argv[]) {
     }
 
     int terminated = 0;
-    while (!terminated && connected_to_head && connected_to_tail) {
+    while (!terminated && connected_to_head && connected_to_tail && connected_to_zk) {
 
         zoo_string* new_children_list =	(zoo_string *) malloc(sizeof(zoo_string));
 
