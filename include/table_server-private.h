@@ -19,6 +19,9 @@
 extern volatile sig_atomic_t terminated;
 extern volatile sig_atomic_t connected_to_zk;
 
+#define ZDATALEN 1024 * 1024
+#define ZVALLEN 1024
+
 typedef struct server_resources {
     struct table_t* table;
     struct statistics_t* global_stats; 

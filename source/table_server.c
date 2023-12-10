@@ -17,9 +17,6 @@
 #include "table_server-private.h"
 
 
-#define ZDATALEN 1024 * 1024
-#define ZVALLEN 1024
-
 typedef struct String_vector zoo_string; 
 server_resources resources = {}; 
 volatile sig_atomic_t terminated = 0;
@@ -67,8 +64,10 @@ int main(int argc, char *argv[]) {
             if (ZOK == zoo_wget_children(resources.zh,root_path, server_data_watcher,NULL,children_list)){
                 if (children_list){ // if /chain HAS children
                     //find tail node
+                    char* last_node_path = children_list->data[children_list->count-1];
                     char* last_node_addr = (char*) malloc(ZDATALEN * sizeof(char));
-                    strcpy(last_node_addr, children_list->data[children_list->count-1]);
+                    int last_node_size = 0;
+                    zoo_get(resources.zh,last_node_path,0,last_node_addr,&last_node_size,NULL);
                     //duplicate the server
                     dup_table_from_server(last_node_addr); // gets table and put it into resources.table
                     //register in zk?
