@@ -19,7 +19,6 @@
 volatile sig_atomic_t connected_to_head = 0; /* need to be turned global */
 volatile sig_atomic_t connected_to_tail = 0; /* need to be turned global */
 static zhandle_t *zh;
-typedef struct String_vector zoo_string; 
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
@@ -43,9 +42,15 @@ int main(int argc, char *argv[]) {
 
     char* head_path = children_list->data[0];
     char* tail_path = children_list->data[children_list->count-1];
+    char *zoo_data_head = malloc(ZDATALEN * sizeof(char));
+    char *zoo_data_tail = malloc(ZDATALEN * sizeof(char));
+	int zoo_data_len = ZDATALEN; /* we gotta define ZDATALEN */
 
-    struct rtable_t* rtable_head = rtable_connect(head_path);
-    struct rtable_t* rtable_tail = rtable_connect(tail_path);
+    zoo_get(zh, head_path, 0, zoo_data_head, zoo_data_len, NULL);
+    zoo_get(zh, head_path, 0, zoo_data_tail, zoo_data_len, NULL);
+
+    struct rtable_t* rtable_head = rtable_connect(zoo_data_head);
+    struct rtable_t* rtable_tail = rtable_connect(zoo_data_tail);
 
     if (!rtable_head || !rtable_tail) {
         perror("Error connecting to remote server\n");
@@ -69,13 +74,15 @@ int main(int argc, char *argv[]) {
             if(head_path != new_head_path) {
                 rtable_disconnect(rtable_head);
                 strcpy(head_path, new_head_path);
-                struct rtable_t* rtable_head = rtable_connect(head_path);
+                zoo_get(zh, head_path, 0, zoo_data_head, zoo_data_len, NULL);
+                struct rtable_t* rtable_head = rtable_connect(zoo_data_head);
             }
 
             if(tail_path != new_tail_path) {
                 rtable_disconnect(rtable_tail);
                 strcpy(tail_path, new_tail_path);
-                struct rtable_t* rtable_tail = rtable_connect(tail_path);
+                zoo_get(zh, head_path, 0, zoo_data_tail, zoo_data_len, NULL);
+                struct rtable_t* rtable_tail = rtable_connect(zoo_data_tail);
             }
         }
 

@@ -11,5 +11,6 @@
 
 extern volatile sig_atomic_t connected_to_head;
 extern volatile sig_atomic_t connected_to_tail;
+typedef struct String_vector zoo_string;
 
 #endif
