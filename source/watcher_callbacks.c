@@ -85,7 +85,6 @@ void server_watch_children(zhandle_t* zh, int evt_type, int conn_state,
     }  else if (!is_tail && new_successor == NULL) {
         // TODO disconnect from current server via a rtable_disconnect like
         // function
-        resources.next_server = NULL;
         resources.next_addr = NULL;
         resources.next_id = NULL;
     }
