@@ -61,9 +61,12 @@ void server_watch_children(zhandle_t* zh, int evt_type, int conn_state,
         free(children_list);
     }
 
-    if (is_tail && new_successor != NULL) {
-        // TODO disconnect from current server via a rtable_disconnect like
-        // function
+
+    if (new_successor != NULL) {
+        if (!is_tail) {
+            // TODO disconnect from current server via a rtable_disconnect like
+            // function
+        }
 
         char* new_successor_addr = (char*) malloc(ZDATALEN * sizeof(char));
         int new_successor_addr_len;
@@ -78,7 +81,8 @@ void server_watch_children(zhandle_t* zh, int evt_type, int conn_state,
 
         // FIXME resources.next_addr = new_successor_addr;
         resources.next_id = new_successor;
-    } else if (!is_tail && new_successor == NULL) {
+
+    }  else if (!is_tail && new_successor == NULL) {
         // TODO disconnect from current server via a rtable_disconnect like
         // function
         resources.next_server = NULL;
@@ -132,7 +136,7 @@ void client_watch_children(zhandle_t* zh, int evt_type, int conn_state,
             }
 
             int path_cmp = strcmp(new_head, child_path);
-            if (path_cmp < 0) {
+            if (path_cmp > 0) {
                 strcpy(new_head, child_path);
             }
         }
@@ -151,7 +155,7 @@ void client_watch_children(zhandle_t* zh, int evt_type, int conn_state,
             }
 
             int path_cmp = strcmp(new_tail, child_path);
-            if (path_cmp > 0) {
+            if (path_cmp < 0) {
                 strcpy(new_tail, child_path);
             }
         }
