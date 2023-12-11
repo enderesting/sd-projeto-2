@@ -13,8 +13,28 @@
 #include "sdmessage.pb-c.h"
 #include "table_client.h"
 #include "stats.h"
+#include <zookeeper/zookeeper.h>
+#include "watcher_callbacks.h"
 
-volatile sig_atomic_t connected_to_server = 0;
+volatile sig_atomic_t connected_to_head = 0; 
+volatile sig_atomic_t connected_to_tail = 0; 
+volatile sig_atomic_t client_connected_to_zk = 0; 
+static zhandle_t *zh;
+
+int children_has_difference(zoo_string* children, zoo_string* new_children) {
+
+    int result = 1;
+
+    if(children->count != new_children->count) {
+        return result;
+    }
+
+    for(int i = 0; i < children->count; i++) {
+        result = result && strcmp(children->data[i], new_children->data[i]);
+    }
+
+    return result;
+}
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
@@ -22,18 +42,90 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
 
-    struct rtable_t* rtable = rtable_connect(argv[1]);
+    zh = zookeeper_init(argv[1], client_connection_handler, 20000, 0, NULL, 0);
+    const char* zoo_root = "/chain"; /* put here the location of the child nodes */
+	zoo_string* children_list =	(zoo_string *) malloc(sizeof(zoo_string));
 
-    if (!rtable) {
+    if(!zh) {
+        perror("Error connecting to remote server\n");
+        exit(-1);
+    }
+
+    while(1) {
+        if(client_connected_to_zk) {
+            break;
+        }
+        sleep(1);
+    }
+
+    if (zoo_get_children(zh, zoo_root, 0, children_list) != ZOK) {
+        perror("Error getting child nodes\n");
+        exit(-1);
+    }
+
+    if (!children_list) {
+        connected_to_head = 0;
+        connected_to_tail = 0;
+        perror("No servers found in chain\n");
+        exit(-1);
+    }
+
+    char* head_path = children_list->data[0];
+    char* tail_path = children_list->data[children_list->count-1];
+    char *zoo_data_head = malloc(ZDATALEN * sizeof(char));
+    char *zoo_data_tail = malloc(ZDATALEN * sizeof(char));
+	int zoo_data_len = ZDATALEN; /* we gotta define ZDATALEN */
+
+    zoo_get(zh, head_path, 0, zoo_data_head, zoo_data_len, NULL);
+    zoo_get(zh, tail_path, 0, zoo_data_tail, zoo_data_len, NULL);
+
+    struct rtable_t* rtable_head = rtable_connect(zoo_data_head);
+    struct rtable_t* rtable_tail = rtable_connect(zoo_data_tail);
+
+    if (!rtable_head || !rtable_tail) {
         perror("Error connecting to remote server\n");
         exit(-1);
     }
 
     int terminated = 0;
-    while (!terminated && connected_to_server) {
+    while (!terminated && connected_to_head && connected_to_tail && client_connected_to_zk) {
+
         printf("Command: ");
         char line[MAX_MSG];
         fgets(line, 99, stdin);
+
+        zoo_string* new_children_list =	(zoo_string *) malloc(sizeof(zoo_string));
+
+        if (zoo_get_children(zh, zoo_root, 0, new_children_list) != ZOK) {
+            perror("Error getting child nodes\n");
+            exit(-1);
+        }
+
+        if (!children_list) {
+            connected_to_head = 0;
+            connected_to_tail = 0;
+            break;
+        }
+
+        if(childrenCheck(children_list, new_children_list)) {
+            char* new_head_path = new_children_list->data[0];
+            char* new_tail_path = new_children_list->data[new_children_list->count-1];
+
+            if(strcmp(head_path, new_head_path) != 0) {
+                rtable_disconnect(rtable_head);
+                strcpy(head_path, new_head_path);
+                zoo_get(zh, head_path, 0, zoo_data_head, zoo_data_len, NULL);
+                struct rtable_t* rtable_head = rtable_connect(zoo_data_head);
+            }
+
+            if(strcmp(tail_path, new_tail_path) != 0) {
+                rtable_disconnect(rtable_tail);
+                strcpy(tail_path, new_tail_path);
+                zoo_get(zh, tail_path, 0, zoo_data_tail, zoo_data_len, NULL);
+                struct rtable_t* rtable_tail = rtable_connect(zoo_data_tail);
+            }
+        }
+
         char* ret_fgets = strtok(line, "");
         switch (parse_operation(ret_fgets)) {
             case PUT: {
@@ -49,7 +141,7 @@ int main(int argc, char *argv[]) {
                 struct data_t* data_obj = data_create(strlen(data), data);
                 struct entry_t* entry = entry_create(strdup(key), data_dup(data_obj));
 
-                int ret_put = rtable_put(rtable, entry);
+                int ret_put = rtable_put(rtable_head, entry);
                 if (ret_put == 0) {
                     printf("Entry with key \"%s\" was added\n", key);
                 } else {
@@ -72,7 +164,7 @@ int main(int argc, char *argv[]) {
                     break;
                 }
                 
-                struct data_t* data = rtable_get(rtable, key);
+                struct data_t* data = rtable_get(rtable_tail, key);
 
                 if (!data) {
                     printf("Error in rtable_get or key not found!\n");
@@ -94,7 +186,7 @@ int main(int argc, char *argv[]) {
                     break;
                 }
 
-                int ret_destroy = rtable_del(rtable, key);
+                int ret_destroy = rtable_del(rtable_head, key);
 
                 if (!ret_destroy) {
                     printf("Entry removed\n");
@@ -107,7 +199,7 @@ int main(int argc, char *argv[]) {
             }
 
             case SIZE: {
-                int size = rtable_size(rtable);
+                int size = rtable_size(rtable_tail);
                 if (size < 0) {
                     printf("There was an error retrieving table's size\n");
                 } else {
@@ -117,7 +209,7 @@ int main(int argc, char *argv[]) {
             }
 
             case GETKEYS: {
-                char** keys = rtable_get_keys(rtable);
+                char** keys = rtable_get_keys(rtable_tail);
 
                 if (!keys) {
                     printf("There was an error retrieving keys\n");
@@ -136,7 +228,7 @@ int main(int argc, char *argv[]) {
             }
 
             case GETTABLE: {
-                struct entry_t** entries = rtable_get_table(rtable);
+                struct entry_t** entries = rtable_get_table(rtable_tail);
 
                 if (!entries) {
                     printf("There was an error retrieving table\n");
@@ -156,7 +248,7 @@ int main(int argc, char *argv[]) {
             }
 
             case STATS: {
-                struct statistics_t* stats = rtable_stats(rtable);
+                struct statistics_t* stats = rtable_stats(rtable_tail);
         
                 if (!stats) {
                     printf("There was an error retrieving stats\n");
@@ -179,7 +271,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (rtable_disconnect(rtable) == -1) {
+    if (rtable_disconnect(rtable_head) == -1 || rtable_disconnect(rtable_tail) == -1) {
         perror("Error disconnecting from remote server\n");
         exit(-1);
     }

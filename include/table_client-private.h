@@ -8,7 +8,16 @@
 #ifndef _TABLE_CLIENT_PRIVATE_H
 #define _TABLE_CLIENT_PRIVATE_H
 #include <signal.h>
+#include <zookeeper/zookeeper.h>
+#include "watcher_callbacks.h"
 
-extern volatile sig_atomic_t connected_to_server;
+extern volatile sig_atomic_t connected_to_head;
+extern volatile sig_atomic_t connected_to_tail;
+extern volatile sig_atomic_t client_connected_to_zk; 
+extern char* head_path;
+extern char* tail_path;
+typedef struct String_vector zoo_string;
+
+int children_has_difference(zoo_string* children, zoo_string* new_children);
 
 #endif
