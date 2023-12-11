@@ -22,7 +22,7 @@ typedef struct String_vector zoo_string;
 server_resources resources = {}; 
 volatile sig_atomic_t terminated = 0;
 volatile sig_atomic_t connected_to_zk = 0;
-volatile sig_atomic_t connected_to_server = 0; // FIXME: check if this right? used for copying. might be used later?
+sig_atomic_t connected_to_server = 0; // FIXME: check if this right? used for copying. might be used later?
 char* root_path = "/chain";
 
 int main(int argc, char *argv[]) {

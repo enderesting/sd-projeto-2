@@ -16,8 +16,8 @@
 #include <zookeeper/zookeeper.h>
 #include "watcher_callbacks.h"
 
-volatile sig_atomic_t connected_to_head = 0; 
-volatile sig_atomic_t connected_to_tail = 0; 
+sig_atomic_t connected_to_head = 0; 
+sig_atomic_t connected_to_tail = 0; 
 volatile sig_atomic_t client_connected_to_zk = 0; 
 static zhandle_t *zh;
 
