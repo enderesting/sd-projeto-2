@@ -13,8 +13,7 @@
 #include "sdmessage.pb-c.h"
 #include "table_client.h"
 #include "stats.h"
-#include <zookeeper/zookeeper.h>
-#include "watcher_callbacks.h"
+
 
 sig_atomic_t connected_to_head = 0; 
 sig_atomic_t connected_to_tail = 0; 

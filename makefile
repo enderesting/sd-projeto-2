@@ -22,6 +22,7 @@ TABLE_CLIENT_R = $(addprefix $(OBJ_DIR)/,data.o \
 	entry.o \
 	mutex.o \
 	table_client.o \
+	client_callbacks.o\
 	sdmessage.pb-c.o \
 	message.o\
 	client_stub.o \
@@ -33,7 +34,7 @@ TABLE_SERVER_R = $(addprefix $(OBJ_DIR)/,data.o \
 	list.o \
 	table.o \
 	address.o \
-	watcher_callback.o\
+	server_callbacks.o\
 	sdmessage.pb-c.o \
 	message.o\
 	client_stub.o \
@@ -62,7 +63,7 @@ $(LIB_DIR)/libtable.a: $(LIB_TABLE_R)
 	$(ARCHIVE) $@ $^
 
 $(BIN_DIR)/table_client: $(TABLE_CLIENT_R)
-	$(CC) $^ $(PROTO_LIB) $(LIB_DIR)/libtable.a -o $@
+	$(CC) $^ $(PROTO_LIB) $(LIB_DIR)/libtable.a -o $@  -lzookeeper_mt
 
 $(BIN_DIR)/table_server: $(TABLE_SERVER_R)
 	$(CC) $^ $(PROTO_LIB) $(LIB_DIR)/libtable.a -o $@ -lzookeeper_mt
