@@ -28,7 +28,7 @@ int interpret_addr(char* addr_str, server_address* addr){
         return -1;
     }
     addr->port = port;
-    addr->addr_str = addr_str;
+    addr->addr_str = strdup(addr_str);
 
     return 0;
 }

@@ -40,7 +40,7 @@ extern server_resources resources;
 
 int dup_table_from_server(char* last_node_addr);
 
-int init_server_resources(int n_lists, char* my_addr);
+int init_server_resources(int n_lists, char* zk_addr, char* my_addr);
 
 int destroy_server_resources();
 
