@@ -5,13 +5,14 @@
  * Github repo: https://github.com/padrezulmiro/sd-projeto/
  */
 
+#include "watcher_callbacks.h"
 #define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
 #include <pthread.h>
-
+#include <unistd.h>
 
 #include "table_server.h"
 #include "table_server-private.h"
@@ -61,7 +62,8 @@ int main(int argc, char *argv[]) {
                 } 
             }
             zoo_string* children_list = (zoo_string*) malloc(sizeof(zoo_string));
-            if (ZOK == zoo_wget_children(resources.zh,root_path, server_data_watcher,NULL,children_list)){
+            if (ZOK == zoo_wget_children(resources.zh,root_path, server_watch_children, NULL,children_list)){
+
                 if (children_list){ // if /chain HAS children
                     //find tail node path
                     char* last_node_path = NULL;
