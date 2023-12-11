@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <zookeeper/zookeeper.h>
 #include "watcher_callbacks.h"
+#include <unistd.h>
 
 extern volatile sig_atomic_t connected_to_head;
 extern volatile sig_atomic_t connected_to_tail;

@@ -52,7 +52,8 @@ int network_connect(struct rtable_t *rtable) {
     }
 
     rtable->sockfd = sockfd;
-    connected_to_server = 1;
+    connected_to_head = 1;
+    connected_to_tail = 1;
     return 0;
 }
 
@@ -106,6 +107,7 @@ int network_close(struct rtable_t *rtable) {
         return -1;
     }
 
-    connected_to_server = 0;
+    connected_to_head = 0;
+    connected_to_tail = 0;
     return 0;
 }

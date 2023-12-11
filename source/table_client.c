@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
         if(client_connected_to_zk) {
             break;
         }
-        //sleep(1);
+        sleep(1);
     }
 
     if (zoo_get_children(zh, zoo_root, 0, children_list) != ZOK) {
