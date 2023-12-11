@@ -105,16 +105,21 @@ returns -1 if error, 0 if fine.
 int dup_table_from_server(char* last_node_addr){
     // connect as client
     struct rtable_t* rtable = rtable_connect(last_node_addr);
+    if (!rtable) return -1;
     struct entry_t** entries = rtable_get_table(rtable);
+    if (!entries) return -1;
     int tab_size = rtable_size(rtable);
+    if (tab_size==-1) return -1;
     rtable_disconnect(rtable);
-    rtable_free_entries(entries);
-    if (!rtable || !entries || tab_size==-1) return -1;
     int ret = 0;
-    for(int i = 0; i < tab_size;i++){ // mfer still think he's in python. fucking idiot
+    for(int i = 0; i < tab_size;i++){
         ret = table_put(resources.table,entries[i]->key,entries[i]->value);
-        if (ret == -1) return ret;
+        if (ret == -1){
+            rtable_free_entries(entries);
+            return ret;
+        }
     }
+    rtable_free_entries(entries);
     return 0;
 }
 
@@ -152,12 +157,10 @@ int init_server_resources(int n_lists, char* my_addr) {
     
     resources.my_addr = (server_address*) malloc(sizeof(server_address));
     interpret_addr(my_addr,resources.my_addr); 
-    resources.next_addr = (server_address*) malloc(sizeof(server_address)); // on initiation we dont know the next addr yet
-    resources.next_addr = NULL; //FIXME: is this even neccessary to explicitly set it to null?
+    resources.next_addr = (server_address*) calloc(1,sizeof(server_address)); // on initiation we dont know the next addr yet
     resources.zh = zookeeper_init(resources.my_addr->addr_str,server_connection_handler,2000,0,0,0);
-    resources.id = malloc(ZVALLEN);
-    resources.next_id = malloc(ZVALLEN);
-    resources.next_id = NULL;
+    resources.id = calloc(1,ZVALLEN);
+    resources.next_id = calloc(1,ZVALLEN);
 
     return 0;
 }
