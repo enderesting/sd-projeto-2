@@ -101,11 +101,12 @@ int main(int argc, char *argv[]) {
 
     //register in zk
     //get node_path
-    char node_path[120] = "";
+    char node_path[ZVALLEN] = "";
     strcat(node_path,root_path); 
     strcat(node_path,"/node");
-
-    if (ZOK != zoo_create(resources.zh,node_path, "" ,10, & ZOO_OPEN_ACL_UNSAFE, ZOO_EPHEMERAL | ZOO_SEQUENCE, resources.id, ZVALLEN)){
+    int addr_len = strlen(resources.my_addr->addr_str);
+    if (ZOK != zoo_create(resources.zh, node_path, resources.my_addr->addr_str,
+                        addr_len, & ZOO_OPEN_ACL_UNSAFE, ZOO_EPHEMERAL | ZOO_SEQUENCE, resources.id, ZVALLEN)){
         fprintf(stderr,"Error Creating %s!\n", root_path);
         exit(EXIT_FAILURE);
     }
@@ -181,7 +182,7 @@ int init_server_resources(int n_lists, char* zk_addr, char* my_addr) {
     resources.my_addr = (server_address*) malloc(sizeof(server_address));
     interpret_addr(my_addr,resources.my_addr); 
     resources.next_addr = (server_address*) calloc(1, sizeof(server_address)); // on initiation we dont know the next addr yet
-    resources.zh = zookeeper_init(zk_addr, server_connection_handler, 2000, 0,
+    resources.zh = zookeeper_init(zk_addr, server_connection_handler, 2000000, 0,
                                   0, 0);
     resources.id = calloc(1,ZVALLEN);
     resources.next_id = calloc(1,ZVALLEN);
