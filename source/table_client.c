@@ -116,8 +116,15 @@ int main(int argc, char *argv[]) {
         }
 
         if(children_has_difference(children_list, new_children_list)) {
-            char* new_head_path = new_children_list->data[0];
-            char* new_tail_path = new_children_list->data[new_children_list->count-1];
+            char new_head_path[ZVALLEN] = "";
+            strcat(new_head_path, zoo_root);
+            strcat(new_head_path, "/");
+            strcat(new_head_path, new_children_list->data[0]);
+
+            char new_tail_path[ZVALLEN] = "";
+            strcat(new_tail_path, zoo_root);
+            strcat(new_tail_path, "/");
+            strcat(new_tail_path, new_children_list->data[new_children_list->count-1]);
 
             if(strcmp(head_path, new_head_path) != 0) {
                 rtable_disconnect(rtable_head,&connected_to_head);
