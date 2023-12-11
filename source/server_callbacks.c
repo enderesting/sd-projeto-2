@@ -11,6 +11,7 @@
 #include <zookeeper/zookeeper.h>
 #include <unistd.h>
 
+#include "address.h"
 #include "network_client.h"
 #include "server_callbacks.h"
 #include "table_server-private.h"
@@ -30,8 +31,8 @@ void server_watch_children(zhandle_t* zh, int evt_type, int conn_state,
                            const char *path, void* context) {
     printf("\nhello from watcher, path is %s\n", path);
     int check_new_successor;
-    char* new_successor_path = NULL;
-    int is_tail = resources.next_id == NULL;
+    char* new_successor_path = (char*) calloc(1, ZVALLEN * sizeof(char));
+    int is_tail = strcmp(resources.next_id, "") == 0;
 
     if (evt_type != ZOO_CHILD_EVENT) return;
 
@@ -40,6 +41,7 @@ void server_watch_children(zhandle_t* zh, int evt_type, int conn_state,
         zoo_exists(zh, resources.next_id, 0, NULL) == ZNONODE;
 
     if (check_new_successor) {
+        printf("\nhello from check new successor\n");
         zoo_string* children_list = (zoo_string *) malloc(sizeof(zoo_string));
         int ret_wget_children = zoo_wget_children(zh, path,
                                                   server_watch_children, context,
@@ -52,9 +54,10 @@ void server_watch_children(zhandle_t* zh, int evt_type, int conn_state,
 
         for (int i = 0; i < children_list->count; ++i) {
             char* child_path = children_list->data[i];
-            int path_cmp = strcmp(resources.id, child_path);
+            char* child_abs_path = concat_zpath("/chain", child_path);
+            int path_cmp = strcmp(resources.id, child_abs_path);
             if (path_cmp < 0) {
-                strcpy(new_successor_path, child_path);
+                strcpy(new_successor_path, child_abs_path);
                 break;
             }
         }
@@ -62,19 +65,16 @@ void server_watch_children(zhandle_t* zh, int evt_type, int conn_state,
         free(children_list);
     }
 
-
     int conn_hack = 0;
 
-    if (new_successor_path != NULL) {
-        char* new_successor_abs_path = concat_zpath("/chain",
-                                                    new_successor_path);
+    if (strcmp(new_successor_path, "") != 0) {
         if (!is_tail) {
             rtable_disconnect(resources.next_rtable, &conn_hack);
         }
 
         char* new_successor_addr = (char*) malloc(ZDATALEN * sizeof(char));
         int new_successor_addr_len = ZDATALEN;
-        int ret_get = zoo_get(zh, new_successor_abs_path, 0, new_successor_addr,
+        int ret_get = zoo_get(zh, new_successor_path, 0, new_successor_addr,
                               &new_successor_addr_len, NULL);
         if (ret_get != ZOK) {
             perror("Error get in callback");
@@ -86,7 +86,7 @@ void server_watch_children(zhandle_t* zh, int evt_type, int conn_state,
         // FIXME resources.next_addr = new_successor_addr;
         resources.next_id = new_successor_path;
 
-    } else if (!is_tail && new_successor_path == NULL) {
+    } else if (!is_tail && strcmp(new_successor_path, "") == 0) {
         rtable_disconnect(resources.next_rtable, &conn_hack);
 
         resources.next_addr = NULL;
