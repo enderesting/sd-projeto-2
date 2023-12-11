@@ -5,8 +5,8 @@
  * Github repo: https://github.com/padrezulmiro/sd-projeto/
  */
 
-#include "watcher_callbacks.h"
 #define _GNU_SOURCE
+#include "watcher_callbacks.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
