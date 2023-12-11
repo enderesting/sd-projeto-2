@@ -79,8 +79,8 @@ int main(int argc, char *argv[]) {
     zoo_get(zh, head_path, 0, zoo_data_head, &zoo_data_len, NULL);
     zoo_get(zh, tail_path, 0, zoo_data_tail, &zoo_data_len, NULL);
 
-    struct rtable_t* rtable_head = rtable_connect(zoo_data_head);
-    struct rtable_t* rtable_tail = rtable_connect(zoo_data_tail);
+    struct rtable_t* rtable_head = rtable_connect(zoo_data_head,&connected_to_head);
+    struct rtable_t* rtable_tail = rtable_connect(zoo_data_tail,&connected_to_tail);
 
     if (!rtable_head || !rtable_tail) {
         perror("Error connecting to remote server\n");
@@ -112,17 +112,17 @@ int main(int argc, char *argv[]) {
             char* new_tail_path = new_children_list->data[new_children_list->count-1];
 
             if(strcmp(head_path, new_head_path) != 0) {
-                rtable_disconnect(rtable_head);
+                rtable_disconnect(rtable_head,&connected_to_head);
                 strcpy(head_path, new_head_path);
                 zoo_get(zh, head_path, 0, zoo_data_head, &zoo_data_len, NULL);
-                rtable_head = rtable_connect(zoo_data_head);
+                rtable_head = rtable_connect(zoo_data_head,&connected_to_head);
             }
 
             if(strcmp(tail_path, new_tail_path) != 0) {
-                rtable_disconnect(rtable_tail);
+                rtable_disconnect(rtable_tail,&connected_to_tail);
                 strcpy(tail_path, new_tail_path);
                 zoo_get(zh, tail_path, 0, zoo_data_tail, &zoo_data_len, NULL);
-                rtable_tail = rtable_connect(zoo_data_tail);
+                rtable_tail = rtable_connect(zoo_data_tail,&connected_to_tail);
             }
         }
 
@@ -141,7 +141,7 @@ int main(int argc, char *argv[]) {
                 struct data_t* data_obj = data_create(strlen(data), data);
                 struct entry_t* entry = entry_create(strdup(key), data_dup(data_obj));
 
-                int ret_put = rtable_put(rtable_head, entry);
+                int ret_put = rtable_put(rtable_head, entry,&connected_to_head);
                 if (ret_put == 0) {
                     printf("Entry with key \"%s\" was added\n", key);
                 } else {
@@ -164,7 +164,7 @@ int main(int argc, char *argv[]) {
                     break;
                 }
                 
-                struct data_t* data = rtable_get(rtable_tail, key);
+                struct data_t* data = rtable_get(rtable_tail, key,&connected_to_tail);
 
                 if (!data) {
                     printf("Error in rtable_get or key not found!\n");
@@ -186,7 +186,7 @@ int main(int argc, char *argv[]) {
                     break;
                 }
 
-                int ret_destroy = rtable_del(rtable_head, key);
+                int ret_destroy = rtable_del(rtable_head, key,&connected_to_head);
 
                 if (!ret_destroy) {
                     printf("Entry removed\n");
@@ -199,7 +199,7 @@ int main(int argc, char *argv[]) {
             }
 
             case SIZE: {
-                int size = rtable_size(rtable_tail);
+                int size = rtable_size(rtable_tail,&connected_to_tail);
                 if (size < 0) {
                     printf("There was an error retrieving table's size\n");
                 } else {
@@ -209,7 +209,7 @@ int main(int argc, char *argv[]) {
             }
 
             case GETKEYS: {
-                char** keys = rtable_get_keys(rtable_tail);
+                char** keys = rtable_get_keys(rtable_tail,&connected_to_tail);
 
                 if (!keys) {
                     printf("There was an error retrieving keys\n");
@@ -228,7 +228,7 @@ int main(int argc, char *argv[]) {
             }
 
             case GETTABLE: {
-                struct entry_t** entries = rtable_get_table(rtable_tail);
+                struct entry_t** entries = rtable_get_table(rtable_tail,&connected_to_tail);
 
                 if (!entries) {
                     printf("There was an error retrieving table\n");
@@ -248,7 +248,7 @@ int main(int argc, char *argv[]) {
             }
 
             case STATS: {
-                struct statistics_t* stats = rtable_stats(rtable_tail);
+                struct statistics_t* stats = rtable_stats(rtable_tail,&connected_to_tail);
         
                 if (!stats) {
                     printf("There was an error retrieving stats\n");
@@ -271,7 +271,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (rtable_disconnect(rtable_head) == -1 || rtable_disconnect(rtable_tail) == -1) {
+    if (rtable_disconnect(rtable_head,&connected_to_head) == -1 || rtable_disconnect(rtable_tail,&connected_to_tail) == -1) {
         perror("Error disconnecting from remote server\n");
         exit(-1);
     }

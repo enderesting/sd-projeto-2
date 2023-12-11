@@ -24,40 +24,40 @@ struct rtable_t;
  * em que address_port é uma string no formato <hostname>:<port>.
  * Retorna a estrutura rtable preenchida, ou NULL em caso de erro.
  */
-struct rtable_t *rtable_connect(char *address_port);
+struct rtable_t *rtable_connect(char *address_port,int* connected);
 
 /* Termina a associação entre o cliente e o servidor, fechando a 
  * ligação com o servidor e libertando toda a memória local.
  * Retorna 0 se tudo correr bem, ou -1 em caso de erro.
  */
-int rtable_disconnect(struct rtable_t *rtable);
+int rtable_disconnect(struct rtable_t *rtable,int* connected);
 
 /* Função para adicionar um elemento na tabela.
  * Se a key já existe, vai substituir essa entrada pelos novos dados.
  * Retorna 0 (OK, em adição/substituição), ou -1 (erro).
  */
-int rtable_put(struct rtable_t *rtable, struct entry_t *entry);
+int rtable_put(struct rtable_t *rtable, struct entry_t *entry,int* connected);
 
 /* Retorna o elemento da tabela com chave key, ou NULL caso não exista
  * ou se ocorrer algum erro.
  */
-struct data_t *rtable_get(struct rtable_t *rtable, char *key);
+struct data_t *rtable_get(struct rtable_t *rtable, char *key,int* connected);
 
 /* Função para remover um elemento da tabela. Vai libertar 
  * toda a memoria alocada na respetiva operação rtable_put().
  * Retorna 0 (OK), ou -1 (chave não encontrada ou erro).
  */
-int rtable_del(struct rtable_t *rtable, char *key);
+int rtable_del(struct rtable_t *rtable, char *key,int* connected);
 
 /* Retorna o número de elementos contidos na tabela ou -1 em caso de erro.
  */
-int rtable_size(struct rtable_t *rtable);
+int rtable_size(struct rtable_t *rtable,int* connected);
 
 /* Retorna um array de char* com a cópia de todas as keys da tabela,
  * colocando um último elemento do array a NULL.
  * Retorna NULL em caso de erro.
  */
-char **rtable_get_keys(struct rtable_t *rtable);
+char **rtable_get_keys(struct rtable_t *rtable,int* connected);
 
 /* Liberta a memória alocada por rtable_get_keys().
  */
@@ -66,7 +66,7 @@ void rtable_free_keys(char **keys);
 /* Retorna um array de entry_t* com todo o conteúdo da tabela, colocando
  * um último elemento do array a NULL. Retorna NULL em caso de erro.
  */
-struct entry_t **rtable_get_table(struct rtable_t *rtable);
+struct entry_t **rtable_get_table(struct rtable_t *rtable,int* connected);
 
 /* Liberta a memória alocada por rtable_get_table().
  */
@@ -74,6 +74,6 @@ void rtable_free_entries(struct entry_t **entries);
 
 /* Obtém as estatísticas do servidor. 
  */
-struct statistics_t *rtable_stats(struct rtable_t *rtable);
+struct statistics_t *rtable_stats(struct rtable_t *rtable,int* connected);
 
 #endif

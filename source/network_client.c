@@ -28,7 +28,7 @@
  *   na estrutura rtable;
  * - Retornar 0 (OK) ou -1 (erro).
  */
-int network_connect(struct rtable_t *rtable) {
+int network_connect(struct rtable_t *rtable, int* connected) {
     struct sockaddr_in server;
 
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -40,20 +40,19 @@ int network_connect(struct rtable_t *rtable) {
     server.sin_family = AF_INET;
     server.sin_port = htons(rtable->server_port);
     if (inet_pton(AF_INET, rtable->server_address, &server.sin_addr) < 1) {
-        network_close(rtable);
+        network_close(rtable,connected);
         perror("Error parsing IP address");
         return -1;
     }
 
     if (connect(sockfd, (struct sockaddr*) &server, sizeof(server)) < 0) {
-        network_close(rtable);
+        network_close(rtable,connected);
         perror("Error connecting to remote server");
         return -1;
     }
 
     rtable->sockfd = sockfd;
-    connected_to_head = 1;
-    connected_to_tail = 1;
+    connected = 1;
     return 0;
 }
 
@@ -66,7 +65,7 @@ int network_connect(struct rtable_t *rtable) {
  * - Tratar de forma apropriada erros de comunicação;
  * - Retornar a mensagem de-serializada ou NULL em caso de erro.
  */
-MessageT *network_send_receive(struct rtable_t *rtable, MessageT *msg) {
+MessageT *network_send_receive(struct rtable_t *rtable, MessageT *msg, int* connected) {
     
     int sockfd = rtable->sockfd;
 
@@ -74,11 +73,11 @@ MessageT *network_send_receive(struct rtable_t *rtable, MessageT *msg) {
 
     if (sent == -1) {
         printf("Error in sending message to server\n");
-        network_close(rtable);
+        network_close(rtable,connected);
         return NULL;
     } else if (sent == 0) {
         printf("Server disconnected\n");
-        network_close(rtable);
+        network_close(rtable,connected);
         return NULL;
     }
 
@@ -87,11 +86,11 @@ MessageT *network_send_receive(struct rtable_t *rtable, MessageT *msg) {
 
     if (disconnected) {
         printf("Server disconnected\n");
-        network_close(rtable);
+        network_close(rtable,connected);
         return NULL;
     } else if (!received_msg) {
         printf("Error in receiving message from client\n");
-        network_close(rtable);
+        network_close(rtable,connected);
         return NULL;
     }
 
@@ -101,13 +100,14 @@ MessageT *network_send_receive(struct rtable_t *rtable, MessageT *msg) {
 /* Fecha a ligação estabelecida por network_connect().
  * Retorna 0 (OK) ou -1 (erro).
  */
-int network_close(struct rtable_t *rtable) {
+int network_close(struct rtable_t *rtable, int* connected) {
     if (close(rtable->sockfd) == -1) {
         perror("Error closing socket");
         return -1;
     }
 
-    connected_to_head = 0;
-    connected_to_tail = 0;
+    // connected_to_head = 0;
+    // connected_to_tail = 0;
+    *connected = 0;
     return 0;
 }

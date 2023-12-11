@@ -19,7 +19,7 @@
  *   na estrutura rtable;
  * - Retornar 0 (OK) ou -1 (erro).
  */
-int network_connect(struct rtable_t *rtable);
+int network_connect(struct rtable_t *rtable, int* connected);
 
 /* Esta função deve:
  * - Obter o descritor da ligação (socket) da estrutura rtable_t;
@@ -30,11 +30,11 @@ int network_connect(struct rtable_t *rtable);
  * - Tratar de forma apropriada erros de comunicação;
  * - Retornar a mensagem de-serializada ou NULL em caso de erro.
  */
-MessageT *network_send_receive(struct rtable_t *rtable, MessageT *msg);
+MessageT *network_send_receive(struct rtable_t *rtable, MessageT *msg,int* connected);
 
 /* Fecha a ligação estabelecida por network_connect().
  * Retorna 0 (OK) ou -1 (erro).
  */
-int network_close(struct rtable_t *rtable);
+int network_close(struct rtable_t *rtable, int* connected);
 
 #endif
