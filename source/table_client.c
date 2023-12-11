@@ -21,13 +21,28 @@ volatile sig_atomic_t connected_to_tail = 0;
 volatile sig_atomic_t client_connected_to_zk = 0; 
 static zhandle_t *zh;
 
+int childrenCheck(zoo_string* children, zoo_string* new_children) {
+
+    int result = 1;
+
+    if(children->count != new_children->count) {
+        return result;
+    }
+
+    for(int i = 0; i < children->count; i++) {
+        result = result && strcmp(children->data[i], new_children->data[i]);
+    }
+
+    return result;
+}
+
 int main(int argc, char *argv[]) {
     if (argc != 2) {
         printf("Invalid args!\nUsage: table-client <server>:<port>\n");
         exit(-1);
     }
 
-    zh = zookeeper_init(argv[1], client_data_watcher, 20000, 0, NULL, 0);
+    zh = zookeeper_init(argv[1], client_connection_handler, 20000, 0, NULL, 0);
     const char* zoo_root = "/chain"; /* put here the location of the child nodes */
 	zoo_string* children_list =	(zoo_string *) malloc(sizeof(zoo_string));
 
@@ -36,8 +51,22 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
 
-    if (zoo_get_children(zh, zoo_root, 1, children_list) != ZOK) {
+    while(1) {
+        if(client_connected_to_zk) {
+            break;
+        }
+        sleep(1);
+    }
+
+    if (zoo_get_children(zh, zoo_root, 0, children_list) != ZOK) {
         perror("Error getting child nodes\n");
+        exit(-1);
+    }
+
+    if (!children_list) {
+        connected_to_head = 0;
+        connected_to_tail = 0;
+        perror("No servers found in chain\n");
         exit(-1);
     }
 
@@ -59,18 +88,28 @@ int main(int argc, char *argv[]) {
     }
 
     int terminated = 0;
-    while (!terminated && connected_to_head && connected_to_tail && connected_to_zk) {
+    while (!terminated && connected_to_head && connected_to_tail && client_connected_to_zk) {
+
+        printf("Command: ");
+        char line[MAX_MSG];
+        fgets(line, 99, stdin);
 
         zoo_string* new_children_list =	(zoo_string *) malloc(sizeof(zoo_string));
 
-        if (zoo_get_children(zh, zoo_root, 1, new_children_list) != ZOK) {
+        if (zoo_get_children(zh, zoo_root, 0, new_children_list) != ZOK) {
             perror("Error getting child nodes\n");
             exit(-1);
         }
 
-        if(strcmp(children_list->data, new_children_list->data) == 1) {
+        if (!children_list) {
+            connected_to_head = 0;
+            connected_to_tail = 0;
+            break;
+        }
+
+        if(childrenCheck(children_list, new_children_list)) {
             char* new_head_path = new_children_list->data[0];
-            char* new_tail_path = new_children_list->data[children_list->count-1];
+            char* new_tail_path = new_children_list->data[new_children_list->count-1];
 
             if(strcmp(head_path, new_head_path) == 1) {
                 rtable_disconnect(rtable_head);
@@ -87,9 +126,6 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        printf("Command: ");
-        char line[MAX_MSG];
-        fgets(line, 99, stdin);
         char* ret_fgets = strtok(line, "");
         switch (parse_operation(ret_fgets)) {
             case PUT: {
