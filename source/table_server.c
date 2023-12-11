@@ -63,6 +63,7 @@ int main(int argc, char *argv[]) {
             }
             zoo_string* children_list = (zoo_string*) malloc(sizeof(zoo_string));
             if (ZOK == zoo_wget_children(resources.zh,root_path, server_watch_children, NULL,children_list)){
+
                 if (children_list){ // if /chain HAS children
                     //find tail node path
                     char* last_node_path = NULL;
