@@ -5,6 +5,7 @@
  * Github repo: https://github.com/padrezulmiro/sd-projeto/
  */
 
+#include "table_server-private.h"
 #define MAX_MSG 2048
 #include <signal.h>
 #include <stdlib.h>
@@ -14,11 +15,11 @@
 #include "table_client.h"
 #include "stats.h"
 
-
-sig_atomic_t connected_to_head = 0; 
+sig_atomic_t connected_to_head = 0;
 sig_atomic_t connected_to_tail = 0; 
 volatile sig_atomic_t client_connected_to_zk = 0; 
 static zhandle_t *zh;
+const char* zoo_root = "/chain"; /* put here the location of the child nodes */
 
 int children_has_difference(zoo_string* children, zoo_string* new_children) {
 
@@ -42,8 +43,7 @@ int main(int argc, char *argv[]) {
     }
 
     zh = zookeeper_init(argv[1], client_connection_handler, 20000, 0, NULL, 0);
-    const char* zoo_root = "/chain"; /* put here the location of the child nodes */
-	zoo_string* children_list =	(zoo_string *) malloc(sizeof(zoo_string));
+    zoo_string* children_list = (zoo_string *) malloc(sizeof(zoo_string));
 
     if(!zh) {
         perror("Error connecting to remote server\n");
@@ -69,11 +69,20 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
 
-    char* head_path = children_list->data[0];
-    char* tail_path = children_list->data[children_list->count-1];
+
+    char head_path[ZVALLEN] = "";
+    strcat(head_path, zoo_root);
+    strcat(head_path, "/");
+    strcat(head_path, children_list->data[0]);
+
+    char tail_path[ZVALLEN] = "";
+    strcat(tail_path, zoo_root);
+    strcat(tail_path, "/");
+    strcat(tail_path, children_list->data[children_list->count-1]);
+
     char *zoo_data_head = malloc(ZDATALEN * sizeof(char));
     char *zoo_data_tail = malloc(ZDATALEN * sizeof(char));
-	int zoo_data_len = ZDATALEN; 
+    int zoo_data_len = ZDATALEN;
 
     zoo_get(zh, head_path, 0, zoo_data_head, &zoo_data_len, NULL);
     zoo_get(zh, tail_path, 0, zoo_data_tail, &zoo_data_len, NULL);
