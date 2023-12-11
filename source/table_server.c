@@ -22,7 +22,7 @@ typedef struct String_vector zoo_string;
 server_resources resources = {}; 
 volatile sig_atomic_t terminated = 0;
 volatile sig_atomic_t connected_to_zk = 0;
-volatile sig_atomic_t connected_to_server = 0; // FIXME: check if this right? used for copying. might be used later?
+sig_atomic_t connected_to_server = 0; // FIXME: check if this right? used for copying. might be used later?
 char* root_path = "/chain";
 
 int main(int argc, char *argv[]) {
@@ -118,13 +118,13 @@ returns -1 if error, 0 if fine.
 */
 int dup_table_from_server(char* last_node_addr){
     // connect as client
-    struct rtable_t* rtable = rtable_connect(last_node_addr);
+    struct rtable_t* rtable = rtable_connect(last_node_addr,&connected_to_server);
     if (!rtable) return -1;
-    struct entry_t** entries = rtable_get_table(rtable);
+    struct entry_t** entries = rtable_get_table(rtable,&connected_to_server);
     if (!entries) return -1;
-    int tab_size = rtable_size(rtable);
+    int tab_size = rtable_size(rtable,&connected_to_server);
     if (tab_size==-1) return -1;
-    rtable_disconnect(rtable);
+    rtable_disconnect(rtable,&connected_to_server);
     int ret = 0;
     for(int i = 0; i < tab_size;i++){
         ret = table_put(resources.table,entries[i]->key,entries[i]->value);
