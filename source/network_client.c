@@ -52,7 +52,7 @@ int network_connect(struct rtable_t *rtable, int* connected) {
     }
 
     rtable->sockfd = sockfd;
-    connected = 1;
+    *connected = 1;
     return 0;
 }
 
