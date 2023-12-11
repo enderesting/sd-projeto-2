@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
         if(client_connected_to_zk) {
             break;
         }
-        sleep(1);
+        //sleep(1);
     }
 
     if (zoo_get_children(zh, zoo_root, 0, children_list) != ZOK) {
@@ -76,8 +76,8 @@ int main(int argc, char *argv[]) {
     char *zoo_data_tail = malloc(ZDATALEN * sizeof(char));
 	int zoo_data_len = ZDATALEN; 
 
-    zoo_get(zh, head_path, 0, zoo_data_head, zoo_data_len, NULL);
-    zoo_get(zh, tail_path, 0, zoo_data_tail, zoo_data_len, NULL);
+    zoo_get(zh, head_path, 0, zoo_data_head, &zoo_data_len, NULL);
+    zoo_get(zh, tail_path, 0, zoo_data_tail, &zoo_data_len, NULL);
 
     struct rtable_t* rtable_head = rtable_connect(zoo_data_head);
     struct rtable_t* rtable_tail = rtable_connect(zoo_data_tail);
@@ -114,14 +114,14 @@ int main(int argc, char *argv[]) {
             if(strcmp(head_path, new_head_path) != 0) {
                 rtable_disconnect(rtable_head);
                 strcpy(head_path, new_head_path);
-                zoo_get(zh, head_path, 0, zoo_data_head, zoo_data_len, NULL);
+                zoo_get(zh, head_path, 0, zoo_data_head, &zoo_data_len, NULL);
                 rtable_head = rtable_connect(zoo_data_head);
             }
 
             if(strcmp(tail_path, new_tail_path) != 0) {
                 rtable_disconnect(rtable_tail);
                 strcpy(tail_path, new_tail_path);
-                zoo_get(zh, tail_path, 0, zoo_data_tail, zoo_data_len, NULL);
+                zoo_get(zh, tail_path, 0, zoo_data_tail, &zoo_data_len, NULL);
                 rtable_tail = rtable_connect(zoo_data_tail);
             }
         }
