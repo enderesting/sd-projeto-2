@@ -14,6 +14,7 @@
 #include <pthread.h>
 #include <unistd.h>
 
+#include "address.h"
 #include "table_server.h"
 // #include "table_server-private.h"
 
@@ -66,7 +67,8 @@ int main(int argc, char *argv[]) {
 
                 if (children_list->count > 0) { // if /chain HAS children
                     //find tail node path
-                    char* last_node_path = NULL;
+                    char* last_node_path = (char*) malloc(ZDATALEN *
+                                                          sizeof(char));
                     for (int i = 0; i < children_list->count; ++i) {
                         char* child_path = children_list->data[i];
                         if (last_node_path == NULL) {
@@ -81,10 +83,15 @@ int main(int argc, char *argv[]) {
                         }
                     }
 
+                    char* last_node_abs_path = concat_zpath(root_path,
+                                                            last_node_path);
                     //find tail node address
                     char* last_node_addr = (char*) malloc(ZDATALEN * sizeof(char));
                     int last_node_size = 0;
-                    zoo_get(resources.zh,last_node_path,0,last_node_addr,&last_node_size,NULL);
+
+
+                    zoo_get(resources.zh, last_node_abs_path, 0, last_node_addr,
+                            &last_node_size, NULL);
 
                     //duplicate the server
                     dup_table_from_server(last_node_addr); // gets table and put it into resources.table

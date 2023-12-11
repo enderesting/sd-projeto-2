@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "address.h"
+#include "watcher_callbacks.h"
 
 /*
 given addr_str, interprets it and put it into the struct pointed to by addr.
@@ -41,4 +42,15 @@ int destory_addr_struct(server_address* addr){
     free(addr->ip);
     free(addr);
     return 0;
+}
+
+char* concat_zpath(char* root, char* node) {
+   char* concatenated = (char*) malloc(ZDATALEN * sizeof(char*));
+   strcpy(concatenated, "");
+
+   strcat(concatenated, root);
+   strcat(concatenated, "/");
+   strcat(concatenated, node);
+
+   return concatenated;
 }
