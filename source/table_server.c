@@ -6,7 +6,6 @@
  */
 
 #define _GNU_SOURCE
-#include "watcher_callbacks.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -14,9 +13,10 @@
 #include <pthread.h>
 #include <unistd.h>
 
+#include "server_callbacks.h"
 #include "address.h"
 #include "table_server.h"
-// #include "table_server-private.h"
+#include "table_server-private.h"
 
 
 typedef struct String_vector zoo_string; 
@@ -63,7 +63,9 @@ int main(int argc, char *argv[]) {
                 } 
             }
             zoo_string* children_list = (zoo_string*) malloc(sizeof(zoo_string));
-            if (ZOK == zoo_wget_children(resources.zh,root_path, server_watch_children, NULL,children_list)){
+            if (ZOK == zoo_wget_children(resources.zh,root_path,
+                                         server_watch_children, NULL,
+                                         children_list)){
 
                 if (children_list->count > 0) { // if /chain HAS children
                     //find tail node path

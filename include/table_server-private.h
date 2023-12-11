@@ -10,9 +10,9 @@
 #include <signal.h>
 #include <stats.h>
 #include <pthread.h>
-// #include <zookeeper/zookeeper.h>
+#include <zookeeper/zookeeper.h>
+#include "client_stub-private.h"
 #include "mutex.h"
-#include "watcher_callbacks.h"
 #include "client_stub.h"
 #include "address.h"
 
@@ -31,6 +31,7 @@ typedef struct server_resources {
     zhandle_t* zh;
     server_address* my_addr;
     server_address* next_addr;
+    struct rtable_t* next_rtable;
     int next_sockfd;
     char* id;
     char* next_id;

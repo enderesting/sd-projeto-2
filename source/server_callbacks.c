@@ -11,10 +11,9 @@
 #include <zookeeper/zookeeper.h>
 #include <unistd.h>
 
-// #include "network_client.h"
-// #include "table_client-private.h"
-// #include "table_server-private.h"
+#include "network_client.h"
 #include "server_callbacks.h"
+#include "table_server-private.h"
 
 void server_connection_handler(zhandle_t* zh, int evt_type, int conn_state,
                                const char *path, void* context) {
@@ -29,8 +28,9 @@ void server_connection_handler(zhandle_t* zh, int evt_type, int conn_state,
 
 void server_watch_children(zhandle_t* zh, int evt_type, int conn_state,
                            const char *path, void* context) {
+    printf("\nhello from watcher, path is %s\n", path);
     int check_new_successor;
-    char* new_successor = NULL;
+    char* new_successor_path = NULL;
     int is_tail = resources.next_id == NULL;
 
     if (evt_type != ZOO_CHILD_EVENT) return;
@@ -54,7 +54,7 @@ void server_watch_children(zhandle_t* zh, int evt_type, int conn_state,
             char* child_path = children_list->data[i];
             int path_cmp = strcmp(resources.id, child_path);
             if (path_cmp < 0) {
-                strcpy(new_successor, child_path);
+                strcpy(new_successor_path, child_path);
                 break;
             }
         }
@@ -63,29 +63,32 @@ void server_watch_children(zhandle_t* zh, int evt_type, int conn_state,
     }
 
 
-    if (new_successor != NULL) {
+    int conn_hack = 0;
+
+    if (new_successor_path != NULL) {
+        char* new_successor_abs_path = concat_zpath("/chain",
+                                                    new_successor_path);
         if (!is_tail) {
-            // TODO disconnect from current server via a rtable_disconnect like
-            // function
+            rtable_disconnect(resources.next_rtable, &conn_hack);
         }
 
         char* new_successor_addr = (char*) malloc(ZDATALEN * sizeof(char));
-        int new_successor_addr_len;
-        int ret_get = zoo_get(zh, path, 0, new_successor_addr,
+        int new_successor_addr_len = ZDATALEN;
+        int ret_get = zoo_get(zh, new_successor_abs_path, 0, new_successor_addr,
                               &new_successor_addr_len, NULL);
         if (ret_get != ZOK) {
             perror("Error get in callback");
             return;
         }
 
-        // TODO connect to new successor via a rtable_connect like function
+        resources.next_rtable = rtable_connect(new_successor_addr, &conn_hack);
 
         // FIXME resources.next_addr = new_successor_addr;
-        resources.next_id = new_successor;
+        resources.next_id = new_successor_path;
 
-    }  else if (!is_tail && new_successor == NULL) {
-        // TODO disconnect from current server via a rtable_disconnect like
-        // function
+    } else if (!is_tail && new_successor_path == NULL) {
+        rtable_disconnect(resources.next_rtable, &conn_hack);
+
         resources.next_addr = NULL;
         resources.next_id = NULL;
     }

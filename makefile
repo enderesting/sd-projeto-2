@@ -47,9 +47,9 @@ TABLE_SERVER_R = $(addprefix $(OBJ_DIR)/,data.o \
 # CFLAGS = -Wall -Werror -g -MMD -MP -MF -I $(INC_DIR)
 
 CC = gcc
-CFLAGS = -Wall -Werror -g -MMD -MP -I $(INC_DIR) -pthread
+CFLAGS = -Wall -Werror -g -MMD -MP -I $(INC_DIR) -pthread -D THREADED
 ARCHIVE = ar -rcs
-PROTO_LIB = -I/usr/local/include -L/usr/local/lib -lprotobuf-c -D THREADED
+PROTO_LIB = -I/usr/local/include -L/usr/local/lib -lprotobuf-c
 
 all: $(LIB_DIR)/libtable.a $(addprefix $(BIN_DIR)/,table_client \
 												table_server)
