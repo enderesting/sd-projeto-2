@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
             zoo_string* children_list = (zoo_string*) malloc(sizeof(zoo_string));
             if (ZOK == zoo_wget_children(resources.zh,root_path, server_watch_children, NULL,children_list)){
 
-                if (children_list){ // if /chain HAS children
+                if (children_list->count > 0) { // if /chain HAS children
                     //find tail node path
                     char* last_node_path = NULL;
                     for (int i = 0; i < children_list->count; ++i) {
@@ -73,19 +73,24 @@ int main(int argc, char *argv[]) {
                             strcpy(last_node_path, child_path);
                             continue;
                         }
+
                         int path_cmp = strcmp(last_node_path, child_path);
+
                         if (path_cmp < 0) {
                             strcpy(last_node_path, child_path);
                         }
                     }
+
                     //find tail node address
                     char* last_node_addr = (char*) malloc(ZDATALEN * sizeof(char));
                     int last_node_size = 0;
                     zoo_get(resources.zh,last_node_path,0,last_node_addr,&last_node_size,NULL);
+
                     //duplicate the server
                     dup_table_from_server(last_node_addr); // gets table and put it into resources.table
-                    //register in zk?
+
                 }
+
                 //else just continue and start loop
                 break;
             }
@@ -93,21 +98,24 @@ int main(int argc, char *argv[]) {
         sleep(3);
     }
 
+
+    //register in zk
     //get node_path
     char node_path[120] = "";
     strcat(node_path,root_path); 
-    strcat(node_path,"/node"); 
+    strcat(node_path,"/node");
+
     if (ZOK != zoo_create(resources.zh,node_path, "" ,10, & ZOO_OPEN_ACL_UNSAFE, ZOO_EPHEMERAL | ZOO_SEQUENCE, resources.id, ZVALLEN)){
         fprintf(stderr,"Error Creating %s!\n", root_path);
         exit(EXIT_FAILURE);
     }
+
     int ret_net = network_main_loop(sockfd, resources.table); //start loop
     //it basically wont stop until server error/manual quits. if any changes happen cb will be called?
     network_server_close(sockfd);
     destroy_server_resources();
 
     return ret_net;
-
 }
 
 
@@ -118,7 +126,8 @@ returns -1 if error, 0 if fine.
 */
 int dup_table_from_server(char* last_node_addr){
     // connect as client
-    struct rtable_t* rtable = rtable_connect(last_node_addr,&connected_to_server);
+    struct rtable_t* rtable = rtable_connect(last_node_addr,
+                                             &connected_to_server);
     if (!rtable) return -1;
     struct entry_t** entries = rtable_get_table(rtable,&connected_to_server);
     if (!entries) return -1;
