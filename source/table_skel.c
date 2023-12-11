@@ -31,7 +31,7 @@ int table_skel_destroy(struct table_t *table){
 
 int return_time(struct timeval* tv){
     gettimeofday(tv,NULL);
-    return tv->tv_usec;
+    return tv->tv_usec + (tv->tv_sec*1000000);
 }
 
 /* Executa na tabela table a operação indicada pelo opcode contido em msg 
