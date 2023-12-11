@@ -15,7 +15,7 @@
 #include <unistd.h>
 
 #include "table_server.h"
-#include "table_server-private.h"
+// #include "table_server-private.h"
 
 
 typedef struct String_vector zoo_string; 
