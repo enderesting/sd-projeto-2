@@ -19,6 +19,7 @@
 #include "network_client.h"
 #include "table_client-private.h" 
 
+
 /* Esta função deve:
  * - Obter o endereço do servidor (struct sockaddr_in) com base na
  *   informação guardada na estrutura rtable;

@@ -10,21 +10,37 @@
 #include <signal.h>
 #include <stats.h>
 #include <pthread.h>
+// #include <zookeeper/zookeeper.h>
 #include "mutex.h"
+#include "watcher_callbacks.h"
+#include "client_stub.h"
+#include "address.h"
 
 extern volatile sig_atomic_t terminated;
-extern volatile sig_atomic_t connected;
+extern volatile sig_atomic_t connected_to_zk;
+
+#define ZDATALEN 1024 * 1024
+#define ZVALLEN 1024
 
 typedef struct server_resources {
     struct table_t* table;
-    struct statistics_t* global_stats; // TODO Add pointer to stats struct
+    struct statistics_t* global_stats; 
     mutex_locks* table_locks;
     mutex_locks* stats_locks;
+    // extras, for zk
+    zhandle_t* zh;
+    server_address* my_addr;
+    server_address* next_addr;
+    int next_sockfd;
+    char* id;
+    char* next_id;
 } server_resources;
 
 extern server_resources resources;
 
-int init_server_resources(int n_lists);
+int dup_table_from_server(char* last_node_addr);
+
+int init_server_resources(int n_lists, char* my_addr);
 
 int destroy_server_resources();
 
