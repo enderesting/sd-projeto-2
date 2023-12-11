@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
     // handle arguments
     int n_lists = strtol(argv[2],NULL,10);
     // initiates table & initiate resources
-    int ret_resources = init_server_resources(n_lists,argv[3]);
+    int ret_resources = init_server_resources(n_lists,argv[1], argv[3]);
     if (ret_resources == -1) {
         return -1;
     }
@@ -137,7 +137,7 @@ int dup_table_from_server(char* last_node_addr){
     return 0;
 }
 
-int init_server_resources(int n_lists, char* my_addr) {
+int init_server_resources(int n_lists, char* zk_addr, char* my_addr) {
     struct table_t* table = table_skel_init(n_lists);
     if (!table){
         perror("Error initializing table\n");
@@ -171,8 +171,9 @@ int init_server_resources(int n_lists, char* my_addr) {
     
     resources.my_addr = (server_address*) malloc(sizeof(server_address));
     interpret_addr(my_addr,resources.my_addr); 
-    resources.next_addr = (server_address*) calloc(1,sizeof(server_address)); // on initiation we dont know the next addr yet
-    resources.zh = zookeeper_init(resources.my_addr->addr_str,server_connection_handler,2000,0,0,0);
+    resources.next_addr = (server_address*) calloc(1, sizeof(server_address)); // on initiation we dont know the next addr yet
+    resources.zh = zookeeper_init(zk_addr, server_connection_handler, 2000, 0,
+                                  0, 0);
     resources.id = calloc(1,ZVALLEN);
     resources.next_id = calloc(1,ZVALLEN);
 
