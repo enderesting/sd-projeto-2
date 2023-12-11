@@ -18,4 +18,6 @@ extern char* head_path;
 extern char* tail_path;
 typedef struct String_vector zoo_string;
 
+int children_has_difference(zoo_string* children, zoo_string* new_children);
+
 #endif
