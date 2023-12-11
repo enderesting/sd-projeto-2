@@ -87,11 +87,13 @@ int main(int argc, char *argv[]) {
                                                             last_node_path);
                     //find tail node address
                     char* last_node_addr = (char*) malloc(ZDATALEN * sizeof(char));
-                    int last_node_size = 0;
-
+                    int last_node_size = ZDATALEN;
 
                     zoo_get(resources.zh, last_node_abs_path, 0, last_node_addr,
                             &last_node_size, NULL);
+
+                    // XXX Delete print
+                    printf("\nValue: %s \n", last_node_addr);
 
                     //duplicate the server
                     dup_table_from_server(last_node_addr); // gets table and put it into resources.table
@@ -189,7 +191,7 @@ int init_server_resources(int n_lists, char* zk_addr, char* my_addr) {
     resources.my_addr = (server_address*) malloc(sizeof(server_address));
     interpret_addr(my_addr,resources.my_addr); 
     resources.next_addr = (server_address*) calloc(1, sizeof(server_address)); // on initiation we dont know the next addr yet
-    resources.zh = zookeeper_init(zk_addr, server_connection_handler, 2000000, 0,
+    resources.zh = zookeeper_init(zk_addr, server_connection_handler, 2000, 0,
                                   0, 0);
     resources.id = calloc(1,ZVALLEN);
     resources.next_id = calloc(1,ZVALLEN);
