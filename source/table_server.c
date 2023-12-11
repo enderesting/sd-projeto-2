@@ -89,8 +89,11 @@ int main(int argc, char *argv[]) {
                     char* last_node_addr = (char*) malloc(ZDATALEN * sizeof(char));
                     int last_node_size = ZDATALEN;
 
-                    zoo_get(resources.zh, last_node_abs_path, 0, last_node_addr,
-                            &last_node_size, NULL);
+                    if (zoo_get(resources.zh, last_node_abs_path, 0, last_node_addr,
+                                &last_node_size, NULL) != ZOK){
+                        return -1;
+
+                    }
 
                     // XXX Delete print
                     printf("\nValue: %s \n", last_node_addr);
