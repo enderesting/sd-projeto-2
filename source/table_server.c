@@ -63,8 +63,20 @@ int main(int argc, char *argv[]) {
             zoo_string* children_list = (zoo_string*) malloc(sizeof(zoo_string));
             if (ZOK == zoo_wget_children(resources.zh,root_path, server_data_watcher,NULL,children_list)){
                 if (children_list){ // if /chain HAS children
-                    //find tail node
-                    char* last_node_path = children_list->data[children_list->count-1];
+                    //find tail node path
+                    char* last_node_path = NULL;
+                    for (int i = 0; i < children_list->count; ++i) {
+                        char* child_path = children_list->data[i];
+                        if (last_node_path == NULL) {
+                            strcpy(last_node_path, child_path);
+                            continue;
+                        }
+                        int path_cmp = strcmp(last_node_path, child_path);
+                        if (path_cmp < 0) {
+                            strcpy(last_node_path, child_path);
+                        }
+                    }
+                    //find tail node address
                     char* last_node_addr = (char*) malloc(ZDATALEN * sizeof(char));
                     int last_node_size = 0;
                     zoo_get(resources.zh,last_node_path,0,last_node_addr,&last_node_size,NULL);
