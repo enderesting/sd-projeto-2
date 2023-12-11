@@ -32,8 +32,12 @@ TABLE_SERVER_R = $(addprefix $(OBJ_DIR)/,data.o \
 	mutex.o \
 	list.o \
 	table.o \
+	address.o \
+	watcher_callback.o\
 	sdmessage.pb-c.o \
 	message.o\
+	client_stub.o \
+	network_client.o \
 	table_server.o \
 	table_skel.o \
 	network_server.o \
@@ -44,7 +48,7 @@ TABLE_SERVER_R = $(addprefix $(OBJ_DIR)/,data.o \
 CC = gcc
 CFLAGS = -Wall -Werror -g -MMD -MP -I $(INC_DIR) -pthread
 ARCHIVE = ar -rcs
-PROTO_LIB = -I/usr/local/include -L/usr/local/lib -lprotobuf-c
+PROTO_LIB = -I/usr/local/include -L/usr/local/lib -lprotobuf-c -D THREADED
 
 all: $(LIB_DIR)/libtable.a $(addprefix $(BIN_DIR)/,table_client \
 												table_server)
@@ -61,7 +65,7 @@ $(BIN_DIR)/table_client: $(TABLE_CLIENT_R)
 	$(CC) $^ $(PROTO_LIB) $(LIB_DIR)/libtable.a -o $@
 
 $(BIN_DIR)/table_server: $(TABLE_SERVER_R)
-	$(CC) $^ $(PROTO_LIB) $(LIB_DIR)/libtable.a -o $@
+	$(CC) $^ $(PROTO_LIB) $(LIB_DIR)/libtable.a -o $@ -lzookeeper_mt
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -MF $(DEP_DIR)/$*.d -c $< -o $@ 
