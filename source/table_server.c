@@ -2,7 +2,7 @@
  * Filipe Costa - 55549
  * Yichen Cao - 58165
  * Emily Sá - 58200
- * Github repo: https://github.com/padrezulmiro/sd-projeto/
+ * Github repo: https://github.com/enderesting/sd-projeto-2
  */
 
 #define _GNU_SOURCE
@@ -120,7 +120,8 @@ int main(int argc, char *argv[]) {
     strcat(node_path,"/node");
     int addr_len = strlen(resources.my_addr->addr_str);
     if (ZOK != zoo_create(resources.zh, node_path, resources.my_addr->addr_str,
-                        addr_len, & ZOO_OPEN_ACL_UNSAFE, ZOO_EPHEMERAL | ZOO_SEQUENCE, resources.id, ZVALLEN)){
+                          addr_len, & ZOO_OPEN_ACL_UNSAFE,
+                          ZOO_EPHEMERAL | ZOO_SEQUENCE, resources.id, ZVALLEN)){
         fprintf(stderr,"Error Creating %s!\n", root_path);
         exit(EXIT_FAILURE);
     }

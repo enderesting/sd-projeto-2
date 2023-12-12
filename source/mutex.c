@@ -2,8 +2,9 @@
  * Filipe Costa - 55549
  * Yichen Cao - 58165
  * Emily Sá - 58200
- * Github repo: https://github.com/padrezulmiro/sd-projeto/
+ * Github repo: https://github.com/enderesting/sd-projeto-2
  */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
