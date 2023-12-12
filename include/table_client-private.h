@@ -9,8 +9,9 @@
 #define _TABLE_CLIENT_PRIVATE_H
 #include <signal.h>
 #include <zookeeper/zookeeper.h>
-#include "watcher_callbacks.h"
 #include <unistd.h>
+
+#include "client_callbacks.h"
 
 // extern volatile sig_atomic_t connected_to_head; //i think they might not need to be global since we're passing them manually around.
 // extern volatile sig_atomic_t connected_to_tail;
