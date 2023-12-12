@@ -11,10 +11,10 @@
 #include <zookeeper/zookeeper.h>
 #include <unistd.h>
 
-#include "address.h"
 #include "network_client.h"
 #include "server_callbacks.h"
 #include "table_server-private.h"
+#include "zoo_utils.h"
 
 void server_connection_handler(zhandle_t* zh, int evt_type, int conn_state,
                                const char *path, void* context) {

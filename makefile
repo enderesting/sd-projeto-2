@@ -18,7 +18,8 @@ $(shell mkdir -p $(DEP_DIR) >/dev/null)
 $(shell mkdir -p $(OBJ_DIR) >/dev/null)
 $(shell mkdir -p $(LIB_DIR) >/dev/null)
 
-LIB_TABLE_R = $(addprefix $(OBJ_DIR)/,data.o entry.o list.o table.o) 
+LIB_TABLE_R = $(addprefix $(OBJ_DIR)/,data.o entry.o list.o table.o)
+
 TABLE_CLIENT_R = $(addprefix $(OBJ_DIR)/,data.o \
 	entry.o \
 	mutex.o \
@@ -28,7 +29,9 @@ TABLE_CLIENT_R = $(addprefix $(OBJ_DIR)/,data.o \
 	message.o\
 	client_stub.o \
 	network_client.o \
-	stats.o)
+	stats.o \
+	zoo_utils.o)
+
 TABLE_SERVER_R = $(addprefix $(OBJ_DIR)/,data.o \
 	entry.o \
 	mutex.o \
@@ -44,7 +47,9 @@ TABLE_SERVER_R = $(addprefix $(OBJ_DIR)/,data.o \
 	table_skel.o \
 	network_server.o \
 	server_thread.o \
-	stats.o)
+	stats.o \
+	zoo_utils.o)
+
 # CFLAGS = -Wall -Werror -g -MMD -MP -MF -I $(INC_DIR)
 
 CC = gcc

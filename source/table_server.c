@@ -14,7 +14,7 @@
 #include <unistd.h>
 
 #include "server_callbacks.h"
-#include "address.h"
+#include "zoo_utils.h"
 #include "table_server.h"
 #include "table_server-private.h"
 

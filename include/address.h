@@ -16,8 +16,6 @@ typedef struct server_address{
 
 int interpret_addr(char* addr_str, server_address* addr);
 
-char* concat_zpath(char* root, char* node);
-
 int destory_addr_struct(server_address* addr);
 
 #endif
