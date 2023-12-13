@@ -18,6 +18,7 @@
 
 extern volatile sig_atomic_t terminated;
 extern volatile sig_atomic_t connected_to_zk;
+extern sig_atomic_t connected_to_server;
 
 #define ZDATALEN 1024 * 1024
 #define ZVALLEN 1024

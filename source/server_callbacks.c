@@ -65,11 +65,10 @@ void server_watch_children(zhandle_t* zh, int evt_type, int conn_state,
         free(children_list);
     }
 
-    int conn_hack = 0;
-
     if (strcmp(new_successor_path, "") != 0) {
         if (!is_tail) {
-            rtable_disconnect(resources.next_server_rtable, &conn_hack);
+            rtable_disconnect(resources.next_server_rtable,
+                              &connected_to_server);
         }
 
         char* new_successor_addr = (char*) malloc(ZDATALEN * sizeof(char));
@@ -81,12 +80,13 @@ void server_watch_children(zhandle_t* zh, int evt_type, int conn_state,
             return;
         }
 
-        resources.next_server_rtable = rtable_connect(new_successor_addr, &conn_hack);
+        resources.next_server_rtable = rtable_connect(new_successor_addr,
+                                                      &connected_to_server);
 
         resources.next_server_node_path = new_successor_path;
 
     } else if (!is_tail && strcmp(new_successor_path, "") == 0) {
-        rtable_disconnect(resources.next_server_rtable, &conn_hack);
+        rtable_disconnect(resources.next_server_rtable, &connected_to_server);
 
         resources.next_server_node_path = NULL;
     }
