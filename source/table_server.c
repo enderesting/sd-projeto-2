@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
                     }
 
                     // XXX Delete print
-                    printf("\nValue: %s \n", last_node_addr);
+                    // printf("\nValue: %s \n", last_node_addr);
 
                     //duplicate the server
                     dup_table_from_server(last_node_addr); // gets table and put it into resources.table

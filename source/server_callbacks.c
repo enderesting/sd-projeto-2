@@ -41,7 +41,7 @@ void server_watch_children(zhandle_t* zh, int evt_type, int conn_state,
         zoo_exists(zh, resources.next_id, 0, NULL) == ZNONODE;
 
     if (check_new_successor) {
-        printf("\nhello from check new successor\n");
+        // printf("\nhello from check new successor\n");
         zoo_string* children_list = (zoo_string *) malloc(sizeof(zoo_string));
         int ret_wget_children = zoo_wget_children(zh, path,
                                                   server_watch_children, context,
