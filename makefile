@@ -24,12 +24,12 @@ TABLE_CLIENT_R = $(addprefix $(OBJ_DIR)/,data.o \
 	entry.o \
 	mutex.o \
 	table_client.o \
-	client_callbacks.o\
 	sdmessage.pb-c.o \
 	message.o\
 	client_stub.o \
 	network_client.o \
 	stats.o \
+	client_callbacks.o\
 	zoo_utils.o)
 
 TABLE_SERVER_R = $(addprefix $(OBJ_DIR)/,data.o \

@@ -5,21 +5,29 @@
  * Github repo: https://github.com/enderesting/sd-projeto-2
  */
 
-#include "table_server-private.h"
 #define MAX_MSG 2048
+
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "sdmessage.pb-c.h"
 #include "table_client.h"
 #include "stats.h"
+#include "client_stub-private.h"
+#include "table_server-private.h"
+#include "zoo_utils.h"
 
 sig_atomic_t connected_to_head = 0;
 sig_atomic_t connected_to_tail = 0; 
 volatile sig_atomic_t client_connected_to_zk = 0; 
 static zhandle_t *zh;
 const char* zoo_root = "/chain"; /* put here the location of the child nodes */
+struct rtable_t* rtable_head = NULL;
+struct rtable_t* rtable_tail = NULL;
+char* head_path = NULL;
+char* tail_path = NULL;
 
 int children_has_difference(zoo_string* children, zoo_string* new_children) {
 
@@ -51,13 +59,11 @@ int main(int argc, char *argv[]) {
     }
 
     while(1) {
-        if(client_connected_to_zk) {
-            break;
-        }
+        if (client_connected_to_zk) break;
         sleep(1);
     }
 
-    if (zoo_get_children(zh, zoo_root, 0, children_list) != ZOK) {
+    if (zoo_wget_children(zh, zoo_root, client_watch_children, NULL, children_list) != ZOK) {
         perror("Error getting child nodes\n");
         exit(-1);
     }
@@ -69,26 +75,48 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
 
+    zoo_string* children_paths = children_abs_zpaths(children_list);
 
-    char head_path[ZVALLEN] = "";
-    strcat(head_path, zoo_root);
-    strcat(head_path, "/");
-    strcat(head_path, children_list->data[0]);
+    head_path = (char*) calloc(ZVALLEN, sizeof(char));
+    tail_path = (char*) calloc(ZVALLEN, sizeof(char));
 
-    char tail_path[ZVALLEN] = "";
-    strcat(tail_path, zoo_root);
-    strcat(tail_path, "/");
-    strcat(tail_path, children_list->data[children_list->count-1]);
+    for (int i = 0; i < children_paths->count; ++i) {
+        char* child_path = children_paths->data[i];
+        if (strcmp(head_path, "") == 0) {
+            strcpy(head_path, child_path);
+            continue;
+        }
 
-    char *zoo_data_head = malloc(ZDATALEN * sizeof(char));
-    char *zoo_data_tail = malloc(ZDATALEN * sizeof(char));
+        int path_cmp = strcmp(head_path, child_path);
+        if (path_cmp > 0) {
+            strcpy(head_path, child_path);
+        }
+    }
+
+    for (int i = 0; i < children_paths->count; ++i) {
+        char* child_path = children_paths->data[i];
+        if (strcmp(tail_path, "") == 0) {
+            strcpy(tail_path, child_path);
+            continue;
+        }
+
+        int path_cmp = strcmp(tail_path, child_path);
+        if (path_cmp < 0) {
+            strcpy(tail_path, child_path);
+        }
+    }
+
+    char *head_server_addr = malloc(ZDATALEN * sizeof(char));
+    char *tail_server_addr = malloc(ZDATALEN * sizeof(char));
     int zoo_data_len = ZDATALEN;
 
-    zoo_get(zh, head_path, 0, zoo_data_head, &zoo_data_len, NULL);
-    zoo_get(zh, tail_path, 0, zoo_data_tail, &zoo_data_len, NULL);
+    zoo_get(zh, head_path, 0, head_server_addr, &zoo_data_len, NULL);
+    zoo_get(zh, tail_path, 0, tail_server_addr, &zoo_data_len, NULL);
 
-    struct rtable_t* rtable_head = rtable_connect(zoo_data_head,&connected_to_head);
-    struct rtable_t* rtable_tail = rtable_connect(zoo_data_tail,&connected_to_tail);
+    struct rtable_t* rtable_head = rtable_connect(head_server_addr,&connected_to_head);
+    struct rtable_t* rtable_tail = rtable_connect(tail_server_addr,&connected_to_tail);
+
+    printf("\nConnected to head in node %s, and to tail in node %s\n", head_path, tail_path);
 
     if (!rtable_head || !rtable_tail) {
         perror("Error connecting to remote server\n");
@@ -101,45 +129,6 @@ int main(int argc, char *argv[]) {
         printf("Command: ");
         char line[MAX_MSG];
         fgets(line, 99, stdin);
-
-        zoo_string* new_children_list =	(zoo_string *) malloc(sizeof(zoo_string));
-
-        if (zoo_get_children(zh, zoo_root, 0, new_children_list) != ZOK) {
-            perror("Error getting child nodes\n");
-            exit(-1);
-        }
-
-        if (!children_list) {
-            connected_to_head = 0;
-            connected_to_tail = 0;
-            break;
-        }
-
-        if(children_has_difference(children_list, new_children_list)) {
-            char new_head_path[ZVALLEN] = "";
-            strcat(new_head_path, zoo_root);
-            strcat(new_head_path, "/");
-            strcat(new_head_path, new_children_list->data[0]);
-
-            char new_tail_path[ZVALLEN] = "";
-            strcat(new_tail_path, zoo_root);
-            strcat(new_tail_path, "/");
-            strcat(new_tail_path, new_children_list->data[new_children_list->count-1]);
-
-            if(strcmp(head_path, new_head_path) != 0) {
-                rtable_disconnect(rtable_head,&connected_to_head);
-                strcpy(head_path, new_head_path);
-                zoo_get(zh, head_path, 0, zoo_data_head, &zoo_data_len, NULL);
-                rtable_head = rtable_connect(zoo_data_head,&connected_to_head);
-            }
-
-            if(strcmp(tail_path, new_tail_path) != 0) {
-                rtable_disconnect(rtable_tail,&connected_to_tail);
-                strcpy(tail_path, new_tail_path);
-                zoo_get(zh, tail_path, 0, zoo_data_tail, &zoo_data_len, NULL);
-                rtable_tail = rtable_connect(zoo_data_tail,&connected_to_tail);
-            }
-        }
 
         char* ret_fgets = strtok(line, "");
         switch (parse_operation(ret_fgets)) {
