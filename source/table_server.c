@@ -85,8 +85,7 @@ int main(int argc, char *argv[]) {
                         }
                     }
 
-                    char* last_node_abs_path = concat_zpath(root_path,
-                                                            last_node_path);
+                    char* last_node_abs_path = concat_zpath(last_node_path);
                     //find tail node address
                     char* last_node_addr = (char*) malloc(ZDATALEN * sizeof(char));
                     int last_node_size = ZDATALEN;

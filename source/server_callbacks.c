@@ -54,7 +54,7 @@ void server_watch_children(zhandle_t* zh, int evt_type, int conn_state,
 
         for (int i = 0; i < children_list->count; ++i) {
             char* child_path = children_list->data[i];
-            char* child_abs_path = concat_zpath("/chain", child_path);
+            char* child_abs_path = concat_zpath(child_path);
             int path_cmp = strcmp(resources.id, child_abs_path);
             if (path_cmp < 0) {
                 strcpy(new_successor_path, child_abs_path);
