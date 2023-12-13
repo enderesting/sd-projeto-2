@@ -2,13 +2,16 @@
  * Filipe Costa - 55549
  * Yichen Cao - 58165
  * Emily Sá - 58200
- * Github repo: https://github.com/padrezulmiro/sd-projeto/
+ * Github repo: https://github.com/enderesting/sd-projeto-2
  */
 
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+
 #include "address.h"
+
+#define ZDATALEN 1024 * 1024
 
 /*
 given addr_str, interprets it and put it into the struct pointed to by addr.
@@ -34,9 +37,8 @@ int interpret_addr(char* addr_str, server_address* addr){
 }
 
 int destory_addr_struct(server_address* addr){
-    if(!addr){
-        return -1;
-    }
+    if (!addr) return -1;
+
     free(addr->addr_str);
     free(addr->ip);
     free(addr);

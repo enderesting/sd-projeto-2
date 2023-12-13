@@ -2,7 +2,7 @@
  * Filipe Costa - 55549
  * Yichen Cao - 58165
  * Emily Sá - 58200
- * Github repo: https://github.com/padrezulmiro/sd-projeto/
+ * Github repo: https://github.com/enderesting/sd-projeto-2
  */
 
 #ifndef _TABLE_SERVER_PRIVATE_H
@@ -10,14 +10,15 @@
 #include <signal.h>
 #include <stats.h>
 #include <pthread.h>
-// #include <zookeeper/zookeeper.h>
+#include <zookeeper/zookeeper.h>
+#include "client_stub-private.h"
 #include "mutex.h"
-#include "watcher_callbacks.h"
 #include "client_stub.h"
 #include "address.h"
 
 extern volatile sig_atomic_t terminated;
 extern volatile sig_atomic_t connected_to_zk;
+extern sig_atomic_t connected_to_server;
 
 #define ZDATALEN 1024 * 1024
 #define ZVALLEN 1024
@@ -29,11 +30,9 @@ typedef struct server_resources {
     mutex_locks* stats_locks;
     // extras, for zk
     zhandle_t* zh;
-    server_address* my_addr;
-    server_address* next_addr;
-    int next_sockfd;
-    char* id;
-    char* next_id;
+    struct rtable_t* next_server_rtable;
+    char* this_node_path;
+    char* next_server_node_path;
 } server_resources;
 
 extern server_resources resources;

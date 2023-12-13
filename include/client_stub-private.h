@@ -2,7 +2,7 @@
  * Filipe Costa - 55549
  * Yichen Cao - 58165
  * Emily Sá - 58200
- * Github repo: https://github.com/padrezulmiro/sd-projeto/
+ * Github repo: https://github.com/enderesting/sd-projeto-2
  */
 
 #ifndef _CLIENT_STUB_PRIVATE_H

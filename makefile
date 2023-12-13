@@ -2,7 +2,8 @@
 #  * Filipe Costa - 55549
 #  * Yichen Cao - 58165
 #  * Emily Sá - 58200
-#  * Github repo: https://github.com/padrezulmiro/sd-projeto/
+#  * Github repo: https://github.com/enderesting/sd-projeto-2
+
 .PRECIOUS: object/%.o object/test_%.o
 BIN_DIR = binary
 INC_DIR = include
@@ -17,7 +18,8 @@ $(shell mkdir -p $(DEP_DIR) >/dev/null)
 $(shell mkdir -p $(OBJ_DIR) >/dev/null)
 $(shell mkdir -p $(LIB_DIR) >/dev/null)
 
-LIB_TABLE_R = $(addprefix $(OBJ_DIR)/,data.o entry.o list.o table.o) 
+LIB_TABLE_R = $(addprefix $(OBJ_DIR)/,data.o entry.o list.o table.o)
+
 TABLE_CLIENT_R = $(addprefix $(OBJ_DIR)/,data.o \
 	entry.o \
 	mutex.o \
@@ -27,7 +29,9 @@ TABLE_CLIENT_R = $(addprefix $(OBJ_DIR)/,data.o \
 	message.o\
 	client_stub.o \
 	network_client.o \
-	stats.o)
+	stats.o \
+	zoo_utils.o)
+
 TABLE_SERVER_R = $(addprefix $(OBJ_DIR)/,data.o \
 	entry.o \
 	mutex.o \
@@ -43,13 +47,15 @@ TABLE_SERVER_R = $(addprefix $(OBJ_DIR)/,data.o \
 	table_skel.o \
 	network_server.o \
 	server_thread.o \
-	stats.o)
+	stats.o \
+	zoo_utils.o)
+
 # CFLAGS = -Wall -Werror -g -MMD -MP -MF -I $(INC_DIR)
 
 CC = gcc
-CFLAGS = -Wall -Werror -g -MMD -MP -I $(INC_DIR) -pthread
+CFLAGS = -Wall -Werror -g -MMD -MP -I $(INC_DIR) -pthread -D THREADED
 ARCHIVE = ar -rcs
-PROTO_LIB = -I/usr/local/include -L/usr/local/lib -lprotobuf-c -D THREADED
+PROTO_LIB = -I/usr/local/include -L/usr/local/lib -lprotobuf-c
 
 all: $(LIB_DIR)/libtable.a $(addprefix $(BIN_DIR)/,table_client \
 												table_server)
