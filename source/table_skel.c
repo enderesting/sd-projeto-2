@@ -51,29 +51,37 @@ int invoke(MessageT *msg, struct table_t *table){
             void* v = malloc(entry_size);
             memcpy(v,msg->entry->value.data,entry_size);
 
-            struct data_t* value = data_create(entry_size, v);
-            if (!entry_size || !value){
+            char* dup_key = strdup(msg->entry->key);  
+            struct data_t* dup_value = data_create(entry_size, v);
+            struct entry_t *dup_entry = entry_create(dup_key,dup_value);
+
+            if (!entry_size || !dup_value || !dup_entry){
                 msg = respond_bad_op(msg);
                 break;
             }
 
             enter_write(resources.table_locks);
+            
             increase_operations(resources.global_stats,resources.stats_locks);
 
             int timestart = return_time(&tv);
-            res = table_put(table,msg->entry->key,value);
+            res = table_put(table,dup_key,dup_value);
+            if(strcmp(resources.next_server_node_path,"")!=0){ // if there is a next rtable
+                rtable_put(resources.next_server_rtable,dup_entry,&connected_to_server);
+            }
             int timeend = return_time(&tv);
 
             increase_time(resources.global_stats, resources.stats_locks,
                           (timeend-timestart));
-            // TODO rtable_put(resources., struct entry_t *entry, int *connected)
+
             exit_write(resources.table_locks);
 
             if (res == 0){
                 msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
             } else msg = respond_err_in_exec(msg);
 
-            data_destroy(value);
+            // data_destroy(dup_value);
+            entry_destroy(dup_entry);
 
             break;
         }
@@ -124,6 +132,9 @@ int invoke(MessageT *msg, struct table_t *table){
 
             int timestart = return_time(&tv);
             res = table_remove(table,msg->key);
+            if(strcmp(resources.next_server_node_path,"")!=0){ // if there is a next rtable
+                rtable_del(resources.next_server_rtable,key,&connected_to_server);
+            }
             int timeend = return_time(&tv);
 
             increase_time(resources.global_stats,resources.stats_locks,
