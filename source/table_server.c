@@ -6,6 +6,7 @@
  */
 
 #include "address.h"
+#include "client_stub-private.h"
 #define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
@@ -76,7 +77,7 @@ int main(int argc, char *argv[]) {
 
             // FIXME Put in callback again
             if (ZOK == zoo_wget_children(resources.zh,root_path,
-                                         NULL, NULL,
+                                         server_watch_children, NULL,
                                          children_nodes_list)){
 
                 zoo_string* children_paths =
@@ -140,7 +141,8 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    resources.this_node_path = concat_zpath(created_node_path);
+    strcpy(resources.this_node_path, "");
+    strcat(resources.this_node_path, created_node_path);
 
     int ret_net = network_main_loop(sockfd, resources.table); //start loop
 
@@ -171,6 +173,7 @@ int dup_table_from_server(char* last_node_addr){
     rtable_disconnect(rtable,&connected_to_server);
     int ret = 0;
     for(int i = 0; i < tab_size;i++){
+        printf("Copying %s key to new server", entries[i]->key);
         ret = table_put(resources.table,entries[i]->key,entries[i]->value);
         if (ret == -1){
             rtable_free_entries(entries);
@@ -214,6 +217,9 @@ int init_server_resources(int n_lists, char* zk_addr, char* my_addr) {
 
     resources.zh = zookeeper_init(zk_addr, server_connection_handler, 2000, 0,
                                   0, 0);
+
+    resources.next_server_rtable = calloc(1, sizeof(struct rtable_t*));
+    resources.next_server_rtable->server_address = calloc(120, sizeof(char));
 
     resources.this_node_path = calloc(1,ZVALLEN);
     resources.next_server_node_path = calloc(1,ZVALLEN);
