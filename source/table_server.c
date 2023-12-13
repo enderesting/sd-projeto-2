@@ -74,8 +74,9 @@ int main(int argc, char *argv[]) {
             zoo_string* children_nodes_list =
                 (zoo_string*) malloc(sizeof(zoo_string));
 
+            // FIXME Put in callback again
             if (ZOK == zoo_wget_children(resources.zh,root_path,
-                                         server_watch_children, NULL,
+                                         NULL, NULL,
                                          children_nodes_list)){
 
                 zoo_string* children_paths =
@@ -127,7 +128,7 @@ int main(int argc, char *argv[]) {
 
     int addr_len = strlen(my_server_addr->addr_str);
 
-    char* created_node_path = (char*) malloc(ZVALLEN * sizeof(char*));
+    char* created_node_path = (char*) malloc(ZVALLEN * sizeof(char));
 
     if (ZOK != zoo_create(
             resources.zh, node_path, my_server_addr->addr_str, addr_len,

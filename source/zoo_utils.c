@@ -12,7 +12,7 @@
 #include "zoo_utils.h"
 
 char* concat_zpath(char* node) {
-   char* concatenated = (char*) malloc(ZDATALEN * sizeof(char*));
+   char* concatenated = (char*) malloc(ZDATALEN * sizeof(char));
    strcpy(concatenated, "");
 
    strcat(concatenated, chain_path);
@@ -23,13 +23,13 @@ char* concat_zpath(char* node) {
 }
 
 zoo_string* children_abs_zpaths(zoo_string* children) {
-   zoo_string* abs_zpaths = (zoo_string*) malloc(sizeof(zoo_string*));
+   zoo_string* abs_zpaths = (zoo_string*) malloc(sizeof(zoo_string));
+   abs_zpaths->count = children->count;
+   abs_zpaths->data = (char**) malloc(children->count * sizeof(char*));
 
    for (int i = 0; i < children->count; ++i) {
        abs_zpaths->data[i] = concat_zpath(children->data[i]);
    }
-
-   abs_zpaths->count = children->count;
 
    return abs_zpaths;
 }
