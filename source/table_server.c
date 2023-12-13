@@ -5,6 +5,7 @@
  * Github repo: https://github.com/enderesting/sd-projeto-2
  */
 
+#include "address.h"
 #define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
@@ -38,14 +39,21 @@ int main(int argc, char *argv[]) {
 
     // handle arguments
     int n_lists = strtol(argv[2],NULL,10);
+    char* zk_addr = argv[1];
+    char* my_addr = argv[3];
+
     // initiates table & initiate resources
-    int ret_resources = init_server_resources(n_lists,argv[1], argv[3]);
+    int ret_resources = init_server_resources(n_lists, zk_addr, my_addr);
     if (ret_resources == -1) {
         return -1;
     }
 
+    server_address* my_server_addr =
+        (server_address*) calloc(1, sizeof(server_address));
+    interpret_addr(my_addr, my_server_addr);
+
     // hook up sockets
-    int sockfd = network_server_init(resources.my_addr->port);
+    int sockfd = network_server_init(my_server_addr->port);
     if (sockfd==-1){
         perror("Error initializing server\n");
         return -1;
@@ -62,46 +70,46 @@ int main(int argc, char *argv[]) {
                     exit(EXIT_FAILURE);
                 } 
             }
-            zoo_string* children_list = (zoo_string*) malloc(sizeof(zoo_string));
+
+            zoo_string* children_nodes_list =
+                (zoo_string*) malloc(sizeof(zoo_string));
+
             if (ZOK == zoo_wget_children(resources.zh,root_path,
                                          server_watch_children, NULL,
-                                         children_list)){
+                                         children_nodes_list)){
 
-                if (children_list->count > 0) { // if /chain HAS children
+                zoo_string* children_paths =
+                    children_abs_zpaths(children_nodes_list);
+
+                if (children_paths->count > 0) { // if /chain HAS children
                     //find tail node path
-                    char* last_node_path = (char*) malloc(ZDATALEN *
-                                                          sizeof(char));
-                    for (int i = 0; i < children_list->count; ++i) {
-                        char* child_path = children_list->data[i];
-                        if (last_node_path == NULL) {
+                    char* last_node_path = (char*) malloc(ZDATALEN * sizeof(char));
+
+                    for (int i = 0; i < children_paths->count; ++i) {
+                        char* child_path = children_paths->data[i];
+
+                        if (strcmp(last_node_path, "") == 0) {
                             strcpy(last_node_path, child_path);
                             continue;
                         }
 
                         int path_cmp = strcmp(last_node_path, child_path);
-
                         if (path_cmp < 0) {
                             strcpy(last_node_path, child_path);
                         }
                     }
 
-                    char* last_node_abs_path = concat_zpath(last_node_path);
                     //find tail node address
                     char* last_node_addr = (char*) malloc(ZDATALEN * sizeof(char));
                     int last_node_size = ZDATALEN;
 
-                    if (zoo_get(resources.zh, last_node_abs_path, 0, last_node_addr,
-                                &last_node_size, NULL) != ZOK){
+                    if (zoo_get(resources.zh, last_node_path, 0, last_node_addr,
+                                &last_node_size, NULL) != ZOK) {
                         return -1;
-
                     }
-
-                    // XXX Delete print
-                    printf("\nValue: %s \n", last_node_addr);
 
                     //duplicate the server
                     dup_table_from_server(last_node_addr); // gets table and put it into resources.table
-
                 }
 
                 //else just continue and start loop
@@ -111,24 +119,35 @@ int main(int argc, char *argv[]) {
         sleep(3);
     }
 
-
     //register in zk
     //get node_path
     char node_path[ZVALLEN] = "";
     strcat(node_path,root_path); 
     strcat(node_path,"/node");
-    int addr_len = strlen(resources.my_addr->addr_str);
-    if (ZOK != zoo_create(resources.zh, node_path, resources.my_addr->addr_str,
-                          addr_len, & ZOO_OPEN_ACL_UNSAFE,
-                          ZOO_EPHEMERAL | ZOO_SEQUENCE, resources.id, ZVALLEN)){
+
+    int addr_len = strlen(my_server_addr->addr_str);
+
+    char* created_node_path = (char*) malloc(ZVALLEN * sizeof(char*));
+
+    if (ZOK != zoo_create(
+            resources.zh, node_path, my_server_addr->addr_str, addr_len,
+            & ZOO_OPEN_ACL_UNSAFE,
+            ZOO_EPHEMERAL | ZOO_SEQUENCE,
+            created_node_path, ZVALLEN)
+    ) {
         fprintf(stderr,"Error Creating %s!\n", root_path);
         exit(EXIT_FAILURE);
     }
 
+    resources.this_node_path = concat_zpath(created_node_path);
+
     int ret_net = network_main_loop(sockfd, resources.table); //start loop
+
     //it basically wont stop until server error/manual quits. if any changes happen cb will be called?
+
     network_server_close(sockfd);
     destroy_server_resources();
+    destory_addr_struct(my_server_addr);
 
     return ret_net;
 }
@@ -192,14 +211,11 @@ int init_server_resources(int n_lists, char* zk_addr, char* my_addr) {
     stat_locks->m = (pthread_mutex_t) PTHREAD_MUTEX_INITIALIZER;
     resources.stats_locks = stat_locks;
 
-    
-    resources.my_addr = (server_address*) malloc(sizeof(server_address));
-    interpret_addr(my_addr,resources.my_addr); 
-    resources.next_addr = (server_address*) calloc(1, sizeof(server_address)); // on initiation we dont know the next addr yet
     resources.zh = zookeeper_init(zk_addr, server_connection_handler, 2000, 0,
                                   0, 0);
-    resources.id = calloc(1,ZVALLEN);
-    resources.next_id = calloc(1,ZVALLEN);
+
+    resources.this_node_path = calloc(1,ZVALLEN);
+    resources.next_server_node_path = calloc(1,ZVALLEN);
 
     return 0;
 }
@@ -213,11 +229,10 @@ int destroy_server_resources(){
     pthread_mutex_destroy(&resources.stats_locks->m);
     pthread_cond_destroy(&resources.stats_locks->c);
     free(resources.stats_locks);
-    // FIXME: free addresses? 
-    destory_addr_struct(resources.my_addr);
-    destory_addr_struct(resources.next_addr);
-    free(resources.id);
-    free(resources.next_id);
+
+    // FIXME: free addresses?
+    free(resources.this_node_path);
+    free(resources.next_server_node_path);
     return 0;
 }
 

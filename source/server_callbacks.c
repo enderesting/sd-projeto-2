@@ -32,13 +32,13 @@ void server_watch_children(zhandle_t* zh, int evt_type, int conn_state,
     printf("\nhello from watcher, path is %s\n", path);
     int check_new_successor;
     char* new_successor_path = (char*) calloc(1, ZVALLEN * sizeof(char));
-    int is_tail = strcmp(resources.next_id, "") == 0;
+    int is_tail = strcmp(resources.next_server_node_path, "") == 0;
 
     if (evt_type != ZOO_CHILD_EVENT) return;
 
     check_new_successor =
         is_tail ||
-        zoo_exists(zh, resources.next_id, 0, NULL) == ZNONODE;
+        zoo_exists(zh, resources.next_server_node_path, 0, NULL) == ZNONODE;
 
     if (check_new_successor) {
         printf("\nhello from check new successor\n");
@@ -55,7 +55,7 @@ void server_watch_children(zhandle_t* zh, int evt_type, int conn_state,
         for (int i = 0; i < children_list->count; ++i) {
             char* child_path = children_list->data[i];
             char* child_abs_path = concat_zpath(child_path);
-            int path_cmp = strcmp(resources.id, child_abs_path);
+            int path_cmp = strcmp(resources.this_node_path, child_abs_path);
             if (path_cmp < 0) {
                 strcpy(new_successor_path, child_abs_path);
                 break;
@@ -69,7 +69,7 @@ void server_watch_children(zhandle_t* zh, int evt_type, int conn_state,
 
     if (strcmp(new_successor_path, "") != 0) {
         if (!is_tail) {
-            rtable_disconnect(resources.next_rtable, &conn_hack);
+            rtable_disconnect(resources.next_server_rtable, &conn_hack);
         }
 
         char* new_successor_addr = (char*) malloc(ZDATALEN * sizeof(char));
@@ -81,15 +81,13 @@ void server_watch_children(zhandle_t* zh, int evt_type, int conn_state,
             return;
         }
 
-        resources.next_rtable = rtable_connect(new_successor_addr, &conn_hack);
+        resources.next_server_rtable = rtable_connect(new_successor_addr, &conn_hack);
 
-        // FIXME resources.next_addr = new_successor_addr;
-        resources.next_id = new_successor_path;
+        resources.next_server_node_path = new_successor_path;
 
     } else if (!is_tail && strcmp(new_successor_path, "") == 0) {
-        rtable_disconnect(resources.next_rtable, &conn_hack);
+        rtable_disconnect(resources.next_server_rtable, &conn_hack);
 
-        resources.next_addr = NULL;
-        resources.next_id = NULL;
+        resources.next_server_node_path = NULL;
     }
 }

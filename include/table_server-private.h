@@ -29,12 +29,9 @@ typedef struct server_resources {
     mutex_locks* stats_locks;
     // extras, for zk
     zhandle_t* zh;
-    server_address* my_addr;
-    server_address* next_addr;
-    struct rtable_t* next_rtable;
-    int next_sockfd;
-    char* id;
-    char* next_id;
+    struct rtable_t* next_server_rtable;
+    char* this_node_path;
+    char* next_server_node_path;
 } server_resources;
 
 extern server_resources resources;
