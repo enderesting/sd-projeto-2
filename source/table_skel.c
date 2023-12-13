@@ -66,7 +66,10 @@ int invoke(MessageT *msg, struct table_t *table){
 
             int timestart = return_time(&tv);
             res = table_put(table,dup_key,dup_value);
+
+            printf("\nnext server node path is %s\n", resources.next_server_node_path);
             if(strcmp(resources.next_server_node_path,"")!=0){ // if there is a next rtable
+                printf("\nChain replicating key %s\n", dup_key);
                 rtable_put(resources.next_server_rtable,dup_entry,&connected_to_server);
             }
             int timeend = return_time(&tv);

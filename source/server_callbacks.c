@@ -29,48 +29,44 @@ void server_connection_handler(zhandle_t* zh, int evt_type, int conn_state,
 
 void server_watch_children(zhandle_t* zh, int evt_type, int conn_state,
                            const char *path, void* context) {
-    int check_new_successor;
     char* new_successor_path = (char*) calloc(1, ZVALLEN * sizeof(char));
     int is_tail = strcmp(resources.next_server_node_path, "") == 0;
 
     if (evt_type != ZOO_CHILD_EVENT) return;
 
-    check_new_successor =
-        is_tail ||
-        zoo_exists(zh, resources.next_server_node_path, 0, NULL) == ZNONODE;
-
-    if (check_new_successor) {
-        zoo_string* children_node_paths =
-            (zoo_string*) malloc(sizeof(zoo_string));
-        int ret_wget_children =
-            zoo_wget_children(zh, path, server_watch_children, context,
-                              children_node_paths);
-        if (ret_wget_children != ZOK) {
-            perror("Error wget_children in callback");
-            free(children_node_paths);
-            return;
-        }
-
-        zoo_string* children_paths = children_abs_zpaths(children_node_paths);
-        for (int i = 0; i < children_paths->count; ++i) {
-            char* child_path = children_paths->data[i];
-
-            int path_cmp = strcmp(resources.this_node_path, child_path);
-            if (path_cmp < 0) {
-                strcpy(new_successor_path, child_path);
-                break;
-            }
-
-        }
-
+    zoo_string* children_node_paths =
+        (zoo_string*) malloc(sizeof(zoo_string));
+    int ret_wget_children =
+        zoo_wget_children(zh, path, server_watch_children, context,
+                            children_node_paths);
+    if (ret_wget_children != ZOK) {
+        perror("Error wget_children in callback");
         free(children_node_paths);
-        free(children_paths);
+        return;
+    }
+
+    zoo_string* children_paths = children_abs_zpaths(children_node_paths);
+    for (int i = 0; i < children_paths->count; ++i) {
+        char* child_path = children_paths->data[i];
+
+        int path_cmp = strcmp(resources.this_node_path, child_path);
+        if (path_cmp < 0) {
+            strcpy(new_successor_path, child_path);
+            break;
+        }
     }
 
     printf("\nNew successor is %s, this_node_path is %s and is_tail is %d\n",
            new_successor_path, resources.this_node_path, is_tail);
 
-    if (strcmp(new_successor_path, "") != 0) {
+    if (strcmp(new_successor_path, "") == 0 &&
+        strcmp(resources.next_server_node_path, "") != 0) {
+
+        rtable_disconnect(resources.next_server_rtable, &connected_to_server);
+
+        resources.next_server_node_path = strcpy(resources.next_server_node_path,
+                                                 "");
+    } else if (strcmp(new_successor_path, resources.next_server_node_path) != 0) {
         if (!is_tail) {
             rtable_disconnect(resources.next_server_rtable,
                               &connected_to_server);
@@ -89,11 +85,5 @@ void server_watch_children(zhandle_t* zh, int evt_type, int conn_state,
                                                       &connected_to_server);
 
         resources.next_server_node_path = new_successor_path;
-
-    } else if (!is_tail && strcmp(new_successor_path, "") == 0) {
-        rtable_disconnect(resources.next_server_rtable, &connected_to_server);
-
-        resources.next_server_node_path = strcpy(resources.next_server_node_path,
-                                                 "");
     }
 }
