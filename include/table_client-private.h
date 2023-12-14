@@ -12,12 +12,15 @@
 #include <unistd.h>
 
 #include "client_callbacks.h"
+#include "client_stub-private.h"
 
-// extern volatile sig_atomic_t connected_to_head; //i think they might not need to be global since we're passing them manually around.
-// extern volatile sig_atomic_t connected_to_tail;
+extern sig_atomic_t connected_to_head;
+extern sig_atomic_t connected_to_tail;
 extern volatile sig_atomic_t client_connected_to_zk; 
 extern char* head_path;
 extern char* tail_path;
+extern struct rtable_t* rtable_head;
+extern struct rtable_t* rtable_tail;
 typedef struct String_vector zoo_string;
 
 int children_has_difference(zoo_string* children, zoo_string* new_children);
